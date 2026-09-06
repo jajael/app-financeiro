@@ -4,7 +4,7 @@
  */
 
 // ID da planilha - SUBSTITUA PELO SEU ID REAL
-const SHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
+const SHEET_ID = '1E_4lPql-YvyTe5awOg5qXtQIbi1d5lqbbD-uojRGDzo';
 
 // Nomes das abas
 const SHEET_ENTRADAS = 'Entradas';
