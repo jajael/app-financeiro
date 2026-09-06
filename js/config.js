@@ -3,8 +3,15 @@
  * Valores imutáveis do sistema
  */
 
-// API
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxl93sA4_Mr-N3L9MBH06p479jLRgS7zXumxnYejjII0hQkNiTF9oslUqAxChUCqXN6/exec';
+// ===== Supabase =====
+// Banco de dados (substitui o Google Apps Script + Google Sheets).
+// A chave abaixo é a "publishable key" (role anon) — pode ficar no front-end.
+// O acesso é controlado por RLS no Supabase (ver supabase/schema.sql).
+const SUPABASE_URL = 'https://lbfnjxzthbclvgnszway.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_vFArls_InXSynj3uzIFNwA_RPcT-Tx7';
+
+// Cliente global (supabase-js carregado via <script> no index.html)
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Categorias padrão (fallback)
 const CATEGORIAS_PADRAO = {

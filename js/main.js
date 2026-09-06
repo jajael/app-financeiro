@@ -13,10 +13,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Adicionar CSS das animações
     adicionarEstilosDinamicos();
-    
+
     // Configurar event listeners
     configurarEventListeners();
-    
+
+    // Exigir login (magic link). Sem sessão, mostra a tela de acesso e para aqui.
+    const autenticado = await initAuth();
+    if (!autenticado) {
+        console.log('🔒 Aguardando login...');
+        return;
+    }
+
     // Carregar menus
     console.log('📑 Carregando categorias e métodos...');
     await carregarMenus();
