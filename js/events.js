@@ -43,8 +43,38 @@ function configurarEventListeners() {
     // Campo de tipo de recorrência
     const tipoRecorrencia = document.querySelector(SELECTORS.tipoRecorrencia);
     if (tipoRecorrencia) {
-        tipoRecorrencia.addEventListener('change', alternarCampoParcelas);
+        tipoRecorrencia.addEventListener('change', atualizarCamposRecorrencia);
     }
+
+    // Método -> mostra bloco de cartão
+    const metodo = document.querySelector(SELECTORS.metodo);
+    if (metodo) metodo.addEventListener('change', atualizarCampoCartao);
+
+    // Cartão selecionado -> recalcula competência
+    const cartaoSelect = document.getElementById('cartaoSelect');
+    if (cartaoSelect) cartaoSelect.addEventListener('change', recalcularCompetencia);
+
+    // Campo Data: máscara dd/mm/aaaa + recalcular competência
+    const dataInput = document.querySelector(SELECTORS.data);
+    if (dataInput) {
+        dataInput.addEventListener('input', () => {
+            mascaraDataBR(dataInput);
+            recalcularCompetencia();
+        });
+    }
+
+    // Campo Competência: máscara mm/aaaa + marca como editado manualmente
+    const compInput = document.getElementById('competencia');
+    if (compInput) {
+        compInput.addEventListener('input', () => {
+            mascaraCompetencia(compInput);
+            compInput.dataset.editado = compInput.value ? '1' : '';
+        });
+    }
+
+    // Dia da recorrência: só números, 2 dígitos
+    const diaRec = document.getElementById('diaRecorrencia');
+    if (diaRec) diaRec.addEventListener('input', () => soNumeros(diaRec, 2));
     
     // Campo de categoria para sugestões (opcional)
     const categoriaInput = document.querySelector(SELECTORS.categoria);
@@ -125,6 +155,9 @@ function mudarAba(novaAba) {
     } else if (novaAba === 'menus') {
         // Carregar aba de gerenciamento de menus
         carregarAbaMenus();
+    } else if (novaAba === 'cartoes') {
+        // Carregar aba de cartões
+        carregarAbaCartoes();
     }
 }
 

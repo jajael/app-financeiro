@@ -19,7 +19,11 @@ function mapearTransacao(row) {
         formaPagamento: row.forma_pagamento || 'À vista',
         tipoRecorrencia: row.tipo_recorrencia || 'Pontual',
         proximaData: row.proxima_data || '',
-        status: row.status || 'Ativa'
+        status: row.status || 'Ativa',
+        cartaoId: row.cartao_id || null,
+        competencia: row.competencia || '',
+        diaRecorrencia: row.dia_recorrencia || '',
+        ehVencimento: !!row.eh_vencimento
     };
 }
 
@@ -45,8 +49,8 @@ async function carregarTransacoes(tipo, mes, ano) {
             .from('transacoes')
             .select('*')
             .eq('tipo', tipo)
-            .gte('data', ini)
-            .lt('data', fim)
+            .gte('competencia', ini)
+            .lt('competencia', fim)
             .order('data', { ascending: false });
 
         if (error) throw error;
@@ -118,8 +122,8 @@ async function carregarResumo(tipo, mes, ano) {
             .from('transacoes')
             .select('valor, categoria')
             .eq('tipo', tipo)
-            .gte('data', ini)
-            .lt('data', fim);
+            .gte('competencia', ini)
+            .lt('competencia', fim);
 
         if (error) throw error;
 
@@ -160,15 +164,24 @@ function montarRegistro(dados) {
         descricao: dados.descricao || '',
         forma_pagamento: dados.formaPagamento || 'À vista',
         tipo_recorrencia: tipoRecorrencia,
-        proxima_data: calcularProximaData(dados.data, tipoRecorrencia),
+        dia_recorrencia: parseInt(dados.diaRecorrencia, 10) || null,
+        eh_vencimento: !!dados.ehVencimento,
+        proxima_data: calcularProximaData(dados.data, tipoRecorrencia, dados.diaRecorrencia),
+        cartao_id: dados.cartaoId || null,
+        competencia: dados.competencia || competenciaDe(dados.data),
         status: dados.status || 'Ativa'
     };
 }
 
 /**
- * Adiciona nova transação
+ * Adiciona nova transação. Se for "Parcelada", gera uma linha por parcela
+ * (valor dividido, competência e data avançando mês a mês).
  */
 async function adicionarTransacaoAPI(dados) {
+    if (dados.tipoRecorrencia === 'Parcelada') {
+        return adicionarParceladoAPI(dados);
+    }
+
     const { data, error } = await sb
         .from('transacoes')
         .insert(montarRegistro(dados))
@@ -177,6 +190,36 @@ async function adicionarTransacaoAPI(dados) {
 
     if (error) throw error;
     return mapearTransacao(data);
+}
+
+async function adicionarParceladoAPI(dados) {
+    const n = Math.max(1, parseInt(dados.parcelas, 10) || 1);
+    const centavos = Math.round(parseFloat(dados.valor) * 100);
+    const baseParc = Math.floor(centavos / n);
+    const resto = centavos - baseParc * n;
+
+    const base = montarRegistro(dados);          // parcela 1 (define competência e data-base)
+    const registros = [];
+
+    for (let i = 0; i < n; i++) {
+        const valor = (baseParc + (i < resto ? 1 : 0)) / 100;
+        const dataParc = i === 0 ? base.data : addMeses(base.data, i);
+        const competencia = i === 0 ? base.competencia : addMeses(base.competencia, i);
+        const proxima = i < n - 1 ? addMeses(base.competencia, i + 1) : null;
+
+        registros.push({
+            ...base,
+            valor,
+            data: dataParc,
+            competencia,
+            proxima_data: proxima,
+            descricao: `${dados.descricao || dados.categoria} (${i + 1}/${n})`
+        });
+    }
+
+    const { data, error } = await sb.from('transacoes').insert(registros).select();
+    if (error) throw error;
+    return (data || []).map(mapearTransacao);
 }
 
 /**

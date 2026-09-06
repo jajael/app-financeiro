@@ -253,13 +253,52 @@ async function atualizarProximasTransacoes() {
 }
 
 /**
- * Mostra/esconde campo de parcelas
+ * Mostra/esconde os campos que dependem do tipo de recorrência
+ * (dia + checkbox "vencimento" para Mensal/Parcelada; nº de parcelas para Parcelada)
  */
-function alternarCampoParcelas() {
-    const tipoRecorrencia = document.querySelector(SELECTORS.tipoRecorrencia).value;
-    const parceleGroup = document.querySelector(SELECTORS.parceleGroup);
-    
-    if (parceleGroup) {
-        parceleGroup.style.display = tipoRecorrencia === 'Parcelada' ? 'block' : 'none';
+function atualizarCamposRecorrencia() {
+    const tipo = document.querySelector(SELECTORS.tipoRecorrencia).value;
+    const comDia = tipo === 'Mensal' || tipo === 'Parcelada';
+
+    const diaGroup = document.getElementById('diaRecorrenciaGroup');
+    const parceleGroup = document.getElementById('parceleGroup');
+    if (diaGroup) diaGroup.hidden = !comDia;
+    if (parceleGroup) parceleGroup.hidden = tipo !== 'Parcelada';
+
+    // Prefill do dia: usa o dia da data digitada, se ainda estiver vazio
+    const diaInput = document.getElementById('diaRecorrencia');
+    if (comDia && diaInput && !diaInput.value) {
+        const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+        if (iso) diaInput.value = String(parseInt(iso.slice(8, 10), 10));
+    }
+}
+
+/**
+ * Mostra/esconde o bloco de cartão (método = Crédito) e recalcula a competência
+ */
+function atualizarCampoCartao() {
+    const metodo = document.querySelector(SELECTORS.metodo).value;
+    const grupo = document.getElementById('cartaoGroup');
+    const ehCredito = metodo === 'Crédito';
+    if (grupo) grupo.hidden = !ehCredito;
+    if (ehCredito) recalcularCompetencia();
+}
+
+/**
+ * Recalcula a competência a partir do cartão selecionado + data da compra.
+ * Não sobrescreve se o usuário já editou o campo manualmente.
+ */
+function recalcularCompetencia() {
+    const campo = document.getElementById('competencia');
+    if (!campo || campo.dataset.editado) return;
+
+    const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+    const cartaoId = Number(document.getElementById('cartaoSelect')?.value || 0);
+    const cartao = estadoApp.cartoes.find(c => c.id === cartaoId);
+
+    if (iso && cartao) {
+        campo.value = competenciaParaBR(competenciaDe(iso, cartao.diaFechamento));
+    } else if (iso) {
+        campo.value = competenciaParaBR(competenciaDe(iso));
     }
 }

@@ -18,13 +18,34 @@ create table if not exists public.transacoes (
   descricao         text default '',
   forma_pagamento   text default 'À vista',
   tipo_recorrencia  text default 'Pontual',
+  dia_recorrencia   smallint,
+  eh_vencimento     boolean not null default false,
   proxima_data      date,
+  cartao_id         bigint,
+  competencia       date not null default date_trunc('month', now())::date,
   status            text default 'Ativa',
   criado_em         timestamptz default now()
 );
 
-create index if not exists transacoes_tipo_data_idx  on public.transacoes (tipo, data);
-create index if not exists transacoes_proxima_data_idx on public.transacoes (proxima_data);
+create index if not exists transacoes_tipo_data_idx    on public.transacoes (tipo, data);
+create index if not exists transacoes_competencia_idx   on public.transacoes (tipo, competencia);
+create index if not exists transacoes_proxima_data_idx  on public.transacoes (proxima_data);
+
+-- ---------- Cartões de crédito ----------
+create table if not exists public.cartoes (
+  id                bigint generated always as identity primary key,
+  nome              text not null,
+  dia_fechamento    smallint not null check (dia_fechamento between 1 and 31),
+  dia_vencimento    smallint not null check (dia_vencimento between 1 and 31),
+  melhor_dia_compra smallint check (melhor_dia_compra between 1 and 31),
+  status            text not null default 'Ativo' check (status in ('Ativo','Inativo')),
+  criado_em         timestamptz default now()
+);
+
+alter table public.transacoes
+  drop constraint if exists transacoes_cartao_id_fkey,
+  add constraint transacoes_cartao_id_fkey
+    foreign key (cartao_id) references public.cartoes(id) on delete set null;
 
 -- ---------- Tabela de menus (categorias / métodos / recorrências) ----------
 create table if not exists public.menu_itens (
@@ -46,6 +67,7 @@ create unique index if not exists menu_itens_tipo_nome_idx on public.menu_itens 
 -- ============================================================
 alter table public.transacoes  enable row level security;
 alter table public.menu_itens  enable row level security;
+alter table public.cartoes     enable row level security;
 
 drop policy if exists "anon full access transacoes" on public.transacoes;
 drop policy if exists "auth full access transacoes" on public.transacoes;
@@ -55,6 +77,10 @@ create policy "auth full access transacoes" on public.transacoes
 drop policy if exists "anon full access menu_itens" on public.menu_itens;
 drop policy if exists "auth full access menu_itens" on public.menu_itens;
 create policy "auth full access menu_itens" on public.menu_itens
+  for all to authenticated using (true) with check (true);
+
+drop policy if exists "auth full access cartoes" on public.cartoes;
+create policy "auth full access cartoes" on public.cartoes
   for all to authenticated using (true) with check (true);
 
 -- ============================================================
@@ -80,14 +106,11 @@ insert into public.menu_itens (tipo, nome) values
   ('Categoria', 'Transporte app'),
   ('Categoria', 'Transporte público'),
   ('Categoria', 'Outro'),
-  ('Método', 'Débito'),
   ('Método', 'Crédito'),
-  ('Método', 'PIX'),
   ('Método', 'Dinheiro'),
-  ('Método', 'Transferência'),
+  ('Método', 'PIX/Débito'),
   ('Recorrência', 'Pontual'),
   ('Recorrência', 'Mensal'),
-  ('Recorrência', 'Último útil do mês'),
-  ('Recorrência', 'Vencimento'),
-  ('Recorrência', 'Parcelada')
+  ('Recorrência', 'Parcelada'),
+  ('Recorrência', 'Último dia útil do mês')
 on conflict (tipo, nome) do nothing;

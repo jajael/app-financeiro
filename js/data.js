@@ -113,13 +113,14 @@ async function carregarMenus() {
         const menus = await carregarMenusAPI();
         
         estadoApp.menus.categorias = menus.categorias || [];
-        estadoApp.menus.metodos = menus.metodos || {};
-        
+        estadoApp.menus.metodos = menus.metodos || [];
+
         console.log('✓ Menus carregados:', estadoApp.menus);
-        
-        // Preencher dropdown
+
+        // Preencher dropdowns
         preencherDropdownCategorias();
-        
+        preencherDropdownMetodos();
+
         return true;
     } catch (error) {
         console.error('Erro ao carregar menus:', error);
@@ -150,6 +151,23 @@ function preencherDropdownCategorias() {
         option.textContent = categoria;
         selectCategoria.appendChild(option);
     });
+}
+
+/**
+ * Preenche dropdown de métodos de pagamento
+ */
+function preencherDropdownMetodos() {
+    const sel = document.querySelector(SELECTORS.metodo);
+    if (!sel) return;
+    const atual = sel.value;
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    (estadoApp.menus.metodos || []).forEach(m => {
+        const o = document.createElement('option');
+        o.value = m;
+        o.textContent = m;
+        sel.appendChild(o);
+    });
+    sel.value = atual;
 }
 
 /**
