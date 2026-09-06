@@ -1,0 +1,486 @@
+/**
+ * RESPONSIVO
+ * Media queries para diferentes tamanhos de tela
+ */
+
+/* ============ TABLET (768px) ============ */
+@media (max-width: 768px) {
+    /* Layout principal */
+    .container {
+        box-shadow: none;
+    }
+
+    /* Header */
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-content h1 {
+        font-size: var(--font-size-xl);
+    }
+
+    .header-info {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Main */
+    main.main {
+        padding: var(--spacing-lg);
+    }
+
+    /* Dashboard */
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    /* Tabs */
+    .tabs {
+        gap: 0;
+    }
+
+    .tab-btn {
+        padding: var(--spacing-md);
+        font-size: var(--font-size-sm);
+        flex: 1;
+        text-align: center;
+    }
+
+    /* Formulário */
+    .form-transacao {
+        padding: var(--spacing-lg);
+    }
+
+    .form-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .tipo-selector {
+        width: 100%;
+    }
+
+    .tipo-btn {
+        flex: 1;
+    }
+
+    /* Transações */
+    .despesa-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .despesa-valor {
+        width: 100%;
+        text-align: left;
+    }
+
+    /* Gráficos */
+    .chart-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Listas */
+    .grid-2,
+    .grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    /* Seletor de mês */
+    .month-selector {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .current-month {
+        font-size: var(--font-size-sm);
+    }
+}
+
+/* ============ SMARTPHONE (480px) ============ */
+@media (max-width: 480px) {
+    /* Reset */
+    * {
+        font-size: calc(var(--font-size-base) * 0.95);
+    }
+
+    /* Container */
+    .container {
+        box-shadow: none;
+        background: var(--light);
+    }
+
+    /* Header */
+    .header {
+        padding: var(--spacing-lg) var(--spacing-md);
+    }
+
+    .header-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .header-info {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    /* Main */
+    main.main {
+        padding: var(--spacing-md);
+    }
+
+    /* Dashboard cards */
+    .summary-card {
+        padding: var(--spacing-md);
+    }
+
+    .summary-card h3 {
+        font-size: 0.75rem;
+    }
+
+    .summary-card .amount {
+        font-size: 1.5rem;
+    }
+
+    /* Tabs */
+    .tabs {
+        margin-bottom: var(--spacing-lg);
+        border-bottom: 1px solid var(--light);
+    }
+
+    .tab-btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.8rem;
+        flex: 1;
+    }
+
+    .tab-badge {
+        display: none;
+    }
+
+    .tab-content {
+        min-height: 200px;
+    }
+
+    /* Formulário */
+    .form-transacao {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-sm);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: var(--spacing-md);
+        font-size: 16px;
+        border-radius: var(--radius-xs);
+    }
+
+    .btn-submit {
+        padding: var(--spacing-md);
+        font-size: var(--font-size-sm);
+        border-radius: var(--radius-sm);
+    }
+
+    .tipo-selector {
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs);
+    }
+
+    .tipo-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+    }
+
+    /* Transações */
+    .despesa-item {
+        padding: var(--spacing-md);
+        border-left-width: 3px;
+    }
+
+    .despesa-categoria {
+        font-size: var(--font-size-sm);
+    }
+
+    .recorrencia-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.3rem;
+    }
+
+    .despesa-meta {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        font-size: 0.75rem;
+    }
+
+    .despesa-descricao {
+        font-size: 0.8rem;
+    }
+
+    .despesa-valor {
+        font-size: 1rem;
+        min-width: auto;
+    }
+
+    /* Gráficos */
+    .chart-container {
+        padding: var(--spacing-md);
+    }
+
+    .category-item {
+        padding: var(--spacing-sm);
+        gap: var(--spacing-sm);
+    }
+
+    .category-bar {
+        height: 4px;
+    }
+
+    .category-value {
+        font-size: 0.75rem;
+    }
+
+    .chart-stats {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+    }
+
+    .stat-value {
+        font-size: 1rem;
+    }
+
+    /* Seletor de mês */
+    .month-selector {
+        width: 100%;
+        padding: var(--spacing-sm);
+    }
+
+    .month-btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.75rem;
+    }
+
+    .current-month {
+        font-size: 0.75rem;
+        min-width: auto;
+    }
+
+    /* Footer */
+    footer.footer {
+        font-size: 0.8rem;
+        padding: var(--spacing-md);
+    }
+
+    /* Utility classes */
+    .hide-mobile {
+        display: none;
+    }
+
+    .show-mobile {
+        display: block;
+    }
+}
+
+/* ============ EXTRA PEQUENO (<320px) ============ */
+@media (max-width: 320px) {
+    .header-content h1 {
+        font-size: 1.2rem;
+    }
+
+    .summary-card {
+        padding: var(--spacing-sm);
+    }
+
+    .tab-btn {
+        padding: var(--spacing-sm) var(--spacing-sm);
+        font-size: 0.7rem;
+    }
+
+    .despesa-item {
+        padding: var(--spacing-sm);
+    }
+
+    .form-group input,
+    .form-group select {
+        font-size: 16px;
+    }
+}
+
+/* ============ GRANDE (1024px) ============ */
+@media (min-width: 1024px) {
+    .container {
+        max-width: 1400px;
+    }
+
+    main.main {
+        padding: var(--spacing-xl) 2.5rem;
+    }
+
+    .dashboard {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .form-row {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .chart-stats {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ============ MUITO GRANDE (1440px) ============ */
+@media (min-width: 1440px) {
+    .container {
+        max-width: 1600px;
+    }
+
+    .grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============ ORIENTAÇÃO ============ */
+@media (orientation: landscape) and (max-height: 600px) {
+    main.main {
+        padding: var(--spacing-md);
+    }
+
+    .dashboard {
+        gap: var(--spacing-md);
+    }
+
+    .form-transacao {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+}
+
+@media (orientation: portrait) and (max-width: 600px) {
+    .header-content {
+        gap: var(--spacing-sm);
+    }
+
+    .header-content h1 {
+        font-size: 1.3rem;
+    }
+}
+
+/* ============ HIGH DPI (Retina) ============ */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Bordas mais finas em telas de alta DPI */
+    .despesa-item {
+        border-left-width: 2px;
+    }
+}
+
+/* ============ MODO ESCURO ============ */
+@media (prefers-color-scheme: dark) {
+    html, body {
+        background: #1a1a1a;
+        color: #f0f0f0;
+    }
+
+    .container {
+        background: #222;
+    }
+
+    .header {
+        background: linear-gradient(135deg, #3d3d3d 0%, #2a2a2a 100%);
+    }
+
+    main.main {
+        background: #1a1a1a;
+    }
+
+    footer.footer {
+        background: #0a0a0a;
+    }
+}
+
+/* ============ MODO CLARO ============ */
+@media (prefers-color-scheme: light) {
+    html, body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        color: #1a1a1a;
+    }
+
+    .container {
+        background: white;
+    }
+}
+
+/* ============ REDUZIR MOVIMENTO ============ */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* ============ ALTO CONTRASTE ============ */
+@media (prefers-contrast: more) {
+    .summary-card {
+        border-width: 3px;
+    }
+
+    .despesa-item {
+        border-left-width: 5px;
+    }
+
+    button {
+        font-weight: bold;
+    }
+}
+
+/* ============ IMPRESSÃO ============ */
+@media print {
+    body {
+        background: white;
+    }
+
+    .container {
+        box-shadow: none;
+        max-width: 100%;
+    }
+
+    header.header,
+    footer.footer,
+    .tabs,
+    .form-transacao,
+    .btn-submit {
+        display: none;
+    }
+
+    main.main {
+        padding: 0;
+    }
+
+    .despesa-item {
+        page-break-inside: avoid;
+    }
+}

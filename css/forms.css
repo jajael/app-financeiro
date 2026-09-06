@@ -1,0 +1,333 @@
+/**
+ * FORMULÁRIOS
+ * Formulário de transações e inputs
+ */
+
+.form-transacao {
+    background: white;
+    padding: var(--spacing-xl);
+    border-radius: var(--radius);
+    border: 1px solid var(--light);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-header h2 {
+    margin: 0;
+    color: var(--dark);
+}
+
+/* Seletor de tipo */
+.tipo-selector {
+    display: flex;
+    gap: var(--spacing-sm);
+    background: var(--light);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+}
+
+.tipo-btn {
+    padding: 0.6rem 1.2rem;
+    background: white;
+    border: 2px solid transparent;
+    border-radius: var(--radius-xs);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-size: 0.95rem;
+    flex: 1;
+    text-align: center;
+}
+
+.tipo-btn:hover {
+    background: var(--light);
+    transform: translateY(-2px);
+}
+
+.tipo-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+}
+
+/* Linhas do formulário */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group.half-width {
+    grid-column: span 1;
+}
+
+/* Labels */
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--dark);
+    font-size: 0.95rem;
+}
+
+.form-group label .required {
+    color: var(--danger);
+}
+
+/* Inputs e selects */
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 2px solid var(--light);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    transition: all var(--transition-normal);
+    font-family: var(--font-family);
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled {
+    background: var(--light);
+    color: var(--gray);
+    cursor: not-allowed;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Placeholder */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--gray);
+}
+
+/* Sugestões */
+.sugestoes {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--light);
+    border-top: none;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+    box-shadow: var(--shadow-md);
+}
+
+.sugestoes.hidden {
+    display: none;
+}
+
+.sugestao-item {
+    padding: var(--spacing-md);
+    cursor: pointer;
+    border-bottom: 1px solid var(--light);
+    transition: background var(--transition-normal);
+    font-size: var(--font-size-sm);
+}
+
+.sugestao-item:hover {
+    background: var(--light);
+    padding-left: calc(var(--spacing-md) + 4px);
+}
+
+.sugestao-item:last-child {
+    border-bottom: none;
+}
+
+/* Grupos de campos condicionais */
+.form-group-conditional {
+    display: none;
+    grid-column: 1 / -1;
+}
+
+.form-group-conditional.show {
+    display: block;
+}
+
+#parceleGroup {
+    display: none;
+}
+
+#parceleGroup.show {
+    display: block;
+}
+
+/* Botão de submit */
+.btn-submit {
+    width: 100%;
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: var(--spacing-md);
+}
+
+.btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
+}
+
+.btn-submit:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Estado de validação */
+.form-group.error input,
+.form-group.error select {
+    border-color: var(--danger);
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.form-group.error input:focus,
+.form-group.error select:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-error {
+    color: var(--danger);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-sm);
+    display: none;
+}
+
+.form-group.error .form-error {
+    display: block;
+}
+
+/* Dica de campo */
+.form-hint {
+    color: var(--gray);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-sm);
+}
+
+/* Animações */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sugestoes {
+    animation: slideDown 0.2s ease;
+}
+
+/* Breakpoints */
+@media (max-width: 768px) {
+    .form-transacao {
+        padding: var(--spacing-lg);
+    }
+
+    .form-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .tipo-selector {
+        width: 100%;
+    }
+
+    .tipo-btn {
+        padding: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-transacao {
+        padding: var(--spacing-md);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: var(--spacing-md);
+        font-size: 16px;
+    }
+
+    .btn-submit {
+        padding: var(--spacing-md);
+        font-size: var(--font-size-sm);
+    }
+
+    .tipo-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Modo dark */
+@media (prefers-color-scheme: dark) {
+    .form-transacao {
+        background: #1a1a1a;
+        border-color: #333;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .sugestoes {
+        background: #2d2d2d;
+        border-color: #444;
+        color: #fff;
+    }
+
+    .sugestao-item:hover {
+        background: #3d3d3d;
+    }
+}

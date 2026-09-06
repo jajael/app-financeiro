@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro</title>
+    
+    <!-- CSS - Modular (carregado em ordem de dependência) -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/tabs.css">
+    <link rel="stylesheet" href="css/transactions.css">
+    <link rel="stylesheet" href="css/charts.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/menus.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>💰 Controle Financeiro</h1>
+                <div class="header-info">
+                    <span class="month-selector">
+                        <button id="prevMonth" class="month-btn">←</button>
+                        <span id="currentMonth" class="current-month">Setembro 2026</span>
+                        <button id="nextMonth" class="month-btn">→</button>
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Dashboard Summary -->
+            <section class="dashboard">
+                <div class="summary-card entradas">
+                    <h3>💰 Entradas</h3>
+                    <p class="amount" id="totalEntradas">R$ 0,00</p>
+                </div>
+                <div class="summary-card saidas">
+                    <h3>💸 Saídas</h3>
+                    <p class="amount" id="totalSaidas">R$ 0,00</p>
+                </div>
+                <div class="summary-card balanco">
+                    <h3>📊 Balanço</h3>
+                    <p class="amount" id="balanco">R$ 0,00</p>
+                </div>
+            </section>
+
+            <!-- Tabs Navigation -->
+            <section class="tabs">
+                <button class="tab-btn active" data-tab="entradas">📥 Entradas</button>
+                <button class="tab-btn" data-tab="saidas">📤 Saídas</button>
+                <button class="tab-btn" data-tab="proximas">⏰ Próximas</button>
+                <button class="tab-btn" data-tab="adicionar">➕ Adicionar</button>
+                <button class="tab-btn" data-tab="menus">⚙️ Menus</button>
+            </section>
+
+            <!-- Tab: Entradas -->
+            <section id="entradas" class="tab-content active">
+                <div class="transacoes-container">
+                    <h2>Entradas do Mês</h2>
+                    <div id="entradasLista" class="transacoes-lista">
+                        <!-- Entradas serão listadas aqui -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Saídas -->
+            <section id="saidas" class="tab-content">
+                <div class="transacoes-container">
+                    <h2>Saídas do Mês</h2>
+                    <div id="saidasLista" class="transacoes-lista">
+                        <!-- Saídas serão listadas aqui -->
+                    </div>
+                </div>
+                
+                <div class="analise-container" style="margin-top: 2rem;">
+                    <h3>Análise por Categoria</h3>
+                    <div id="categoriesList" class="categories-list">
+                        <!-- Análise por categoria -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Próximas Transações -->
+            <section id="proximas" class="tab-content">
+                <div class="proximas-container">
+                    <h2>Próximas Transações (30 dias)</h2>
+                    <div id="proximasLista" class="transacoes-lista">
+                        <!-- Próximas transações -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Adicionar Transação -->
+            <section id="adicionar" class="tab-content">
+                <form id="formTransacao" class="form-transacao">
+                    <div class="form-header">
+                        <h2>Adicionar Transação</h2>
+                        <div class="tipo-selector">
+                            <button type="button" class="tipo-btn active" data-tipo="entradas">
+                                📥 Entrada
+                            </button>
+                            <button type="button" class="tipo-btn" data-tipo="saidas">
+                                📤 Saída
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="tipoTransacao" value="entradas">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="data">Data:</label>
+                            <input type="date" id="data" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="valor">Valor:</label>
+                            <input type="number" id="valor" step="0.01" placeholder="0,00" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="metodo">Método:</label>
+                            <select id="metodo" required>
+                                <option value="">Selecione...</option>
+                                <option value="Débito">Débito</option>
+                                <option value="Crédito">Crédito</option>
+                                <option value="PIX">PIX</option>
+                                <option value="Dinheiro">Dinheiro</option>
+                                <option value="Transferência">Transferência</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="categoria">Categoria:</label>
+                            <select id="categoria" required>
+                                <option value="">-- Selecione uma categoria --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="formaPagamento">Forma de Pagamento:</label>
+                            <select id="formaPagamento" required>
+                                <option value="À vista">À vista</option>
+                                <option value="Parcelada">Parcelada</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="parceleGroup" style="display: none;">
+                            <label for="parcelas">Parcelas:</label>
+                            <input type="number" id="parcelas" min="1" max="12" value="1">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tipoRecorrencia">Tipo de Recorrência:</label>
+                            <select id="tipoRecorrencia" required>
+                                <option value="Pontual">Pontual (uma única vez)</option>
+                                <option value="Mensal">Mensal</option>
+                                <option value="Último útil do mês">Último útil do mês</option>
+                                <option value="Vencimento">Vencimento fixo</option>
+                                <option value="Parcelada">Parcelada</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="descricao">Descrição (opcional):</label>
+                        <input type="text" id="descricao" placeholder="Ex: Compra no mercado, Aluguel, etc">
+                    </div>
+
+                    <button type="submit" class="btn-submit">Adicionar Transação</button>
+                </form>
+            </section>
+
+            <!-- Tab: Gerenciar Menus -->
+            <section id="menus" class="tab-content">
+                <div id="menusContainer" class="menus-container">
+                    <p class="loading">Carregando menus...</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>App Financeiro v2.0 | Desenvolvido com ❤️</p>
+        </footer>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/menus-api.js"></script>
+    <script src="js/menus-ui.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

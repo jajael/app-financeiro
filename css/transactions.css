@@ -1,0 +1,235 @@
+/**
+ * TRANSAÇÕES
+ * Listagem de transações (entradas e saídas)
+ */
+
+.despesas-lista,
+.transacoes-lista {
+    display: grid;
+    gap: var(--spacing-md);
+}
+
+.despesa-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--light);
+    border-left: 4px solid var(--secondary);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
+}
+
+.despesa-item:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm);
+}
+
+.despesa-item.entrada {
+    border-left-color: var(--success);
+}
+
+.despesa-item.saida {
+    border-left-color: var(--danger);
+}
+
+.despesa-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.despesa-categoria {
+    font-weight: var(--font-weight-semibold);
+    color: var(--dark);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+/* Badge de recorrência */
+.recorrencia-badge {
+    display: inline-block;
+    font-size: var(--font-size-sm);
+    background: var(--primary);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-xs);
+    font-weight: var(--font-weight-semibold);
+    white-space: nowrap;
+}
+
+.recorrencia-badge.mensal {
+    background: #8B5CF6;
+}
+
+.recorrencia-badge.ultimo-util {
+    background: #EC4899;
+}
+
+.recorrencia-badge.parcelada {
+    background: #F59E0B;
+}
+
+.recorrencia-badge.vencimento {
+    background: #06B6D4;
+}
+
+/* Informações adicionais */
+.despesa-meta {
+    display: flex;
+    gap: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: var(--gray);
+    margin-top: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    white-space: nowrap;
+}
+
+.meta-item strong {
+    color: var(--dark);
+}
+
+/* Descrição */
+.despesa-descricao {
+    font-size: var(--font-size-sm);
+    color: var(--gray);
+    margin-top: var(--spacing-sm);
+    line-height: 1.4;
+}
+
+/* Valor */
+.despesa-valor {
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--danger);
+    min-width: 120px;
+    text-align: right;
+}
+
+.despesa-item.entrada .despesa-valor {
+    color: var(--success);
+}
+
+/* Mensagem vazia */
+.empty-message {
+    text-align: center;
+    color: var(--gray);
+    padding: var(--spacing-xl);
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+/* Estados especiais */
+.despesa-item.pendente {
+    opacity: 0.7;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.despesa-item.cancelada {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.despesa-item.ativa {
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Animação de entrada */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.despesa-item {
+    animation: slideInLeft 0.3s ease;
+}
+
+/* Efeito ao hover com ícone de ação */
+.despesa-item.interativo:hover {
+    cursor: pointer;
+    background: rgba(79, 70, 229, 0.05);
+    border-left-color: var(--primary);
+}
+
+/* Breakpoints */
+@media (max-width: 768px) {
+    .despesa-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .despesa-valor {
+        width: 100%;
+        text-align: left;
+    }
+
+    .despesa-meta {
+        gap: var(--spacing-md);
+    }
+}
+
+@media (max-width: 480px) {
+    .despesa-item {
+        padding: var(--spacing-md);
+        border-left-width: 3px;
+    }
+
+    .despesa-categoria {
+        font-size: var(--font-size-sm);
+    }
+
+    .recorrencia-badge {
+        font-size: 0.7rem;
+        padding: 0.15rem 0.4rem;
+    }
+
+    .despesa-meta {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .meta-item {
+        font-size: 0.8rem;
+    }
+
+    .despesa-valor {
+        font-size: 1rem;
+    }
+}
+
+/* Modo dark */
+@media (prefers-color-scheme: dark) {
+    .despesa-item {
+        background: #2d2d2d;
+    }
+
+    .despesa-item:hover {
+        background: #3d3d3d;
+    }
+
+    .despesa-categoria {
+        color: #fff;
+    }
+
+    .despesa-descricao,
+    .despesa-meta,
+    .meta-item {
+        color: #aaa;
+    }
+}

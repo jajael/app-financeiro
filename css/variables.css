@@ -1,0 +1,85 @@
+/**
+ * VARIÁVEIS E TEMAS
+ * Cores, espaçamentos, tamanhos
+ */
+
+:root {
+    /* Cores primárias */
+    --primary: #4F46E5;
+    --primary-dark: #4338CA;
+    --secondary: #06B6D4;
+    --success: #10B981;
+    --danger: #EF4444;
+    --warning: #F59E0B;
+    
+    /* Tons neutros */
+    --light: #F3F4F6;
+    --dark: #1F2937;
+    --gray: #6B7280;
+    
+    /* Entrada (receita) */
+    --receita-bg: #DCFCE7;
+    --receita-text: #166534;
+    --receita-border: #86EFAC;
+    
+    /* Saída (despesa) */
+    --despesa-bg: #FEE2E2;
+    --despesa-text: #991B1B;
+    --despesa-border: #FECACA;
+    
+    /* Balanço */
+    --balanco-bg: #FEF3C7;
+    --balanco-text: #B45309;
+    --balanco-border: #FCD34D;
+    
+    /* Espaçamento */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    
+    /* Bordas */
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-xs: 4px;
+    
+    /* Sombras */
+    --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 0 20px rgba(0, 0, 0, 0.1);
+    
+    /* Tipografia */
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: 2rem;
+    
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    
+    /* Transições */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* Modo claro (padrão) */
+@media (prefers-color-scheme: light) {
+    :root {
+        color-scheme: light;
+    }
+}
+
+/* Modo escuro (opcional) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light: #374151;
+        --dark: #F9FAFB;
+        --gray: #D1D5DB;
+    }
+}

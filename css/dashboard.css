@@ -1,0 +1,159 @@
+/**
+ * DASHBOARD - CARDS DE RESUMO
+ * Cards de entradas, saídas e balanço
+ */
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.summary-card {
+    padding: var(--spacing-lg);
+    border-radius: var(--radius);
+    border: 2px solid;
+    background-color: white;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, inherit, currentColor);
+}
+
+.summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.summary-card h3 {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-sm);
+}
+
+.summary-card .amount {
+    font-size: 1.8rem;
+    font-weight: var(--font-weight-bold);
+}
+
+/* Card Entradas */
+.summary-card.entradas {
+    background-color: var(--receita-bg);
+    border-color: var(--receita-border);
+    color: var(--receita-text);
+}
+
+.summary-card.entradas:hover {
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2);
+}
+
+/* Card Saídas */
+.summary-card.saidas {
+    background-color: var(--despesa-bg);
+    border-color: var(--despesa-border);
+    color: var(--despesa-text);
+}
+
+.summary-card.saidas:hover {
+    box-shadow: 0 8px 16px rgba(239, 68, 68, 0.2);
+}
+
+/* Card Balanço */
+.summary-card.balanco {
+    background-color: var(--balanco-bg);
+    border-color: var(--balanco-border);
+    color: var(--balanco-text);
+}
+
+.summary-card.balanco:hover {
+    box-shadow: 0 8px 16px rgba(245, 158, 11, 0.2);
+}
+
+/* Informações adicionais */
+.summary-card-info {
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-md);
+    opacity: 0.8;
+}
+
+.summary-card-detail {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-sm);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid currentColor;
+    opacity: 0.8;
+}
+
+/* Indicadores */
+.indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: var(--spacing-sm);
+}
+
+.indicator.positive {
+    background: var(--success);
+}
+
+.indicator.negative {
+    background: var(--danger);
+}
+
+.indicator.neutral {
+    background: var(--warning);
+}
+
+/* Animação de atualização */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.summary-card.updating {
+    animation: pulse 1s ease-in-out;
+}
+
+/* Breakpoints */
+@media (max-width: 768px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-card .amount {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .summary-card {
+        padding: var(--spacing-md);
+    }
+
+    .summary-card h3 {
+        font-size: 0.8rem;
+    }
+
+    .summary-card .amount {
+        font-size: 1.2rem;
+    }
+}
