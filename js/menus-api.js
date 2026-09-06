@@ -1,210 +1,144 @@
 /**
- * API DE MENUS
- * Chamadas Fetch para gerenciar categorias, métodos e recorrências
+ * API DE MENUS - SUPABASE
+ * Gerencia categorias, métodos e tipos de recorrência (tabela menu_itens).
+ * Mantém as assinaturas usadas por js/menus-ui.js.
+ * "linha" nas funções abaixo = coluna id (bigint) da tabela.
  */
 
-/**
- * Carrega todos os menus completos (com descrições e status)
- * Para a aba de gerenciamento
- */
-async function carregarMenusCompleto() {
-  try {
-    const url = SCRIPT_URL + '?acao=menusCompleto';
-    const response = await fetch(url);
-    const resultado = await response.json();
-    
-    if (resultado.status === 'sucesso') {
-      return resultado.dados;
-    } else {
-      console.error('Erro ao carregar menus:', resultado.mensagem);
-      mostrarNotificacao('Erro ao carregar menus', 'erro');
-      return null;
-    }
-  } catch (error) {
-    console.error('Erro na requisição:', error);
-    mostrarNotificacao('Erro de conexão ao carregar menus', 'erro');
-    return null;
-  }
+function mapearItemMenu(row) {
+    return {
+        linha: row.id,
+        id: row.id,
+        tipo: row.tipo,
+        nome: row.nome,
+        descricao: row.descricao || '',
+        status: row.status || 'Ativo'
+    };
 }
 
 /**
- * Obtém itens de um tipo específico
- * @param {string} tipo - 'Categoria', 'Método' ou 'Recorrência'
+ * Carrega todos os itens (ativos e inativos), agrupados por tipo.
+ */
+async function carregarMenusCompleto() {
+    try {
+        const { data, error } = await sb
+            .from('menu_itens')
+            .select('*')
+            .order('nome', { ascending: true });
+
+        if (error) throw error;
+
+        const itens = (data || []).map(mapearItemMenu);
+        return {
+            categorias: itens.filter(i => i.tipo === 'Categoria'),
+            metodos: itens.filter(i => i.tipo === 'Método'),
+            recorrencias: itens.filter(i => i.tipo === 'Recorrência')
+        };
+    } catch (error) {
+        console.error('Erro ao carregar menus:', error);
+        mostrarNotificacao('Erro ao carregar menus', 'erro');
+        return null;
+    }
+}
+
+/**
+ * Itens de um tipo específico ('Categoria' | 'Método' | 'Recorrência')
  */
 async function obterItensPorTipo(tipo) {
-  try {
-    const url = SCRIPT_URL + `?acao=itensPorTipo&tipo=${encodeURIComponent(tipo)}`;
-    const response = await fetch(url);
-    const resultado = await response.json();
-    
-    if (resultado.status === 'sucesso') {
-      return resultado.dados;
-    } else {
-      console.error('Erro ao obter itens:', resultado.mensagem);
-      return null;
+    try {
+        const { data, error } = await sb
+            .from('menu_itens')
+            .select('*')
+            .eq('tipo', tipo)
+            .order('nome', { ascending: true });
+
+        if (error) throw error;
+        return (data || []).map(mapearItemMenu);
+    } catch (error) {
+        console.error('Erro ao obter itens:', error);
+        return null;
     }
-  } catch (error) {
-    console.error('Erro na requisição:', error);
-    return null;
-  }
 }
 
 /**
  * Adiciona novo item ao menu
- * @param {string} tipo - 'Categoria', 'Método' ou 'Recorrência'
- * @param {string} nome - Nome do item
- * @param {string} descricao - Descrição do item
  */
 async function adicionarItemMenuAPI(tipo, nome, descricao = '') {
-  try {
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      payload: JSON.stringify({
-        acao: 'adicionarItemMenu',
-        tipo: tipo,
-        nome: nome,
-        descricao: descricao
-      })
-    });
-    
-    const resultado = await response.json();
-    
-    if (resultado.status === 'sucesso') {
-      mostrarNotificacao(`${nome} adicionado com sucesso!`, 'sucesso');
-      return true;
-    } else {
-      mostrarNotificacao(`Erro: ${resultado.mensagem}`, 'erro');
-      return false;
+    try {
+        const { error } = await sb
+            .from('menu_itens')
+            .insert({ tipo, nome, descricao });
+
+        if (error) throw error;
+        mostrarNotificacao(`${nome} adicionado com sucesso!`, 'sucesso');
+        return true;
+    } catch (error) {
+        console.error('Erro ao adicionar item:', error);
+        const msg = error.code === '23505' ? 'Item já existe' : 'Erro ao adicionar item';
+        mostrarNotificacao(msg, 'erro');
+        return false;
     }
-  } catch (error) {
-    console.error('Erro na requisição:', error);
-    mostrarNotificacao('Erro ao adicionar item', 'erro');
-    return false;
-  }
 }
 
 /**
  * Edita um item existente
- * @param {number} linha - Número da linha na planilha
- * @param {string} novoNome - Novo nome
- * @param {string} novaDescricao - Nova descrição
- * @param {string} novoStatus - 'Ativo' ou 'Inativo'
  */
 async function editarItemMenuAPI(linha, novoNome, novaDescricao = '', novoStatus = 'Ativo') {
-  try {
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      payload: JSON.stringify({
-        acao: 'editarItemMenu',
-        linha: linha,
-        nome: novoNome,
-        descricao: novaDescricao,
-        status: novoStatus
-      })
-    });
-    
-    const resultado = await response.json();
-    
-    if (resultado.status === 'sucesso') {
-      mostrarNotificacao('Item atualizado com sucesso!', 'sucesso');
-      return true;
-    } else {
-      mostrarNotificacao(`Erro: ${resultado.mensagem}`, 'erro');
-      return false;
+    try {
+        const { error } = await sb
+            .from('menu_itens')
+            .update({ nome: novoNome, descricao: novaDescricao, status: novoStatus })
+            .eq('id', linha);
+
+        if (error) throw error;
+        mostrarNotificacao('Item atualizado com sucesso!', 'sucesso');
+        return true;
+    } catch (error) {
+        console.error('Erro ao atualizar item:', error);
+        mostrarNotificacao('Erro ao atualizar item', 'erro');
+        return false;
     }
-  } catch (error) {
-    console.error('Erro na requisição:', error);
-    mostrarNotificacao('Erro ao atualizar item', 'erro');
-    return false;
-  }
 }
 
 /**
- * Remove um item do menu (deleta a linha)
- * @param {number} linha - Número da linha
+ * Remove um item (delete definitivo)
  */
 async function removerItemMenuAPI(linha) {
-  try {
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      payload: JSON.stringify({
-        acao: 'removerItemMenu',
-        linha: linha
-      })
-    });
-    
-    const resultado = await response.json();
-    
-    if (resultado.status === 'sucesso') {
-      mostrarNotificacao('Item removido com sucesso!', 'sucesso');
-      return true;
-    } else {
-      mostrarNotificacao(`Erro: ${resultado.mensagem}`, 'erro');
-      return false;
+    try {
+        const { error } = await sb.from('menu_itens').delete().eq('id', linha);
+        if (error) throw error;
+        mostrarNotificacao('Item removido com sucesso!', 'sucesso');
+        return true;
+    } catch (error) {
+        console.error('Erro ao remover item:', error);
+        mostrarNotificacao('Erro ao remover item', 'erro');
+        return false;
     }
-  } catch (error) {
-    console.error('Erro na requisição:', error);
-    mostrarNotificacao('Erro ao remover item', 'erro');
-    return false;
-  }
 }
 
 /**
- * Desativa um item (mais seguro que remover)
- * @param {number} linha - Número da linha
+ * Desativa um item (status = Inativo)
  */
 async function desativarItemMenuAPI(linha) {
-  try {
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      payload: JSON.stringify({
-        acao: 'desativarItemMenu',
-        linha: linha
-      })
-    });
-    
-    const resultado = await response.json();
-    
-    if (resultado.status === 'sucesso') {
-      mostrarNotificacao('Item desativado com sucesso!', 'sucesso');
-      return true;
-    } else {
-      mostrarNotificacao(`Erro: ${resultado.mensagem}`, 'erro');
-      return false;
-    }
-  } catch (error) {
-    console.error('Erro na requisição:', error);
-    mostrarNotificacao('Erro ao desativar item', 'erro');
-    return false;
-  }
+    return _mudarStatusItem(linha, 'Inativo', 'Item desativado com sucesso!');
 }
 
 /**
- * Ativa um item desativado
- * @param {number} linha - Número da linha
+ * Ativa um item (status = Ativo)
  */
 async function ativarItemMenuAPI(linha) {
-  try {
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      payload: JSON.stringify({
-        acao: 'ativarItemMenu',
-        linha: linha
-      })
-    });
-    
-    const resultado = await response.json();
-    
-    if (resultado.status === 'sucesso') {
-      mostrarNotificacao('Item ativado com sucesso!', 'sucesso');
-      return true;
-    } else {
-      mostrarNotificacao(`Erro: ${resultado.mensagem}`, 'erro');
-      return false;
+    return _mudarStatusItem(linha, 'Ativo', 'Item ativado com sucesso!');
+}
+
+async function _mudarStatusItem(linha, status, msgOk) {
+    try {
+        const { error } = await sb.from('menu_itens').update({ status }).eq('id', linha);
+        if (error) throw error;
+        mostrarNotificacao(msgOk, 'sucesso');
+        return true;
+    } catch (error) {
+        console.error('Erro ao mudar status do item:', error);
+        mostrarNotificacao('Erro ao atualizar item', 'erro');
+        return false;
     }
-  } catch (error) {
-    console.error('Erro na requisição:', error);
-    mostrarNotificacao('Erro ao ativar item', 'erro');
-    return false;
-  }
 }
