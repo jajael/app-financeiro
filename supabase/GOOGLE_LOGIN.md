@@ -36,4 +36,4 @@ Abra o site → "Entrar com Google" → escolhe a conta → volta logado.
 A sessão fica salva no navegador (não pede login toda vez; só quando expira,
 troca de navegador/dispositivo ou faz logout).
 
-O login por e-mail (magic link) continua disponível como alternativa.
+Google é o único método de login (o magic link por e-mail foi removido).

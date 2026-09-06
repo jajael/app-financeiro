@@ -2,7 +2,7 @@
 
 O app deixou de usar Google Apps Script + Google Sheets e passou a gravar
 direto no **Supabase** (Postgres). O acesso é protegido por **Supabase Auth**
-com **magic link** (login por e-mail, sem senha).
+com **Google** (Supabase Auth OAuth).
 
 ## Arquitetura
 
@@ -17,7 +17,7 @@ Depois: index.html + js/  →  supabase-js  →  Supabase (Postgres + Auth)
 |---|---|
 | `index.html` | carrega `supabase-js` (CDN), `js/auth.js` e `js/recorrencia.js`; botão "Sair" |
 | `js/config.js` | `SCRIPT_URL` → `SUPABASE_URL` + `SUPABASE_KEY` + cliente `sb` |
-| `js/auth.js` | **novo** — tela de login (magic link), sessão, logout |
+| `js/auth.js` | **novo** — tela de login (Google OAuth), sessão, logout |
 | `js/api.js` | CRUD de transações reescrito com o cliente Supabase |
 | `js/menus-api.js` | CRUD de menus reescrito com o cliente Supabase |
 | `js/recorrencia.js` | **novo** — cálculo de `proxima_data` (portado de `recorrencia.gs`) |
@@ -38,7 +38,7 @@ Abra o [SQL Editor](https://supabase.com/dashboard/project/lbfnjxzthbclvgnszway/
   fecha o RLS para usuários autenticados).
 
 ### 2. Auth (painel do Supabase)
-- **Authentication → Providers → Email**: manter habilitado (magic link já vem ligado).
+- **Authentication → Providers → Google**: habilitar e configurar (ver `supabase/GOOGLE_LOGIN.md`).
 - **Authentication → URL Configuration → Redirect URLs**: adicionar
   - `http://localhost:8777/*` (dev)
   - `https://<seu-usuario>.github.io/*` (GitHub Pages)
@@ -59,7 +59,7 @@ pessoal. Para volume maior, configurar SMTP próprio.
 ## Segurança
 
 Com o RLS em `authenticated`, a chave publishable no front-end sozinha não dá
-acesso aos dados — é preciso uma sessão válida (magic link). Como é app de
+acesso aos dados — é preciso uma sessão válida (login Google). Como é app de
 usuário único, qualquer usuário logado tem acesso total; se um dia virar
 multiusuário, adicionar `user_id` nas tabelas e trocar as policies por
 `auth.uid()`.
