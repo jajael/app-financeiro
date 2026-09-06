@@ -4,7 +4,7 @@
  */
 
 // API
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwAnB6H8LLXrSwYN5vOV-_XGXKQAGn5lHlP4b8k2D4kLwKQFkSL7Xuqg_Mx40MXVMCA4g/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxl93sA4_Mr-N3L9MBH06p479jLRgS7zXumxnYejjII0hQkNiTF9oslUqAxChUCqXN6/exec';
 
 // Categorias padrão (fallback)
 const CATEGORIAS_PADRAO = {
