@@ -5,6 +5,40 @@
  * "linha" nas funções abaixo = coluna id (bigint) da tabela.
  */
 
+// Conjunto padrão criado para cada novo usuário (inclui visitantes)
+const MENUS_PADRAO = [
+    ['Categoria', ['Salário', 'Freelance', 'Investimento', 'Bônus', 'Devolução',
+        'Alimentação', 'Alimentação app', 'Assinatura', 'Casa', 'Compras',
+        'Compras online', 'Lazer', 'Mercado', 'Saúde', 'Serviços',
+        'Transporte app', 'Transporte público', 'Outro']],
+    ['Método', ['Crédito', 'Dinheiro', 'PIX/Débito']],
+    ['Recorrência', ['Pontual', 'Mensal', 'Parcelada', 'Último dia útil do mês']]
+];
+
+/**
+ * Se o usuário atual ainda não tem nenhum item de menu, cria o conjunto padrão.
+ * Chamado no primeiro carregamento (novo usuário ou visitante).
+ */
+async function semearMenusPadraoSeVazio() {
+    try {
+        const { count, error } = await sb
+            .from('menu_itens')
+            .select('id', { count: 'exact', head: true });
+        if (error) throw error;
+        if (count && count > 0) return false;
+
+        const linhas = [];
+        MENUS_PADRAO.forEach(([tipo, nomes]) => nomes.forEach(nome => linhas.push({ tipo, nome })));
+        const { error: insErr } = await sb.from('menu_itens').insert(linhas);
+        if (insErr) throw insErr;
+        console.log('🌱 Menus padrão criados para o usuário');
+        return true;
+    } catch (error) {
+        console.error('Erro ao semear menus padrão:', error);
+        return false;
+    }
+}
+
 function mapearItemMenu(row) {
     return {
         linha: row.id,

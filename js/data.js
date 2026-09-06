@@ -109,7 +109,11 @@ function carregarDadosSimulados() {
 async function carregarMenus() {
     try {
         console.log('📑 Carregando menus...');
-        
+
+        if (typeof semearMenusPadraoSeVazio === 'function') {
+            await semearMenusPadraoSeVazio();
+        }
+
         const menus = await carregarMenusAPI();
         
         estadoApp.menus.categorias = menus.categorias || [];

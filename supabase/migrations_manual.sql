@@ -21,3 +21,40 @@ drop policy if exists "anon full access menu_itens" on public.menu_itens;
 drop policy if exists "auth full access menu_itens" on public.menu_itens;
 create policy "auth full access menu_itens" on public.menu_itens
   for all to authenticated using (true) with check (true);
+
+-- ============================================================
+-- 3) Multiusuário + "Testar sem cadastro" (visitante anônimo)
+--    (o essencial já foi aplicado via migração; isto cobre reinstalação
+--     e a limpeza dos itens de menu órfãos do seed global antigo)
+-- ============================================================
+alter table public.transacoes add column if not exists user_id uuid;
+alter table public.cartoes    add column if not exists user_id uuid;
+alter table public.menu_itens add column if not exists user_id uuid;
+alter table public.transacoes alter column user_id set default auth.uid();
+alter table public.cartoes    alter column user_id set default auth.uid();
+alter table public.menu_itens alter column user_id set default auth.uid();
+
+drop index if exists public.menu_itens_tipo_nome_idx;
+create unique index if not exists menu_itens_user_tipo_nome_idx
+  on public.menu_itens (user_id, tipo, nome);
+
+drop policy if exists "auth full access transacoes" on public.transacoes;
+drop policy if exists "own transacoes" on public.transacoes;
+create policy "own transacoes" on public.transacoes for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+drop policy if exists "auth full access menu_itens" on public.menu_itens;
+drop policy if exists "own menu_itens" on public.menu_itens;
+create policy "own menu_itens" on public.menu_itens for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+drop policy if exists "auth full access cartoes" on public.cartoes;
+drop policy if exists "own cartoes" on public.cartoes;
+create policy "own cartoes" on public.cartoes for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- itens de menu do seed global antigo (sem dono) — invisíveis com o novo RLS
+delete from public.menu_itens where user_id is null;
+
+-- No painel: Authentication -> Providers -> "Anonymous sign-ins" -> Enable
+-- (necessário para o botão "Testar sem cadastro")

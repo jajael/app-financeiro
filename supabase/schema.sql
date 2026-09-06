@@ -24,6 +24,7 @@ create table if not exists public.transacoes (
   cartao_id         bigint,
   competencia       date not null default date_trunc('month', now())::date,
   status            text default 'Ativa',
+  user_id           uuid default auth.uid(),
   criado_em         timestamptz default now()
 );
 
@@ -39,6 +40,7 @@ create table if not exists public.cartoes (
   dia_vencimento    smallint not null check (dia_vencimento between 1 and 31),
   melhor_dia_compra smallint check (melhor_dia_compra between 1 and 31),
   status            text not null default 'Ativo' check (status in ('Ativo','Inativo')),
+  user_id           uuid default auth.uid(),
   criado_em         timestamptz default now()
 );
 
@@ -54,16 +56,17 @@ create table if not exists public.menu_itens (
   nome       text not null,
   descricao  text default '',
   status     text not null default 'Ativo' check (status in ('Ativo', 'Inativo')),
+  user_id    uuid default auth.uid(),
   criado_em  timestamptz default now()
 );
 
-create unique index if not exists menu_itens_tipo_nome_idx on public.menu_itens (tipo, nome);
+create unique index if not exists menu_itens_user_tipo_nome_idx on public.menu_itens (user_id, tipo, nome);
 
 -- ============================================================
--- Row Level Security
--- Acesso somente para usuários autenticados (Supabase Auth / magic link).
--- App de usuário único: qualquer usuário logado tem acesso total.
--- Para multiusuário, adicionar coluna user_id e trocar por auth.uid().
+-- Row Level Security — multiusuário
+-- Cada usuário (incluindo visitantes anônimos) só enxerga as próprias linhas.
+-- Login: Google OAuth ou "Testar sem cadastro" (signInAnonymously).
+-- Requer "Anonymous sign-ins" habilitado em Authentication.
 -- ============================================================
 alter table public.transacoes  enable row level security;
 alter table public.menu_itens  enable row level security;
@@ -71,46 +74,20 @@ alter table public.cartoes     enable row level security;
 
 drop policy if exists "anon full access transacoes" on public.transacoes;
 drop policy if exists "auth full access transacoes" on public.transacoes;
-create policy "auth full access transacoes" on public.transacoes
-  for all to authenticated using (true) with check (true);
+drop policy if exists "own transacoes" on public.transacoes;
+create policy "own transacoes" on public.transacoes for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 drop policy if exists "anon full access menu_itens" on public.menu_itens;
 drop policy if exists "auth full access menu_itens" on public.menu_itens;
-create policy "auth full access menu_itens" on public.menu_itens
-  for all to authenticated using (true) with check (true);
+drop policy if exists "own menu_itens" on public.menu_itens;
+create policy "own menu_itens" on public.menu_itens for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 drop policy if exists "auth full access cartoes" on public.cartoes;
-create policy "auth full access cartoes" on public.cartoes
-  for all to authenticated using (true) with check (true);
+drop policy if exists "own cartoes" on public.cartoes;
+create policy "own cartoes" on public.cartoes for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
--- ============================================================
--- Seed inicial dos menus (banco começa do zero)
--- ============================================================
-insert into public.menu_itens (tipo, nome) values
-  ('Categoria', 'Salário'),
-  ('Categoria', 'Freelance'),
-  ('Categoria', 'Investimento'),
-  ('Categoria', 'Bônus'),
-  ('Categoria', 'Devolução'),
-  ('Categoria', 'Alimentação'),
-  ('Categoria', 'Alimentação app'),
-  ('Categoria', 'Assinatura'),
-  ('Categoria', 'Bebida alcoólica'),
-  ('Categoria', 'Casa'),
-  ('Categoria', 'Compras'),
-  ('Categoria', 'Compras online'),
-  ('Categoria', 'Lazer'),
-  ('Categoria', 'Mercado'),
-  ('Categoria', 'Saúde'),
-  ('Categoria', 'Serviços'),
-  ('Categoria', 'Transporte app'),
-  ('Categoria', 'Transporte público'),
-  ('Categoria', 'Outro'),
-  ('Método', 'Crédito'),
-  ('Método', 'Dinheiro'),
-  ('Método', 'PIX/Débito'),
-  ('Recorrência', 'Pontual'),
-  ('Recorrência', 'Mensal'),
-  ('Recorrência', 'Parcelada'),
-  ('Recorrência', 'Último dia útil do mês')
-on conflict (tipo, nome) do nothing;
+-- Os menus padrão são criados pelo app no primeiro acesso de cada usuário
+-- (js/menus-api.js -> semearMenusPadraoSeVazio), então não há seed global aqui.
