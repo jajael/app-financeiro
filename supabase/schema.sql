@@ -40,21 +40,22 @@ create unique index if not exists menu_itens_tipo_nome_idx on public.menu_itens 
 
 -- ============================================================
 -- Row Level Security
--- Uso pessoal / sem login: liberado para a chave publishable (role anon).
--- ATENÇÃO: qualquer pessoa com a URL + chave anon (que fica visível no
--- front-end publicado) consegue ler e gravar. Para trancar, migrar para
--- Supabase Auth + policies por usuário (auth.uid()).
+-- Acesso somente para usuários autenticados (Supabase Auth / magic link).
+-- App de usuário único: qualquer usuário logado tem acesso total.
+-- Para multiusuário, adicionar coluna user_id e trocar por auth.uid().
 -- ============================================================
 alter table public.transacoes  enable row level security;
 alter table public.menu_itens  enable row level security;
 
 drop policy if exists "anon full access transacoes" on public.transacoes;
-create policy "anon full access transacoes" on public.transacoes
-  for all to anon using (true) with check (true);
+drop policy if exists "auth full access transacoes" on public.transacoes;
+create policy "auth full access transacoes" on public.transacoes
+  for all to authenticated using (true) with check (true);
 
 drop policy if exists "anon full access menu_itens" on public.menu_itens;
-create policy "anon full access menu_itens" on public.menu_itens
-  for all to anon using (true) with check (true);
+drop policy if exists "auth full access menu_itens" on public.menu_itens;
+create policy "auth full access menu_itens" on public.menu_itens
+  for all to authenticated using (true) with check (true);
 
 -- ============================================================
 -- Seed inicial dos menus (banco começa do zero)
