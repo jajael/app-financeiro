@@ -11,7 +11,7 @@ const CATEGORIAS_PADRAO_SEED = ['Salário', 'Freelance', 'Investimento', 'Bônus
     'Compras online', 'Lazer', 'Mercado', 'Saúde', 'Serviços',
     'Transporte app', 'Transporte público', 'Outro'];
 // Vocabulário fixo de tipos de recorrência (não vão para o banco)
-const RECORRENCIAS_KINDS = ['Pontual', 'Conta', 'Parcelada',
+const RECORRENCIAS_KINDS = ['Pontual', 'Mensal', 'Parcelada',
   'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês', 'Semanal'];
 
 /**

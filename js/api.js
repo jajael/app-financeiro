@@ -198,8 +198,8 @@ function montarRegistro(dados) {
         pagar_no_vencimento: !!dados.pagarVencimento
     };
 
-    // "Pagar no vencimento" (Conta/Parcelada): data do lançamento = data de vencimento
-    if (reg.pagar_no_vencimento && (tipoRecorrencia === 'Conta' || tipoRecorrencia === 'Parcelada')) {
+    // "Pagar no vencimento" (Mensal/Parcelada): data do lançamento = data de vencimento
+    if (reg.pagar_no_vencimento && (tipoRecorrencia === 'Mensal' || tipoRecorrencia === 'Parcelada')) {
         const venc = dataVencimento(reg.competencia, reg.dia_recorrencia);
         if (venc) reg.data = venc;
     }
@@ -225,7 +225,7 @@ function montarRegistro(dados) {
 }
 
 // Tipos que se repetem "rolando" um mês por vez (mês atual + 1 pendente)
-const RECORRENTES = ['Conta', 'Semanal', 'Último dia útil do mês',
+const RECORRENTES = ['Mensal', 'Semanal', 'Último dia útil do mês',
     'Primeiro dia útil do mês', 'Até o 5º dia útil do mês'];
 
 // Tipo cujo lançamento já nasce pendente e se auto-confirma no 5º dia útil
@@ -234,7 +234,7 @@ const AUTO_CONFIRMA = 'Até o 5º dia útil do mês';
 /**
  * Adiciona nova transação.
  * - Parcelada: uma linha por parcela.
- * - Conta / Semanal / dia útil: mês atual (confirmado) + próximo mês (pendente).
+ * - Mensal / Semanal / dia útil: mês atual (confirmado) + próximo mês (pendente).
  * - Pontual: uma linha.
  */
 async function adicionarTransacaoAPI(dados) {

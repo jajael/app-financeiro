@@ -40,11 +40,11 @@
             <!-- Dashboard Summary -->
             <section class="dashboard">
                 <div class="summary-card entradas">
-                    <h3>💰 Entradas</h3>
+                    <h3>💰 Receitas</h3>
                     <p class="amount" id="totalEntradas">R$ 0,00</p>
                 </div>
                 <div class="summary-card saidas">
-                    <h3>💸 Saídas</h3>
+                    <h3>💸 Despesas</h3>
                     <p class="amount" id="totalSaidas">R$ 0,00</p>
                 </div>
                 <div class="summary-card balanco">
@@ -55,8 +55,8 @@
 
             <!-- Tabs Navigation -->
             <section class="tabs">
-                <button class="tab-btn active" data-tab="entradas">📥 Entradas</button>
-                <button class="tab-btn" data-tab="saidas">📤 Saídas</button>
+                <button class="tab-btn active" data-tab="entradas">📥 Receitas</button>
+                <button class="tab-btn" data-tab="saidas">📤 Despesas</button>
                 <button class="tab-btn" data-tab="proximas">⏰ Próximas</button>
                 <button class="tab-btn" data-tab="adicionar">➕ Lançamento</button>
                 <button class="tab-btn" data-tab="menus">⚙️ Configuração</button>
@@ -65,7 +65,7 @@
             <!-- Tab: Entradas -->
             <section id="entradas" class="tab-content active">
                 <div class="transacoes-container">
-                    <h2>Entradas do Mês</h2>
+                    <h2>Receitas do Mês</h2>
                     <div id="entradasLista" class="transacoes-lista">
                         <!-- Entradas serão listadas aqui -->
                     </div>
@@ -75,7 +75,7 @@
             <!-- Tab: Saídas -->
             <section id="saidas" class="tab-content">
                 <div class="transacoes-container">
-                    <h2>Saídas do Mês</h2>
+                    <h2>Despesas do Mês</h2>
                     <div id="saidasLista" class="transacoes-lista">
                         <!-- Saídas serão listadas aqui -->
                     </div>
@@ -106,10 +106,10 @@
                         <h2>Adicionar Lançamento</h2>
                         <div class="tipo-selector">
                             <button type="button" class="tipo-btn active" data-tipo="entradas">
-                                📥 Entrada
+                                📥 Receita
                             </button>
                             <button type="button" class="tipo-btn" data-tipo="saidas">
-                                📤 Saída
+                                📤 Despesa
                             </button>
                         </div>
                     </div>
@@ -125,7 +125,7 @@
                         <div class="form-group" id="diaRecorrenciaGroup" hidden>
                             <label for="diaRecorrencia">Dia de vencimento:</label>
                             <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
-                            <label class="inline-check"><input type="checkbox" id="pagarVencimento"> pagar no vencimento</label>
+                            <label class="inline-check"><input type="checkbox" id="pagarVencimento"> <span id="pagarVencimentoLabel">pagar no vencimento</span></label>
                         </div>
                         <div class="form-group" id="parceleGroup" hidden>
                             <label for="parcelas">Parcelas:</label>

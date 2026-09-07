@@ -97,7 +97,7 @@ function carregarDadosSimulados() {
                 categoria: 'Casa',
                 descricao: 'Condomínio',
                 formaPagamento: 'À vista',
-                tipoRecorrencia: 'Conta',
+                tipoRecorrencia: 'Mensal',
                 proximaData: '2026-10-01',
                 status: 'Ativa'
             }
@@ -184,7 +184,7 @@ function preencherDropdownMetodos() {
 }
 
 // Ordem preferida de exibição dos tipos de recorrência
-const ORDEM_RECORRENCIA = ['Pontual', 'Conta', 'Parcelada',
+const ORDEM_RECORRENCIA = ['Pontual', 'Mensal', 'Parcelada',
     'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês', 'Semanal'];
 
 /**

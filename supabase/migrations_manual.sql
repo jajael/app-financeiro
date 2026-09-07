@@ -114,3 +114,9 @@ alter table public.transacoes
 -- 9) "Pagar no vencimento" (trava a data do lançamento no dia do vencimento)
 -- ============================================================
 alter table public.transacoes add column if not exists pagar_no_vencimento boolean not null default false;
+
+-- ============================================================
+-- 10) "Conta" volta a se chamar "Mensal"; rótulos receita/despesa são só de UI
+-- ============================================================
+update public.transacoes set tipo_recorrencia = 'Mensal' where tipo_recorrencia = 'Conta';
+update public.menu_itens  set nome = 'Mensal'            where tipo = 'Recorrência' and nome = 'Conta';

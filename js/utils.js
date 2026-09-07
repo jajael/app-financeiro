@@ -42,7 +42,10 @@ function validarCampo(valor) {
  * Valida um formulário de transação
  */
 function validarFormularioTransacao(dados) {
-    const campos = ['tipo', 'data', 'valor', 'metodo', 'categoria'];
+    // Receita (entradas) não tem método
+    const campos = dados.tipo === 'saidas'
+        ? ['tipo', 'data', 'valor', 'metodo', 'categoria']
+        : ['tipo', 'data', 'valor', 'categoria'];
 
     for (let campo of campos) {
         if (!validarCampo(dados[campo])) {
@@ -69,7 +72,7 @@ function validarFormularioTransacao(dados) {
         return { valido: false, erro: 'Informe a competência (mm/aaaa)' };
     }
 
-    if ((dados.tipoRecorrencia === 'Conta' || dados.tipoRecorrencia === 'Parcelada')
+    if ((dados.tipoRecorrencia === 'Mensal' || dados.tipoRecorrencia === 'Parcelada')
         && !(parseInt(dados.diaRecorrencia, 10) >= 1 && parseInt(dados.diaRecorrencia, 10) <= 31)) {
         return { valido: false, erro: 'Informe o dia de vencimento (1-31)' };
     }
@@ -256,6 +259,7 @@ function limparFormulario() {
         if (typeof semanasMarcadas !== 'undefined') semanasMarcadas = new Set();
         if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
         if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
+        if (typeof atualizarLabelsPorTipo === 'function') atualizarLabelsPorTipo();
         if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();
     }
 }

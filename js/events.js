@@ -138,7 +138,9 @@ function mudarTipoTransacao(tipo) {
     // Limpar categoria e recarregar opções
     const categoriaField = document.querySelector(SELECTORS.categoria);
     if (categoriaField) categoriaField.value = '';
-    
+
+    if (typeof atualizarLabelsPorTipo === 'function') atualizarLabelsPorTipo();
+
     // Recarregar menus para o novo tipo
     carregarMenus();
 }
@@ -197,7 +199,7 @@ async function submeterFormulario(e) {
             cancelarEdicaoTransacao();
         } else {
             await adicionarTransacaoAPI(dados);
-            mostrarNotificacao('✓ Transação adicionada com sucesso!', 'sucesso');
+            mostrarNotificacao('✓ Lançamento adicionado!', 'sucesso');
             limparFormulario();
         }
 
