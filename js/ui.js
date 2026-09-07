@@ -35,7 +35,7 @@ function atualizarResumo() {
     if (totalSaidasEl) totalSaidasEl.textContent = resumo.saidas;
     if (balancoEl) {
         balancoEl.textContent = resumo.balanco;
-        
+
         // Aplicar tema baseado no saldo
         const card = balancoEl.closest('.summary-card');
         if (card) {
@@ -47,61 +47,87 @@ function atualizarResumo() {
             } else {
                 tema = TEMAS_BALANCO.neutro;
             }
-            
+
             card.style.backgroundColor = tema.bg;
             card.style.borderColor = tema.border;
             card.style.color = tema.color;
         }
     }
+
+    // Gasto diário = balanço / dias restantes do mês vigente
+    const gd = document.getElementById('gastoDiario');
+    const gdSub = document.getElementById('gastoDiarioSub');
+    if (gd) {
+        const dias = diasRestantesMesVigente();
+        const valor = (estadoApp.resumo.balanco || 0) / dias;
+        gd.textContent = formatarMoeda(valor);
+        if (gdSub) gdSub.textContent = `${dias} dia${dias === 1 ? '' : 's'} restante${dias === 1 ? '' : 's'}`;
+    }
 }
 
-/**
- * Atualiza lista de entradas
- */
+/** Dias restantes do mês corrente, incluindo hoje (mínimo 1) */
+function diasRestantesMesVigente() {
+    const hoje = new Date();
+    const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
+    return Math.max(1, ultimoDia - hoje.getDate() + 1);
+}
+
 function atualizarEntradasLista() {
-    const container = document.querySelector(SELECTORS.entradasLista);
-    if (!container) return;
-    
-    const transacoes = estadoApp.transacoes.entradas;
-    
-    if (transacoes.length === 0) {
-        container.innerHTML = '<p class="empty-message">Nenhuma receita neste mês</p>';
-        return;
-    }
-    
-    // Ordenar por data decrescente
-    const ordenadas = [...transacoes].sort((a, b) => new Date(b.data) - new Date(a.data));
-    
-    let html = '';
-    ordenadas.forEach(trans => {
-        html += gerarHTMLTransacao(trans, 'entrada');
-    });
-
-    container.innerHTML = html;
-    container.onclick = onListaTransacaoClick;
+    renderListaAgrupada(document.querySelector(SELECTORS.entradasLista),
+        estadoApp.transacoes.entradas, 'entrada', 'Nenhuma receita neste mês');
 }
 
-/**
- * Atualiza lista de saídas
- */
 function atualizarSaidasLista() {
-    const container = document.querySelector(SELECTORS.saidasLista);
+    renderListaAgrupada(document.querySelector(SELECTORS.saidasLista),
+        estadoApp.transacoes.saidas, 'saida', 'Nenhuma despesa neste mês');
+}
+
+const _porDataDesc = (a, b) => new Date(b.data) - new Date(a.data);
+
+/**
+ * Renderiza a lista de um tipo dividida em "Fixas" (com subgrupos por tipo de
+ * recorrência) e "Pontuais".
+ */
+function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
     if (!container) return;
-    
-    const transacoes = estadoApp.transacoes.saidas;
-    
-    if (transacoes.length === 0) {
-        container.innerHTML = '<p class="empty-message">Nenhuma despesa neste mês</p>';
+    if (!transacoes || !transacoes.length) {
+        container.innerHTML = `<p class="empty-message">${msgVazia}</p>`;
+        container.onclick = null;
         return;
     }
-    
-    // Ordenar por data decrescente
-    const ordenadas = [...transacoes].sort((a, b) => new Date(b.data) - new Date(a.data));
-    
-    let html = '';
-    ordenadas.forEach(trans => {
-        html += gerarHTMLTransacao(trans, 'saida');
+
+    const ehPontual = t => !t.tipoRecorrencia || t.tipoRecorrencia === 'Pontual';
+    const pontuais = transacoes.filter(ehPontual).sort(_porDataDesc);
+    const fixas = transacoes.filter(t => !ehPontual(t));
+    const ehDespesa = tipoUI === 'saida';
+
+    const soma = arr => arr.reduce((s, t) => s + (t.valor || 0), 0);
+
+    // Subgrupos de fixas por tipo de recorrência
+    const ordem = ORDEM_RECORRENCIA.filter(t => t !== 'Pontual');
+    const conhecidos = new Set(ordem);
+    let htmlFixas = '';
+    ordem.forEach(tipoRec => {
+        const grupo = fixas.filter(t => t.tipoRecorrencia === tipoRec).sort(_porDataDesc);
+        if (!grupo.length) return;
+        const rotulo = (tipoRec === 'Mensal' && ehDespesa) ? 'Conta' : tipoRec;
+        htmlFixas += `<div class="grupo-sub"><span>${rotulo}</span><span>${formatarMoeda(soma(grupo))}</span></div>`;
+        grupo.forEach(t => { htmlFixas += gerarHTMLTransacao(t, tipoUI); });
     });
+    const resto = fixas.filter(t => !conhecidos.has(t.tipoRecorrencia)).sort(_porDataDesc);
+    if (resto.length) {
+        htmlFixas += `<div class="grupo-sub"><span>Outros</span><span>${formatarMoeda(soma(resto))}</span></div>`;
+        resto.forEach(t => { htmlFixas += gerarHTMLTransacao(t, tipoUI); });
+    }
+
+    let html = '';
+    if (fixas.length) {
+        html += `<div class="grupo-cab"><span>Fixas</span><span>${formatarMoeda(soma(fixas))}</span></div>${htmlFixas}`;
+    }
+    if (pontuais.length) {
+        html += `<div class="grupo-cab"><span>Pontuais</span><span>${formatarMoeda(soma(pontuais))}</span></div>`;
+        pontuais.forEach(t => { html += gerarHTMLTransacao(t, tipoUI); });
+    }
 
     container.innerHTML = html;
     container.onclick = onListaTransacaoClick;
@@ -117,10 +143,11 @@ function gerarHTMLTransacao(trans, tipo) {
         ? `${formatarMoeda(trans.valor)} <span class="valor-meta">/ ${formatarMoeda(trans.valorMes)}</span>`
         : formatarMoeda(trans.valor);
     
-    // Badge de recorrência
+    // Badge de recorrência ("Mensal" aparece como "Conta" nas despesas)
     let badgeRecorrencia = '';
     if (trans.tipoRecorrencia && trans.tipoRecorrencia !== 'Pontual') {
-        badgeRecorrencia = `<span class="recorrencia-badge">${trans.tipoRecorrencia}</span>`;
+        const rot = (trans.tipoRecorrencia === 'Mensal' && tipo === 'saida') ? 'Conta' : trans.tipoRecorrencia;
+        badgeRecorrencia = `<span class="recorrencia-badge">${rot}</span>`;
     }
     
     // Informações adicionais

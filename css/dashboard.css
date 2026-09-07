@@ -156,3 +156,11 @@
         font-size: 1.2rem;
     }
 }
+
+/* Card "Gasto diário" */
+.summary-card .sub {
+  margin: .2rem 0 0;
+  font-size: .72rem;
+  opacity: .7;
+}
+.summary-card.gasto-diario { border-left: 4px solid #7C3AED; }
