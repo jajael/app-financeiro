@@ -112,7 +112,10 @@ function atualizarSaidasLista() {
  */
 function gerarHTMLTransacao(trans, tipo) {
     const dataFormatada = formatarData(trans.data);
-    const valorFormatado = formatarMoeda(trans.valor);
+    const ehSemanalChips = trans.tipoRecorrencia === 'Semanal' && Array.isArray(trans.semanas) && trans.semanas.length;
+    const valorFormatado = ehSemanalChips
+        ? `${formatarMoeda(trans.valor)} <span class="valor-meta">/ ${formatarMoeda(trans.valorMes)}</span>`
+        : formatarMoeda(trans.valor);
     
     // Badge de recorrência
     let badgeRecorrencia = '';
@@ -133,46 +136,82 @@ function gerarHTMLTransacao(trans, tipo) {
         meta += '</div>';
     }
     
+    const tagPendente = trans.pendente
+        ? '<span class="pendente-badge">a confirmar</span>' : '';
+
+    const ehParcela = !!trans.parcelasTotal;
+    const ehOriginal = ehParcela && trans.parcelaNum === 1;
+
+    // Ações
+    let acoes = '';
+    if (trans.pendente) {
+        acoes += `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>`;
+    }
+    if (ehParcela && !trans.quitada) {
+        const chk = trans.quitadoEm ? 'checked' : '';
+        acoes += `<label class="quitar-check" title="Quitar a partir deste mês"><input type="checkbox" data-act="quitar-parc" data-id="${trans.id}" ${chk}> quitar</label>`;
+    }
+    if (!ehParcela || ehOriginal) {
+        acoes += `<button class="btn-icon" data-act="editar-trans" data-id="${trans.id}" title="Editar">✏️</button>`;
+    }
+    if (!trans.quitada) {
+        acoes += `<button class="btn-icon btn-danger" data-act="excluir-trans" data-id="${trans.id}" title="Excluir">🗑️</button>`;
+    }
+
+    const classes = `despesa-item ${tipo}`
+        + (trans.pendente ? ' pendente' : '')
+        + (trans.quitada ? ' quitada' : '');
+
     return `
-        <div class="despesa-item ${tipo}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
+        <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             <div class="despesa-info">
                 <div class="despesa-categoria">
-                    ${trans.categoria} ${badgeRecorrencia}
+                    ${trans.categoria} ${badgeRecorrencia} ${tagPendente}
                 </div>
                 ${meta}
                 <div class="despesa-descricao">${trans.descricao || 'Sem descrição'} • ${dataFormatada}</div>
             </div>
             <div class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${valorFormatado}</div>
-            <div class="despesa-actions">
-                <button class="btn-icon" data-act="editar-trans" data-id="${trans.id}" title="Editar">✏️</button>
-                <button class="btn-icon btn-danger" data-act="excluir-trans" data-id="${trans.id}" title="Excluir">🗑️</button>
-            </div>
+            <div class="despesa-actions">${acoes}</div>
         </div>
     `;
 }
 
-/** Delegação de clique nas listas de transações (editar / excluir) */
+/** Delegação de clique nas listas de transações */
 function onListaTransacaoClick(e) {
-    const btn = e.target.closest('button[data-act]');
-    if (!btn) return;
-    const id = Number(btn.dataset.id);
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const id = Number(el.dataset.id);
     const trans = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
         .find(t => t.id === id);
     if (!trans) return;
 
-    if (btn.dataset.act === 'editar-trans') {
-        const tipo = estadoApp.transacoes.entradas.some(t => t.id === id) ? 'entradas' : 'saidas';
-        iniciarEdicaoTransacao(trans, tipo);
-    } else if (btn.dataset.act === 'excluir-trans') {
-        if (btn.dataset.armed) {
-            excluirTransacao(id);
-        } else {
-            const orig = btn.textContent;
-            btn.dataset.armed = '1';
-            btn.textContent = 'excluir?';
-            btn.classList.add('armed');
-            setTimeout(() => { delete btn.dataset.armed; btn.textContent = orig; btn.classList.remove('armed'); }, 3000);
+    switch (el.dataset.act) {
+        case 'confirmar-trans':
+            confirmarPendente(id);
+            break;
+        case 'quitar-parc':
+            quitarParcelamento(id, el.checked);
+            break;
+        case 'editar-trans': {
+            const tipo = estadoApp.transacoes.entradas.some(t => t.id === id) ? 'entradas' : 'saidas';
+            iniciarEdicaoTransacao(trans, tipo);
+            break;
         }
+        case 'excluir-trans':
+            // Parcela que não é a original: aviso, sem arme de 2 cliques
+            if (trans.parcelasTotal && trans.parcelaNum !== 1) {
+                excluirTransacao(id); // deixa a API lançar o detalhe e o catch mostra o diálogo
+            } else if (el.dataset.armed) {
+                excluirTransacao(id);
+            } else {
+                const orig = el.textContent;
+                el.dataset.armed = '1';
+                el.textContent = 'excluir?';
+                el.classList.add('armed');
+                setTimeout(() => { delete el.dataset.armed; el.textContent = orig; el.classList.remove('armed'); }, 3000);
+            }
+            break;
     }
 }
 
@@ -183,8 +222,54 @@ async function excluirTransacao(id) {
         await recarregarDados();
         atualizarUI();
     } catch (e) {
+        if (e && e.detalhe && e.detalhe.tipo === 'parcela-nao-original') {
+            const comp = e.detalhe.competenciaOriginal;
+            const label = competenciaParaBR(comp);
+            mostrarDialogo({
+                titulo: 'Só a 1ª parcela pode ser apagada',
+                texto: `A parcela original está em <strong>${label}</strong>. Apagar a original remove todas as parcelas.`,
+                acoes: [
+                    { label: `Ir para ${label}`, primario: true, onClick: () => irParaMes(comp) },
+                    { label: 'Fechar' }
+                ]
+            });
+            return;
+        }
         console.error(e);
         mostrarNotificacao('Erro ao excluir', 'erro');
+    }
+}
+
+async function quitarParcelamento(id, quitar) {
+    try {
+        await quitarParcelamentoAPI(id, quitar);
+        mostrarNotificacao(quitar ? '✓ Parcelamento quitado' : 'Quitação desfeita', 'sucesso');
+        await recarregarDados();
+        atualizarUI();
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacao('Erro ao quitar', 'erro');
+        await recarregarDados();
+        atualizarUI();
+    }
+}
+
+/** Navega a visão mensal para a competência informada (YYYY-MM-01) */
+function irParaMes(competencia) {
+    if (!competencia) return;
+    estadoApp.mesAtual = parseDataLocal(competencia);
+    recarregarDados().then(atualizarUI);
+}
+
+async function confirmarPendente(id) {
+    try {
+        await confirmarPendenteAPI(id);
+        mostrarNotificacao('✓ Mês confirmado', 'sucesso');
+        await recarregarDados();
+        atualizarUI();
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacao('Erro ao confirmar', 'erro');
     }
 }
 
@@ -202,7 +287,9 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
         b.classList.toggle('active', b.dataset.tipo === tipoTransacao));
 
     document.querySelector(SELECTORS.data).value = isoParaDataBR(trans.data);
-    document.querySelector(SELECTORS.valor).value = trans.valor;
+    document.querySelector(SELECTORS.valor).value =
+        (trans.tipoRecorrencia === 'Semanal' && trans.valorSessao != null) ? trans.valorSessao : trans.valor;
+    semanasMarcadas = new Set(trans.semanas || []);
     document.querySelector(SELECTORS.categoria).value = trans.categoria;
     document.querySelector(SELECTORS.descricao).value = trans.descricao || '';
     document.querySelector(SELECTORS.metodo).value = trans.metodo || '';
@@ -230,6 +317,7 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
 /** Sai do modo edição e limpa o formulário */
 function cancelarEdicaoTransacao() {
     estadoApp.editandoId = null;
+    semanasMarcadas = new Set();
     limparFormulario();
     const btn = document.querySelector('.btn-submit');
     if (btn) btn.textContent = 'Adicionar Transação';
@@ -373,6 +461,68 @@ function atualizarCamposRecorrencia() {
         const campo = document.getElementById('dataCalculada');
         if (campo) campo.value = iso ? isoParaDataBR(dataDaOcorrencia(iso, tipo)) : '';
     }
+
+    // Semanal: chips das ocorrências do dia da semana no mês
+    const grupoChips = document.getElementById('semanasChipsGroup');
+    const dowVal = document.getElementById('diaSemana')?.value ?? '';
+    const mostrarChips = ehSemanal && dowVal !== '';
+    if (grupoChips) grupoChips.hidden = !mostrarChips;
+    if (mostrarChips) renderSemanasChips();
+}
+
+// Conjunto de datas (YYYY-MM-DD) marcadas nas chips do formulário
+let semanasMarcadas = new Set();
+
+const DOW_ABREV = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+/** (Re)desenha as chips de semanas para o mês/dia-da-semana atuais do formulário */
+function renderSemanasChips() {
+    const box = document.getElementById('semanasChips');
+    if (!box) return;
+    const dow = parseInt(document.getElementById('diaSemana').value, 10);
+    const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+    if (!Number.isInteger(dow) || !iso) { box.innerHTML = ''; return; }
+
+    const d = parseDataLocal(iso);
+    const dias = ocorrenciasDoDiaNoMes(d.getFullYear(), d.getMonth(), dow);
+    const hoje = hojeISO();
+
+    // Reinicia (futuras marcadas) se o conjunto atual não pertence a este mês
+    const pertence = [...semanasMarcadas].some(x => dias.includes(x));
+    if (!pertence) semanasMarcadas = new Set(dias.filter(x => x > hoje));
+    // Mantém só as datas válidas deste mês
+    semanasMarcadas = new Set([...semanasMarcadas].filter(x => dias.includes(x)));
+
+    box.innerHTML = dias.map(dt => {
+        const marc = semanasMarcadas.has(dt);
+        const passada = dt <= hoje;
+        const dd = dt.slice(8, 10);
+        return `<button type="button" class="chip${marc ? ' on' : ''}${passada ? ' passada' : ''}" data-dt="${dt}">${DOW_ABREV[dow]} ${dd}</button>`;
+    }).join('');
+
+    box.onclick = e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        const dt = chip.dataset.dt;
+        if (semanasMarcadas.has(dt)) semanasMarcadas.delete(dt);
+        else semanasMarcadas.add(dt);
+        chip.classList.toggle('on');
+        atualizarResumoSemanas();
+    };
+
+    atualizarResumoSemanas();
+}
+
+/** Atualiza o "X / Y" do resumo semanal */
+function atualizarResumoSemanas() {
+    const el = document.getElementById('semanasResumo');
+    if (!el) return;
+    const vs = parseFloat(document.querySelector(SELECTORS.valor).value) || 0;
+    const hoje = hojeISO();
+    const marc = [...semanasMarcadas];
+    const x = marc.filter(dt => dt <= hoje).length * vs;
+    const y = marc.length * vs;
+    el.textContent = `${formatarMoeda(x)} / ${formatarMoeda(y)}  (${marc.length} sessões)`;
 }
 
 /**

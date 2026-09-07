@@ -12,7 +12,7 @@ create table if not exists public.transacoes (
   id                bigint generated always as identity primary key,
   tipo              text not null check (tipo in ('entradas', 'saidas')),
   data              date not null,
-  valor             numeric(12,2) not null check (valor > 0),
+  valor             numeric(12,2) not null check (valor >= 0),
   metodo            text,
   categoria         text not null,
   descricao         text default '',
@@ -20,14 +20,24 @@ create table if not exists public.transacoes (
   tipo_recorrencia  text default 'Pontual',
   dia_recorrencia   smallint,   -- dia de vencimento (Conta / Parcelada)
   dia_semana        smallint,   -- 0=Dom .. 6=Sáb (Semanal); null = sem dia fixo
+  valor_sessao      numeric(12,2), -- Semanal: valor por sessão
+  semanas           jsonb,       -- Semanal: datas marcadas do mês (["YYYY-MM-DD", ...])
   proxima_data      date,
   competencia       date not null default date_trunc('month', now())::date,
   status            text default 'Ativa',
+  grupo_id          uuid,        -- liga as ocorrências de uma recorrência / parcelamento
+  pendente          boolean not null default false,  -- ocorrência "mês seguinte" aguardando OK
+  parcela_num       smallint,    -- nº da parcela (1..N); só Parcelada
+  parcelas_total    smallint,    -- N
+  valor_total       numeric(12,2),
+  quitada           boolean not null default false,  -- parcela zerada por quitação
+  quitado_em        date,        -- competência em que o parcelamento foi quitado
   user_id           uuid default auth.uid(),
   criado_em         timestamptz default now()
 );
 
 create index if not exists transacoes_tipo_data_idx   on public.transacoes (tipo, data);
+create index if not exists transacoes_grupo_idx       on public.transacoes (grupo_id, competencia);
 create index if not exists transacoes_competencia_idx  on public.transacoes (tipo, competencia);
 create index if not exists transacoes_proxima_data_idx on public.transacoes (proxima_data);
 

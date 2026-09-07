@@ -372,3 +372,35 @@
   cursor: pointer;
   font-size: .95rem;
 }
+
+/* Chips de semanas (recorrência Semanal) */
+.hint-inline { font-weight: 400; color: #6B7280; font-size: .85em; }
+.semanas-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+.semanas-chips .chip {
+  border: 1px solid #D1D5DB;
+  background: #fff;
+  color: #374151;
+  border-radius: 999px;
+  padding: .3rem .8rem;
+  font-size: .85rem;
+  cursor: pointer;
+  user-select: none;
+}
+.semanas-chips .chip.on {
+  background: #4F46E5;
+  border-color: #4F46E5;
+  color: #fff;
+}
+.semanas-chips .chip.passada:not(.on) {
+  opacity: .5;
+  text-decoration: line-through;
+}
+.semanas-resumo {
+  margin-top: .5rem;
+  font-weight: 600;
+  color: #1F2937;
+}

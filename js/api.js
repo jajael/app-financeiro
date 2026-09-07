@@ -9,10 +9,25 @@
  * Converte uma linha do banco (snake_case) para o formato usado na UI (camelCase)
  */
 function mapearTransacao(row) {
+    let valor = parseFloat(row.valor) || 0;
+    let valorMes = row.valor_total != null ? parseFloat(row.valor_total) : valor;
+    const semanas = Array.isArray(row.semanas) ? row.semanas : null;
+    const valorSessao = row.valor_sessao != null ? parseFloat(row.valor_sessao) : null;
+
+    // Semanal: X (realizado até hoje) e Y (total do mês) recalculados na leitura
+    if (row.tipo_recorrencia === 'Semanal' && semanas && valorSessao != null) {
+        const hoje = hojeISO();
+        valor = semanas.filter(d => d <= hoje).length * valorSessao;   // X
+        valorMes = semanas.length * valorSessao;                        // Y
+    }
+
     return {
         id: row.id,
         data: row.data,
-        valor: parseFloat(row.valor) || 0,
+        valor,
+        valorMes,
+        valorSessao,
+        semanas,
         metodo: row.metodo || '',
         categoria: row.categoria || '',
         descricao: row.descricao || '',
@@ -22,6 +37,12 @@ function mapearTransacao(row) {
         status: row.status || 'Ativa',
         cartaoId: row.cartao_id || null,
         grupoId: row.grupo_id || null,
+        pendente: !!row.pendente,
+        parcelaNum: row.parcela_num || null,
+        parcelasTotal: row.parcelas_total || null,
+        valorTotal: row.valor_total != null ? parseFloat(row.valor_total) : null,
+        quitada: !!row.quitada,
+        quitadoEm: row.quitado_em || null,
         competencia: row.competencia || '',
         diaRecorrencia: row.dia_recorrencia || '',
         diaSemana: row.dia_semana ?? null
@@ -159,10 +180,10 @@ async function carregarResumo(tipo, mes, ano) {
  */
 function montarRegistro(dados) {
     const tipoRecorrencia = dados.tipoRecorrencia || 'Pontual';
-    return {
+    const reg = {
         tipo: dados.tipo,
         data: dados.data,
-        valor: parseFloat(dados.valor),
+        valor: parseFloat(dados.valor) || 0,
         metodo: dados.metodo || null,
         categoria: dados.categoria,
         descricao: dados.descricao || '',
@@ -174,18 +195,27 @@ function montarRegistro(dados) {
         competencia: dados.competencia || competenciaDe(dados.data),
         status: dados.status || 'Ativa'
     };
+
+    // Semanal com dia fixo: valor por sessão + semanas marcadas; valor gravado = X
+    const semanas = Array.isArray(dados.semanas) ? dados.semanas.slice().sort() : [];
+    if (tipoRecorrencia === 'Semanal' && semanas.length) {
+        const vs = parseFloat(dados.valorSessao ?? dados.valor) || 0;
+        const hoje = hojeISO();
+        reg.valor_sessao = vs;
+        reg.semanas = semanas;
+        reg.valor_total = semanas.length * vs;                        // Y
+        reg.valor = semanas.filter(d => d <= hoje).length * vs;       // X
+    }
+    return reg;
 }
 
-// Tipos que se repetem indefinidamente (materializados por um horizonte)
+// Tipos que se repetem "rolando" um mês por vez (mês atual + 1 pendente)
 const RECORRENTES = ['Conta', 'Semanal', 'Último dia útil do mês', 'Primeiro dia útil do mês'];
-const HORIZONTE_MESES = 12;   // Conta / dia útil
-const HORIZONTE_SEMANAS = 26; // Semanal
 
 /**
  * Adiciona nova transação.
  * - Parcelada: uma linha por parcela.
- * - Conta / Semanal / Último/Primeiro dia útil: gera as ocorrências dos
- *   próximos meses (cada uma na sua competência).
+ * - Conta / Semanal / dia útil: mês atual (confirmado) + próximo mês (pendente).
  * - Pontual: uma linha.
  */
 async function adicionarTransacaoAPI(dados) {
@@ -202,59 +232,131 @@ async function adicionarTransacaoAPI(dados) {
     return mapearTransacao(data);
 }
 
-/**
- * Gera as linhas de uma série recorrente (Conta / Semanal / dia útil),
- * a partir de `dados`, com `total` ocorrências, todas no mesmo grupo.
- */
-function gerarSerieRecorrente(dados, grupoId, total) {
-    const tipo = dados.tipoRecorrencia;
-    const base = montarRegistro(dados);
-    base.grupo_id = grupoId;
-
-    const datas = [base.data];
-    for (let i = 1; i < total; i++) {
-        const prox = calcularProximaData(datas[i - 1], tipo, dados.diaRecorrencia, dados.diaSemana);
-        if (!prox) break;
-        datas.push(prox);
+/** Próxima "data base" para o mês seguinte de uma série recorrente */
+function proximaDataRecorrente(row) {
+    if (row.tipo_recorrencia === 'Semanal' && row.dia_semana != null) {
+        return primeiraOcorrenciaProxMes(row.data, row.dia_semana);
     }
+    return calcularProximaData(row.data, row.tipo_recorrencia, row.dia_recorrencia, row.dia_semana);
+}
 
-    return datas.map((dt, i) => ({
-        ...base,
-        data: dt,
-        competencia: i === 0 ? base.competencia : competenciaDe(dt),
-        proxima_data: datas[i + 1] || null
-    }));
+/** Clona os campos de negócio de uma linha para gerar a próxima ocorrência (mês seguinte, pendente) */
+function ocorrenciaSeguinte(row, novaData) {
+    const base = {
+        tipo: row.tipo,
+        valor: row.valor,
+        metodo: row.metodo,
+        categoria: row.categoria,
+        descricao: row.descricao,
+        forma_pagamento: row.forma_pagamento,
+        tipo_recorrencia: row.tipo_recorrencia,
+        dia_recorrencia: row.dia_recorrencia,
+        dia_semana: row.dia_semana,
+        status: row.status,
+        grupo_id: row.grupo_id,
+        data: novaData,
+        competencia: competenciaDe(novaData),
+        proxima_data: null,
+        pendente: true
+    };
+
+    // Semanal: o mês seguinte vem com TODAS as suas ocorrências marcadas (nada passou ainda)
+    if (row.tipo_recorrencia === 'Semanal' && row.dia_semana != null && row.valor_sessao != null) {
+        const d = parseDataLocal(novaData);
+        const semanas = ocorrenciasDoDiaNoMes(d.getFullYear(), d.getMonth(), row.dia_semana);
+        const vs = parseFloat(row.valor_sessao);
+        base.valor_sessao = vs;
+        base.semanas = semanas;
+        base.valor_total = semanas.length * vs;
+        base.valor = 0;
+    }
+    return base;
 }
 
 async function adicionarRecorrenteAPI(dados) {
-    const total = dados.tipoRecorrencia === 'Semanal' ? HORIZONTE_SEMANAS : HORIZONTE_MESES;
-    const registros = gerarSerieRecorrente(dados, crypto.randomUUID(), total);
+    const grupoId = crypto.randomUUID();
+    const atual = { ...montarRegistro(dados), grupo_id: grupoId, pendente: false };
+
+    const proxData = proximaDataRecorrente(atual);
+    atual.proxima_data = proxData || null;
+
+    const registros = [atual];
+    if (proxData) registros.push(ocorrenciaSeguinte(atual, proxData));
 
     const { data, error } = await sb.from('transacoes').insert(registros).select();
     if (error) throw error;
     return (data || []).map(mapearTransacao);
 }
 
+/**
+ * Confirma uma ocorrência pendente: marca como confirmada e cria a próxima
+ * (mês seguinte) também pendente.
+ */
+async function confirmarPendenteAPI(id) {
+    const { data: row, error: e1 } = await sb
+        .from('transacoes').select('*').eq('id', id).single();
+    if (e1) throw e1;
+
+    const proxData = proximaDataRecorrente(row);
+
+    const { error: e2 } = await sb.from('transacoes')
+        .update({ pendente: false, proxima_data: proxData || null })
+        .eq('id', id);
+    if (e2) throw e2;
+
+    if (proxData && row.grupo_id) {
+        const { error: e3 } = await sb.from('transacoes').insert(ocorrenciaSeguinte(row, proxData));
+        if (e3) throw e3;
+    }
+    return { mensagem: 'Confirmado' };
+}
+
+/** Número formatado sem símbolo: inteiro sem casas, senão 2 casas com vírgula */
+function numParcela(x) {
+    return Number.isInteger(x) ? String(x) : x.toFixed(2).replace('.', ',');
+}
+
+/** Valor "original" da parcela `num` (1-based) de um total, com n parcelas */
+function valorParcelaOriginal(valorTotal, n, num) {
+    const cent = Math.round(valorTotal * 100);
+    const base = Math.floor(cent / n);
+    const resto = cent - base * n;
+    return (base + ((num - 1) < resto ? 1 : 0)) / 100;
+}
+
+/** Nome base da descrição de uma parcela (remove "k/n · ..." e sufixos) */
+function nomeBaseParcela(descricao) {
+    return String(descricao || '').replace(/\s+\d+\/\d+\s+·.*$/, '').trim();
+}
+
+/** Monta a descrição de uma parcela: "Nome k/n · vParc/vTotal" */
+function descParcela(nome, num, n, valorParc, valorTotal, sufixo) {
+    return `${nome} ${num}/${n} · ${numParcela(valorParc)}/${numParcela(valorTotal)}${sufixo ? ' · ' + sufixo : ''}`;
+}
+
 async function adicionarParceladoAPI(dados) {
     const n = Math.max(1, parseInt(dados.parcelas, 10) || 1);
     const grupoId = crypto.randomUUID();
-    const centavos = Math.round(parseFloat(dados.valor) * 100);
-    const baseParc = Math.floor(centavos / n);
-    const resto = centavos - baseParc * n;
+    const total = parseFloat(dados.valor);
+    const nome = dados.descricao || dados.categoria;
 
     const base = montarRegistro(dados);
     base.grupo_id = grupoId;
-    const registros = [];
+    base.parcelas_total = n;
+    base.valor_total = total;
 
+    const registros = [];
     for (let i = 0; i < n; i++) {
-        const valor = (baseParc + (i < resto ? 1 : 0)) / 100;
+        const num = i + 1;
+        const valor = valorParcelaOriginal(total, n, num);
         registros.push({
             ...base,
             valor,
+            parcela_num: num,
             data: i === 0 ? base.data : addMeses(base.data, i),
             competencia: i === 0 ? base.competencia : addMeses(base.competencia, i),
             proxima_data: i < n - 1 ? addMeses(base.competencia, i + 1) : null,
-            descricao: `${dados.descricao || dados.categoria} (${i + 1}/${n})`
+            descricao: descParcela(nome, num, n, valor, total)
         });
     }
 
@@ -263,88 +365,132 @@ async function adicionarParceladoAPI(dados) {
     return (data || []).map(mapearTransacao);
 }
 
-/** Nº de meses de `compA` (YYYY-MM-01) até `compB`, inclusivo */
-function mesesInclusive(compA, compB) {
-    const [ya, ma] = compA.slice(0, 7).split('-').map(Number);
-    const [yb, mb] = compB.slice(0, 7).split('-').map(Number);
-    return Math.max(1, (yb - ya) * 12 + (mb - ma) + 1);
+/**
+ * Quita (ou desfaz a quitação de) um parcelamento a partir da parcela `id`.
+ * quitar=true: a parcela do mês recebe o saldo restante; as seguintes zeram,
+ * ficam marcadas como quitadas e indicam o mês da quitação.
+ * quitar=false: restaura os valores originais de todas as parcelas do grupo.
+ */
+async function quitarParcelamentoAPI(id, quitar) {
+    const { data: alvo, error: e1 } = await sb.from('transacoes')
+        .select('grupo_id, competencia, parcela_num, parcelas_total, valor_total, tipo_recorrencia, descricao')
+        .eq('id', id).single();
+    if (e1) throw e1;
+    if (!alvo.grupo_id || alvo.tipo_recorrencia !== 'Parcelada') throw new Error('Não é um parcelamento');
+
+    const { data: rows, error: e2 } = await sb.from('transacoes')
+        .select('id, parcela_num, descricao')
+        .eq('grupo_id', alvo.grupo_id).order('parcela_num');
+    if (e2) throw e2;
+
+    const n = alvo.parcelas_total || rows.length;
+    const total = alvo.valor_total;
+    const nome = nomeBaseParcela(alvo.descricao) || 'Parcela';
+    const mm = competenciaParaBR(alvo.competencia);
+
+    let updates;
+    if (quitar) {
+        const k = alvo.parcela_num;
+        const saldo = rows.filter(r => r.parcela_num >= k)
+            .reduce((s, r) => s + valorParcelaOriginal(total, n, r.parcela_num), 0);
+        const saldoR = Math.round(saldo * 100) / 100;
+
+        updates = rows.filter(r => r.parcela_num >= k).map(r => r.parcela_num === k
+            ? { id: r.id, patch: { valor: saldoR, quitada: false, quitado_em: alvo.competencia,
+                  descricao: descParcela(nome, r.parcela_num, n, saldoR, total, 'quitado') } }
+            : { id: r.id, patch: { valor: 0, quitada: true, quitado_em: alvo.competencia,
+                  descricao: descParcela(nome, r.parcela_num, n, 0, total, `quitado em ${mm}`) } });
+    } else {
+        updates = rows.map(r => ({
+            id: r.id,
+            patch: {
+                valor: valorParcelaOriginal(total, n, r.parcela_num),
+                quitada: false, quitado_em: null,
+                descricao: descParcela(nome, r.parcela_num, n, valorParcelaOriginal(total, n, r.parcela_num), total)
+            }
+        }));
+    }
+
+    for (const u of updates) {
+        const { error } = await sb.from('transacoes').update(u.patch).eq('id', u.id);
+        if (error) throw error;
+    }
+    return { mensagem: quitar ? 'Parcelamento quitado' : 'Quitação desfeita' };
 }
 
+// Campos "de negócio" que uma edição propaga para a ocorrência pendente da série
+const CAMPOS_CASCATA = ['valor', 'metodo', 'categoria', 'descricao',
+    'dia_recorrencia', 'dia_semana', 'forma_pagamento'];
+
 /**
- * Edita uma transação. Se ela faz parte de uma série (grupo_id), a alteração
- * cascateia para essa ocorrência e todas as SEGUINTES (meses anteriores ficam
- * como estavam).
+ * Edita uma transação. Se faz parte de uma série (grupo_id), a alteração dos
+ * campos de negócio também é aplicada à ocorrência pendente (o "mês seguinte"),
+ * desde que ela seja posterior. Meses já confirmados não são tocados.
  */
 async function editarTransacaoAPI(dados) {
     if (!dados.id) throw new Error('ID é obrigatório para editar');
 
     const { data: alvo, error: e1 } = await sb
         .from('transacoes')
-        .select('grupo_id, competencia, tipo_recorrencia')
+        .select('grupo_id, competencia, pendente')
         .eq('id', dados.id)
         .single();
     if (e1) throw e1;
 
-    // Sem série -> update simples
-    if (!alvo.grupo_id) {
-        const registro = montarRegistro(dados);
-        delete registro.tipo;
-        const { data, error } = await sb.from('transacoes')
-            .update(registro).eq('id', dados.id).select().single();
-        if (error) throw error;
-        return mapearTransacao(data);
-    }
+    const registro = montarRegistro(dados);
+    delete registro.tipo;
 
-    // Parcelada: propaga campos para as parcelas seguintes, sem regerar
-    if (alvo.tipo_recorrencia === 'Parcelada') {
-        const registro = montarRegistro(dados);
-        ['tipo', 'data', 'competencia', 'proxima_data', 'grupo_id'].forEach(k => delete registro[k]);
-        const { error } = await sb.from('transacoes')
-            .update(registro)
-            .eq('grupo_id', alvo.grupo_id)
-            .gte('competencia', alvo.competencia);
-        if (error) throw error;
-        return { mensagem: 'Parcelas atualizadas' };
-    }
-
-    // Recorrente: apaga do mês editado pra frente e regera com os novos valores
-    const { data: irmaos } = await sb.from('transacoes')
-        .select('competencia').eq('grupo_id', alvo.grupo_id)
-        .order('competencia', { ascending: false }).limit(1);
-    const ultimaComp = irmaos?.[0]?.competencia || alvo.competencia;
-
-    const total = alvo.tipo_recorrencia === 'Semanal'
-        ? HORIZONTE_SEMANAS
-        : mesesInclusive(alvo.competencia, ultimaComp);
-
-    await sb.from('transacoes').delete()
-        .eq('grupo_id', alvo.grupo_id)
-        .gte('competencia', alvo.competencia);
-
-    const registros = gerarSerieRecorrente(dados, alvo.grupo_id, total);
-    const { data, error } = await sb.from('transacoes').insert(registros).select();
+    const { data, error } = await sb.from('transacoes')
+        .update(registro).eq('id', dados.id).select().single();
     if (error) throw error;
-    return (data || []).map(mapearTransacao);
+
+    // Propaga para o pendente da série (não para Semanal: cada mês tem seus chips)
+    if (alvo.grupo_id && !alvo.pendente && registro.tipo_recorrencia !== 'Semanal') {
+        const patch = {};
+        CAMPOS_CASCATA.forEach(k => { if (k in registro) patch[k] = registro[k]; });
+        await sb.from('transacoes')
+            .update(patch)
+            .eq('grupo_id', alvo.grupo_id)
+            .eq('pendente', true)
+            .gt('competencia', alvo.competencia);
+    }
+
+    return mapearTransacao(data);
 }
 
 /**
- * Deleta uma transação. Se faz parte de uma série, apaga essa ocorrência e
- * todas as SEGUINTES do mesmo grupo.
+ * Deleta uma transação. Se faz parte de uma série, também remove a ocorrência
+ * pendente (encerra a repetição). Meses já confirmados permanecem.
  */
 async function deletarTransacaoAPI(id) {
     const { data: alvo, error: e1 } = await sb
-        .from('transacoes').select('grupo_id, competencia').eq('id', id).single();
+        .from('transacoes')
+        .select('grupo_id, competencia, tipo_recorrencia, parcela_num')
+        .eq('id', id).single();
     if (e1) throw e1;
 
-    if (alvo.grupo_id) {
-        const { error } = await sb.from('transacoes').delete()
-            .eq('grupo_id', alvo.grupo_id)
-            .gte('competencia', alvo.competencia);
+    // Parcelamento: só a 1ª parcela pode ser apagada (e apaga todas)
+    if (alvo.tipo_recorrencia === 'Parcelada' && alvo.grupo_id) {
+        if ((alvo.parcela_num || 1) !== 1) {
+            const { data: orig } = await sb.from('transacoes').select('competencia')
+                .eq('grupo_id', alvo.grupo_id).eq('parcela_num', 1).single();
+            const err = new Error('Só a primeira parcela pode ser apagada.');
+            err.detalhe = { tipo: 'parcela-nao-original', competenciaOriginal: orig?.competencia || alvo.competencia };
+            throw err;
+        }
+        const { error } = await sb.from('transacoes').delete().eq('grupo_id', alvo.grupo_id);
         if (error) throw error;
-        return { mensagem: 'Série apagada a partir deste mês' };
+        return { mensagem: 'Parcelamento removido' };
     }
 
     const { error } = await sb.from('transacoes').delete().eq('id', id);
     if (error) throw error;
-    return { mensagem: 'Transação deletada' };
+
+    if (alvo.grupo_id) {
+        await sb.from('transacoes').delete()
+            .eq('grupo_id', alvo.grupo_id)
+            .eq('pendente', true)
+            .gte('competencia', alvo.competencia);
+    }
+    return { mensagem: 'Transação removida' };
 }

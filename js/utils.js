@@ -74,6 +74,12 @@ function validarFormularioTransacao(dados) {
         return { valido: false, erro: 'Informe o dia de vencimento (1-31)' };
     }
 
+    // Semanal com dia da semana fixo: precisa de ao menos 1 semana marcada
+    if (dados.tipoRecorrencia === 'Semanal' && dados.diaSemana !== '' && dados.diaSemana != null
+        && !(dados.semanas && dados.semanas.length >= 1)) {
+        return { valido: false, erro: 'Marque ao menos uma semana' };
+    }
+
     return { valido: true };
 }
 
@@ -114,6 +120,31 @@ function dataHojeBR() {
 /** Mantém um input só com dígitos, limitado a `max` caracteres */
 function soNumeros(input, max) {
     input.value = input.value.replace(/\D/g, '').slice(0, max);
+}
+
+/**
+ * Diálogo modal simples (sem alert/confirm nativos).
+ * @param {{titulo?:string, texto:string, acoes?:Array<{label:string, primario?:boolean, onClick?:Function}>}}
+ */
+function mostrarDialogo({ titulo, texto, acoes }) {
+    const ov = document.createElement('div');
+    ov.className = 'dialogo-overlay';
+    ov.innerHTML = `
+        <div class="dialogo">
+            ${titulo ? `<h3>${titulo}</h3>` : ''}
+            <p>${texto}</p>
+            <div class="dialogo-acoes"></div>
+        </div>`;
+    const box = ov.querySelector('.dialogo-acoes');
+    (acoes && acoes.length ? acoes : [{ label: 'OK' }]).forEach(a => {
+        const b = document.createElement('button');
+        b.textContent = a.label;
+        b.className = a.primario ? 'btn-add' : 'btn-cancelar';
+        b.onclick = () => { ov.remove(); if (a.onClick) a.onClick(); };
+        box.appendChild(b);
+    });
+    ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
 }
 
 /** Máscara mm/aaaa */
@@ -220,6 +251,7 @@ function limparFormulario() {
         form.reset();
         document.querySelector(SELECTORS.data).value = dataHojeBR();
         document.querySelector(SELECTORS.tipoTransacao).value = 'entradas';
+        if (typeof semanasMarcadas !== 'undefined') semanasMarcadas = new Set();
         if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
         if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
         if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();
@@ -243,6 +275,8 @@ function obterDadosFormulario() {
         tipoRecorrencia,
         diaRecorrencia,
         diaSemana: document.getElementById('diaSemana')?.value ?? '',
+        semanas: typeof semanasMarcadas !== 'undefined' ? [...semanasMarcadas].sort() : [],
+        valorSessao: parseFloat(document.querySelector(SELECTORS.valor).value) || 0,
         parcelas: parseInt(document.getElementById('parcelas')?.value, 10) || 1,
         competencia: parseCompetencia(document.getElementById('competencia')?.value || ''),
         descricao: document.querySelector(SELECTORS.descricao).value

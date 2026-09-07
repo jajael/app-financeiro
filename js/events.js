@@ -76,6 +76,14 @@ function configurarEventListeners() {
     // Dia da recorrência: só números, 2 dígitos
     const diaRec = document.getElementById('diaRecorrencia');
     if (diaRec) diaRec.addEventListener('input', () => soNumeros(diaRec, 2));
+
+    // Semanal: dia da semana -> refaz as chips; valor -> atualiza o resumo X/Y
+    const diaSem = document.getElementById('diaSemana');
+    if (diaSem) diaSem.addEventListener('change', atualizarCamposRecorrencia);
+    const valorInput = document.querySelector(SELECTORS.valor);
+    if (valorInput) valorInput.addEventListener('input', () => {
+        if (typeof atualizarResumoSemanas === 'function') atualizarResumoSemanas();
+    });
     
     // Campo de categoria para sugestões (opcional)
     const categoriaInput = document.querySelector(SELECTORS.categoria);
