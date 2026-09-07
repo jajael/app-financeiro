@@ -7,18 +7,24 @@
  * Formata um valor numérico como moeda brasileira
  */
 function formatarMoeda(valor) {
+    const n = Number(valor) || 0;
+    const semCentavos = Math.round(n * 100) % 100 === 0;
     return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
-        currency: 'BRL'
-    }).format(valor);
+        currency: 'BRL',
+        minimumFractionDigits: semCentavos ? 0 : 2,
+        maximumFractionDigits: 2
+    }).format(n);
 }
 
-/** Número BR completo, sem símbolo de moeda: "5.000,00", "-1.234,56" */
+/** Número BR sem símbolo de moeda. Omite os centavos quando forem ",00". */
 function formatarNumeroBR(valor) {
+    const n = Number(valor) || 0;
+    const semCentavos = Math.round(n * 100) % 100 === 0;
     return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: 2,
+        minimumFractionDigits: semCentavos ? 0 : 2,
         maximumFractionDigits: 2
-    }).format(Number(valor) || 0);
+    }).format(n);
 }
 
 /**

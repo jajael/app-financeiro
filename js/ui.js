@@ -131,17 +131,38 @@ function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
     container.onclick = onListaTransacaoClick;
 }
 
-/** Alterna o "box completo" de um lançamento (compacto <-> completo) */
+// Cache das "próximas" para permitir expandir/retrair esses boxes também
+let _proximasCtx = [];
+
+/** Contexto de um lançamento nas listas do mês (Receitas/Despesas) */
+function ctxNoMes(id) {
+    const e = estadoApp.transacoes.entradas.find(t => t.id === id);
+    if (e) return { trans: e, tipoUI: 'entrada', opts: {} };
+    const s = estadoApp.transacoes.saidas.find(t => t.id === id);
+    if (s) return { trans: s, tipoUI: 'saida', opts: {} };
+    return null;
+}
+
+/** Acha um lançamento por id em qualquer lista (mês ou "próximas") */
+function acharCtxTransacao(id) {
+    return ctxNoMes(id) || _proximasCtx.find(x => x.trans.id === id) || null;
+}
+
+/**
+ * Alterna o "box completo" (compacto <-> completo). Re-renderiza TODAS as
+ * cópias do item (o mesmo id pode estar em Receitas/Despesas e em Próximas),
+ * cada uma com o contexto certo.
+ */
 function alternarExpandirTransacao(id) {
     if (itensExpandidos.has(id)) itensExpandidos.delete(id);
     else itensExpandidos.add(id);
 
-    const trans = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
-        .find(t => t.id === id);
-    const el = document.querySelector(`.despesa-item[data-id="${id}"]`);
-    if (!trans || !el) return;
-    const tipoUI = estadoApp.transacoes.entradas.some(t => t.id === id) ? 'entrada' : 'saida';
-    el.outerHTML = gerarHTMLTransacao(trans, tipoUI);
+    document.querySelectorAll(`.despesa-item[data-id="${id}"]`).forEach(el => {
+        const ctx = el.closest('#proximasLista')
+            ? _proximasCtx.find(x => x.trans.id === id)
+            : ctxNoMes(id);
+        if (ctx) el.outerHTML = gerarHTMLTransacao(ctx.trans, ctx.tipoUI, ctx.opts);
+    });
 }
 
 /**
@@ -170,6 +191,7 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
 
     const tagPendente = trans.pendente
         ? '<span class="pendente-badge">a confirmar</span>' : '';
+    const quandoTag = opts.quando ? `<span class="quando-tag">${opts.quando}</span>` : '';
 
     const ehParcela = !!trans.parcelasTotal;
     const ehOriginal = ehParcela && trans.parcelaNum === 1;
@@ -180,20 +202,22 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
         : `<button class="btn-expandir" data-act="colapsar-trans" data-id="${trans.id}" title="Recolher">−</button>`;
     const lado = `<div class="despesa-lado">${toggle}<span class="despesa-dia">${diaFormatado}</span></div>`;
 
-    // Ações
+    // Ações (nas "próximas" fica só o botão de expandir)
     let acoes = '';
-    if (trans.pendente) {
-        acoes += `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>`;
-    }
-    if (ehParcela && !trans.quitada && !compacto) {
-        const chk = trans.quitadoEm ? 'checked' : '';
-        acoes += `<label class="quitar-check" title="Quitar a partir deste mês"><input type="checkbox" data-act="quitar-parc" data-id="${trans.id}" ${chk}> quitar</label>`;
-    }
-    if (!ehParcela || ehOriginal) {
-        acoes += `<button class="btn-icon" data-act="editar-trans" data-id="${trans.id}" title="Editar">✏️</button>`;
-    }
-    if (!trans.quitada) {
-        acoes += `<button class="btn-icon btn-danger" data-act="excluir-trans" data-id="${trans.id}" title="Excluir">🗑️</button>`;
+    if (!opts.semAcoes) {
+        if (trans.pendente) {
+            acoes += `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>`;
+        }
+        if (ehParcela && !trans.quitada && !compacto) {
+            const chk = trans.quitadoEm ? 'checked' : '';
+            acoes += `<label class="quitar-check" title="Quitar a partir deste mês"><input type="checkbox" data-act="quitar-parc" data-id="${trans.id}" ${chk}> quitar</label>`;
+        }
+        if (!ehParcela || ehOriginal) {
+            acoes += `<button class="btn-icon" data-act="editar-trans" data-id="${trans.id}" title="Editar">✏️</button>`;
+        }
+        if (!trans.quitada) {
+            acoes += `<button class="btn-icon btn-danger" data-act="excluir-trans" data-id="${trans.id}" title="Excluir">🗑️</button>`;
+        }
     }
 
     const classes = `despesa-item ${tipo}`
@@ -206,6 +230,7 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             ${lado}
             <span class="despesa-valor">${sinal} ${valorFormatado}</span>
+            ${quandoTag}
             ${tagPendente}
             <div class="despesa-actions">${acoes}</div>
         </div>`;
@@ -229,6 +254,7 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
             <div class="despesa-info">
                 <div class="despesa-topo">
                     <span class="despesa-valor">${sinal} ${valorFormatado}</span>
+                    ${quandoTag}
                     ${tagPendente}
                 </div>
                 ${metodoLinha}
@@ -248,24 +274,24 @@ function onListaTransacaoClick(e) {
         // (ignora cliques em controles como o checkbox "quitar")
         if (e.target.closest('label, input, button, a')) return;
         const item = e.target.closest('.despesa-item');
-        if (item && item.dataset.id) {
-            const idItem = Number(item.dataset.id);
-            const t = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
-                .find(x => x.id === idItem);
-            if (t) alternarExpandirTransacao(idItem);
+        if (item && item.dataset.id && acharCtxTransacao(Number(item.dataset.id))) {
+            alternarExpandirTransacao(Number(item.dataset.id));
         }
         return;
     }
     const id = Number(el.dataset.id);
+
+    // Expandir/retrair vale também para as "próximas" (não estão em estadoApp.transacoes)
+    if (el.dataset.act === 'expandir-trans' || el.dataset.act === 'colapsar-trans') {
+        alternarExpandirTransacao(id);
+        return;
+    }
+
     const trans = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
         .find(t => t.id === id);
     if (!trans) return;
 
     switch (el.dataset.act) {
-        case 'expandir-trans':
-        case 'colapsar-trans':
-            alternarExpandirTransacao(id);
-            break;
         case 'confirmar-trans':
             confirmarPendente(id);
             break;
@@ -494,34 +520,23 @@ async function atualizarProximasTransacoes() {
         
         if (proximas.length === 0) {
             container.innerHTML = '<p class="empty-message">Nenhuma transação programada nos próximos 30 dias</p>';
+            container.onclick = null;
+            _proximasCtx = [];
             return;
         }
-        
-        let html = '';
-        proximas.forEach(trans => {
-            const tipo = proximasEntradas.some(t => t.id === trans.id) ? 'entrada' : 'saida';
-            const dataFormatada = formatarData(trans.proximaData);
-            const diasAte = calcularDiasAte(trans.proximaData);
-            
-            html += `
-                <div class="despesa-item ${tipo}">
-                    <div class="despesa-info">
-                        <div class="despesa-categoria">
-                            ${trans.categoria}
-                            <span class="recorrencia-badge">${trans.tipoRecorrencia}</span>
-                        </div>
-                        <div class="despesa-meta">
-                            <span class="meta-item">📅 ${dataFormatada}</span>
-                            <span class="meta-item">⏱️ Em ${diasAte} dias</span>
-                        </div>
-                        <div class="despesa-descricao">${trans.descricao || 'Sem descrição'}</div>
-                    </div>
-                    <div class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${formatarMoeda(trans.valor)}</div>
-                </div>
-            `;
+
+        // Mesmo box de Receitas/Despesas: dia (da próxima data) + valor, expansível
+        _proximasCtx = proximas.map(trans => {
+            const tipoUI = proximasEntradas.some(t => t.id === trans.id) ? 'entrada' : 'saida';
+            const dias = calcularDiasAte(trans.proximaData);
+            const quando = dias <= 0 ? 'hoje' : `em ${dias}d`;
+            return { trans: { ...trans, data: trans.proximaData }, tipoUI, opts: { quando, semAcoes: true } };
         });
-        
-        container.innerHTML = html;
+
+        container.innerHTML = _proximasCtx
+            .map(c => gerarHTMLTransacao(c.trans, c.tipoUI, c.opts))
+            .join('');
+        container.onclick = onListaTransacaoClick;
     } catch (error) {
         console.error('Erro ao atualizar próximas transações:', error);
         container.innerHTML = '<p class="empty-message">Erro ao carregar próximas transações</p>';
