@@ -352,10 +352,23 @@
 }
 .inline-check input { width: auto; }
 
-.add-item-form.cartao-form {
+.add-item-form.metodo-form {
     flex-wrap: wrap;
+    align-items: flex-start;
 }
-.add-item-form.cartao-form input {
+.add-item-form.metodo-form #metodoDetalhes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    flex: 1 1 100%;
+}
+.add-item-form.metodo-form #metodoCartaoCampos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    flex: 1 1 100%;
+}
+.add-item-form.metodo-form input {
     flex: 1 1 8rem;
     min-width: 0;
 }

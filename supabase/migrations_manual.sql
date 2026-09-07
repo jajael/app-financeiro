@@ -58,3 +58,20 @@ delete from public.menu_itens where user_id is null;
 
 -- No painel: Authentication -> Providers -> "Anonymous sign-ins" -> Enable
 -- (necessário para o botão "Testar sem cadastro")
+
+-- ============================================================
+-- 4) Método de pagamento com detalhes (cartão vira método) + fim da tabela cartoes
+-- ============================================================
+alter table public.menu_itens
+  add column if not exists metodo_kind       text,
+  add column if not exists banco             text,
+  add column if not exists dia_fechamento    smallint,
+  add column if not exists dia_vencimento    smallint,
+  add column if not exists melhor_dia_compra smallint;
+
+alter table public.transacoes drop constraint if exists transacoes_cartao_id_fkey;
+alter table public.transacoes drop column if exists cartao_id;
+drop table if exists public.cartoes;
+
+-- remove "Crédito" que vinha no seed padrão de métodos (agora é criado por banco)
+delete from public.menu_itens where tipo = 'Método' and nome = 'Crédito' and metodo_kind is null;

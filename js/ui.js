@@ -274,18 +274,19 @@ function atualizarCamposRecorrencia() {
 }
 
 /**
- * Mostra/esconde o bloco de cartão (método = Crédito) e recalcula a competência
+ * Mostra/esconde o campo Competência (só para método do tipo Crédito)
+ * e recalcula seu valor.
  */
-function atualizarCampoCartao() {
-    const metodo = document.querySelector(SELECTORS.metodo).value;
-    const grupo = document.getElementById('cartaoGroup');
-    const ehCredito = metodo === 'Crédito';
+function atualizarCampoCredito() {
+    const metodo = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
+    const ehCredito = !!metodo && metodo.metodoKind === 'Crédito';
+    const grupo = document.getElementById('competenciaGroup');
     if (grupo) grupo.hidden = !ehCredito;
     if (ehCredito) recalcularCompetencia();
 }
 
 /**
- * Recalcula a competência a partir do cartão selecionado + data da compra.
+ * Recalcula a competência a partir do fechamento do método + data da compra.
  * Não sobrescreve se o usuário já editou o campo manualmente.
  */
 function recalcularCompetencia() {
@@ -293,12 +294,9 @@ function recalcularCompetencia() {
     if (!campo || campo.dataset.editado) return;
 
     const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
-    const cartaoId = Number(document.getElementById('cartaoSelect')?.value || 0);
-    const cartao = estadoApp.cartoes.find(c => c.id === cartaoId);
+    if (!iso) return;
 
-    if (iso && cartao) {
-        campo.value = competenciaParaBR(competenciaDe(iso, cartao.diaFechamento));
-    } else if (iso) {
-        campo.value = competenciaParaBR(competenciaDe(iso));
-    }
+    const metodo = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
+    const fech = metodo && metodo.metodoKind === 'Crédito' ? metodo.diaFechamento : null;
+    campo.value = competenciaParaBR(competenciaDe(iso, fech));
 }

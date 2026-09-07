@@ -124,7 +124,6 @@ async function initAuth() {
         if (event === 'SIGNED_IN') {
             esconderTelaLogin();
             if (typeof carregarMenus === 'function') carregarMenus();
-            if (typeof carregarCartoes === 'function') carregarCartoes();
             if (typeof window.recarregarApp === 'function') window.recarregarApp();
         } else if (event === 'SIGNED_OUT') {
             mostrarTelaLogin();

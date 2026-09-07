@@ -64,8 +64,9 @@ function validarFormularioTransacao(dados) {
         };
     }
 
-    if (dados.metodo === 'Crédito' && !dados.cartaoId) {
-        return { valido: false, erro: 'Selecione o cartão' };
+    const met = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
+    if (met && met.metodoKind === 'Crédito' && !dados.competencia) {
+        return { valido: false, erro: 'Informe a competência (mm/aaaa)' };
     }
 
     if ((dados.tipoRecorrencia === 'Mensal' || dados.tipoRecorrencia === 'Parcelada')
@@ -108,6 +109,11 @@ function isoParaDataBR(iso) {
 function dataHojeBR() {
     const d = new Date();
     return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+/** Mantém um input só com dígitos, limitado a `max` caracteres */
+function soNumeros(input, max) {
+    input.value = input.value.replace(/\D/g, '').slice(0, max);
 }
 
 /** Máscara mm/aaaa */
@@ -217,7 +223,7 @@ function limparFormulario() {
         const venc = document.getElementById('ehVencimento');
         if (venc) venc.checked = false;
         if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
-        if (typeof atualizarCampoCartao === 'function') atualizarCampoCartao();
+        if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();
     }
 }
 
@@ -226,22 +232,19 @@ function limparFormulario() {
  */
 function obterDadosFormulario() {
     const tipoRecorrencia = document.querySelector(SELECTORS.tipoRecorrencia).value;
-    const metodo = document.querySelector(SELECTORS.metodo).value;
-    const cartaoId = document.getElementById('cartaoSelect')?.value || '';
     const diaRecorrencia = document.getElementById('diaRecorrencia')?.value || '';
 
     return {
         tipo: document.querySelector(SELECTORS.tipoTransacao).value,
         data: parseDataBR(document.querySelector(SELECTORS.data).value),
         valor: parseFloat(document.querySelector(SELECTORS.valor).value),
-        metodo,
+        metodo: document.querySelector(SELECTORS.metodo).value,
         categoria: document.querySelector(SELECTORS.categoria).value,
         formaPagamento: tipoRecorrencia === 'Parcelada' ? 'Parcelada' : 'À vista',
         tipoRecorrencia,
         diaRecorrencia,
         ehVencimento: !!document.getElementById('ehVencimento')?.checked,
         parcelas: parseInt(document.getElementById('parcelas')?.value, 10) || 1,
-        cartaoId: metodo === 'Crédito' && cartaoId ? Number(cartaoId) : null,
         competencia: parseCompetencia(document.getElementById('competencia')?.value || ''),
         descricao: document.querySelector(SELECTORS.descricao).value
     };

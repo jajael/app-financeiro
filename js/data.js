@@ -166,12 +166,20 @@ function preencherDropdownMetodos() {
     const atual = sel.value;
     sel.innerHTML = '<option value="">Selecione...</option>';
     (estadoApp.menus.metodos || []).forEach(m => {
+        const label = rotuloMetodo(m);
         const o = document.createElement('option');
-        o.value = m;
-        o.textContent = m;
+        o.value = label;
+        o.textContent = label;
         sel.appendChild(o);
     });
     sel.value = atual;
+    if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();
+}
+
+/** Método selecionado no formulário (objeto do menu) ou null */
+function metodoSelecionado() {
+    const label = document.querySelector(SELECTORS.metodo)?.value;
+    return (estadoApp.menus.metodos || []).find(m => rotuloMetodo(m) === label) || null;
 }
 
 /**

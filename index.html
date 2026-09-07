@@ -59,7 +59,6 @@
                 <button class="tab-btn" data-tab="saidas">📤 Saídas</button>
                 <button class="tab-btn" data-tab="proximas">⏰ Próximas</button>
                 <button class="tab-btn" data-tab="adicionar">➕ Adicionar</button>
-                <button class="tab-btn" data-tab="cartoes">💳 Cartões</button>
                 <button class="tab-btn" data-tab="menus">⚙️ Menus</button>
             </section>
 
@@ -143,13 +142,7 @@
                         </div>
                     </div>
 
-                    <div class="form-row" id="cartaoGroup" hidden>
-                        <div class="form-group">
-                            <label for="cartaoSelect">Cartão:</label>
-                            <select id="cartaoSelect">
-                                <option value="">Selecione o cartão...</option>
-                            </select>
-                        </div>
+                    <div class="form-row" id="competenciaGroup" hidden>
                         <div class="form-group">
                             <label for="competencia">Competência:</label>
                             <input type="text" id="competencia" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
@@ -188,13 +181,6 @@
                 </form>
             </section>
 
-            <!-- Tab: Cartões -->
-            <section id="cartoes" class="tab-content">
-                <div id="cartoesContainer" class="menus-container">
-                    <p class="loading">Carregando cartões...</p>
-                </div>
-            </section>
-
             <!-- Tab: Gerenciar Menus -->
             <section id="menus" class="tab-content">
                 <div id="menusContainer" class="menus-container">
@@ -222,8 +208,6 @@
     <script src="js/ui.js"></script>
     <script src="js/menus-api.js"></script>
     <script src="js/menus-ui.js"></script>
-    <script src="js/cartoes-api.js"></script>
-    <script src="js/cartoes-ui.js"></script>
     <script src="js/events.js"></script>
     <script src="js/main.js"></script>
 </body>

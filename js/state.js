@@ -24,12 +24,9 @@ let estadoApp = {
     // Menus dinâmicos
     menus: {
         categorias: [],
-        metodos: {}
+        metodos: []
     },
 
-    // Cartões de crédito
-    cartoes: [],
-    
     // Status de loading
     carregando: false,
     erro: null

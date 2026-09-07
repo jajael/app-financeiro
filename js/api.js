@@ -95,16 +95,18 @@ async function carregarMenusAPI() {
     try {
         const { data, error } = await sb
             .from('menu_itens')
-            .select('tipo, nome')
+            .select('*')
             .eq('status', 'Ativo')
             .order('nome', { ascending: true });
 
         if (error) throw error;
+        const itens = (data || []).map(mapearItemMenu);
 
-        const categorias = (data || []).filter(i => i.tipo === 'Categoria').map(i => i.nome);
-        const metodos = (data || []).filter(i => i.tipo === 'Método').map(i => i.nome);
-
-        return { categorias, metodos };
+        return {
+            categorias: itens.filter(i => i.tipo === 'Categoria').map(i => i.nome),
+            // métodos como objetos (o formulário precisa do tipo/fechamento p/ competência)
+            metodos: itens.filter(i => i.tipo === 'Método')
+        };
     } catch (error) {
         console.error('Erro ao carregar menus:', error);
         return { categorias: [], metodos: [] };
@@ -167,7 +169,6 @@ function montarRegistro(dados) {
         dia_recorrencia: parseInt(dados.diaRecorrencia, 10) || null,
         eh_vencimento: !!dados.ehVencimento,
         proxima_data: calcularProximaData(dados.data, tipoRecorrencia, dados.diaRecorrencia),
-        cartao_id: dados.cartaoId || null,
         competencia: dados.competencia || competenciaDe(dados.data),
         status: dados.status || 'Ativa'
     };

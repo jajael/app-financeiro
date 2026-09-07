@@ -6,14 +6,11 @@
  */
 
 // Conjunto padrão criado para cada novo usuário (inclui visitantes)
-const MENUS_PADRAO = [
-    ['Categoria', ['Salário', 'Freelance', 'Investimento', 'Bônus', 'Devolução',
-        'Alimentação', 'Alimentação app', 'Assinatura', 'Casa', 'Compras',
-        'Compras online', 'Lazer', 'Mercado', 'Saúde', 'Serviços',
-        'Transporte app', 'Transporte público', 'Outro']],
-    ['Método', ['Crédito', 'Dinheiro', 'PIX/Débito']],
-    ['Recorrência', ['Pontual', 'Mensal', 'Parcelada', 'Último dia útil do mês']]
-];
+const CATEGORIAS_PADRAO_SEED = ['Salário', 'Freelance', 'Investimento', 'Bônus', 'Devolução',
+    'Alimentação', 'Alimentação app', 'Assinatura', 'Casa', 'Compras',
+    'Compras online', 'Lazer', 'Mercado', 'Saúde', 'Serviços',
+    'Transporte app', 'Transporte público', 'Outro'];
+const RECORRENCIAS_PADRAO_SEED = ['Pontual', 'Mensal', 'Parcelada', 'Último dia útil do mês'];
 
 /**
  * Se o usuário atual ainda não tem nenhum item de menu, cria o conjunto padrão.
@@ -27,8 +24,12 @@ async function semearMenusPadraoSeVazio() {
         if (error) throw error;
         if (count && count > 0) return false;
 
-        const linhas = [];
-        MENUS_PADRAO.forEach(([tipo, nomes]) => nomes.forEach(nome => linhas.push({ tipo, nome })));
+        const linhas = [
+            ...CATEGORIAS_PADRAO_SEED.map(nome => ({ tipo: 'Categoria', nome })),
+            ...RECORRENCIAS_PADRAO_SEED.map(nome => ({ tipo: 'Recorrência', nome })),
+            { tipo: 'Método', nome: 'Dinheiro', metodo_kind: 'Dinheiro' },
+            { tipo: 'Método', nome: 'PIX/Débito', metodo_kind: 'PIX/Débito' }
+        ];
         const { error: insErr } = await sb.from('menu_itens').insert(linhas);
         if (insErr) throw insErr;
         console.log('🌱 Menus padrão criados para o usuário');
@@ -46,8 +47,19 @@ function mapearItemMenu(row) {
         tipo: row.tipo,
         nome: row.nome,
         descricao: row.descricao || '',
-        status: row.status || 'Ativo'
+        status: row.status || 'Ativo',
+        metodoKind: row.metodo_kind || null,
+        banco: row.banco || '',
+        diaFechamento: row.dia_fechamento || null,
+        diaVencimento: row.dia_vencimento || null,
+        melhorDiaCompra: row.melhor_dia_compra || null
     };
+}
+
+/** Rótulo mostrado no dropdown do formulário para um método */
+function rotuloMetodo(item) {
+    if (!item.metodoKind || item.metodoKind === 'Dinheiro') return item.nome;
+    return item.banco ? `${item.metodoKind} — ${item.banco}` : item.metodoKind;
 }
 
 /**
@@ -95,13 +107,17 @@ async function obterItensPorTipo(tipo) {
 }
 
 /**
- * Adiciona novo item ao menu
+ * Adiciona novo item ao menu.
+ * @param {string} tipo   'Categoria' | 'Método' | 'Recorrência'
+ * @param {string} nome
+ * @param {object} extra  campos opcionais: descricao, metodo_kind, banco,
+ *                        dia_fechamento, dia_vencimento, melhor_dia_compra
  */
-async function adicionarItemMenuAPI(tipo, nome, descricao = '') {
+async function adicionarItemMenuAPI(tipo, nome, extra = {}) {
     try {
         const { error } = await sb
             .from('menu_itens')
-            .insert({ tipo, nome, descricao });
+            .insert({ tipo, nome, ...extra });
 
         if (error) throw error;
         mostrarNotificacao(`${nome} adicionado com sucesso!`, 'sucesso');
@@ -115,15 +131,12 @@ async function adicionarItemMenuAPI(tipo, nome, descricao = '') {
 }
 
 /**
- * Edita um item existente
+ * Edita um item existente. `campos` = objeto com o que mudar
+ * (nome, descricao, status, banco, dia_fechamento, ...).
  */
-async function editarItemMenuAPI(linha, novoNome, novaDescricao = '', novoStatus = 'Ativo') {
+async function editarItemMenuAPI(linha, campos) {
     try {
-        const { error } = await sb
-            .from('menu_itens')
-            .update({ nome: novoNome, descricao: novaDescricao, status: novoStatus })
-            .eq('id', linha);
-
+        const { error } = await sb.from('menu_itens').update(campos).eq('id', linha);
         if (error) throw error;
         mostrarNotificacao('Item atualizado com sucesso!', 'sucesso');
         return true;

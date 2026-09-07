@@ -46,13 +46,9 @@ function configurarEventListeners() {
         tipoRecorrencia.addEventListener('change', atualizarCamposRecorrencia);
     }
 
-    // Método -> mostra bloco de cartão
+    // Método -> mostra campo de competência se for Crédito
     const metodo = document.querySelector(SELECTORS.metodo);
-    if (metodo) metodo.addEventListener('change', atualizarCampoCartao);
-
-    // Cartão selecionado -> recalcula competência
-    const cartaoSelect = document.getElementById('cartaoSelect');
-    if (cartaoSelect) cartaoSelect.addEventListener('change', recalcularCompetencia);
+    if (metodo) metodo.addEventListener('change', atualizarCampoCredito);
 
     // Campo Data: máscara dd/mm/aaaa + recalcular competência
     const dataInput = document.querySelector(SELECTORS.data);
@@ -155,9 +151,6 @@ function mudarAba(novaAba) {
     } else if (novaAba === 'menus') {
         // Carregar aba de gerenciamento de menus
         carregarAbaMenus();
-    } else if (novaAba === 'cartoes') {
-        // Carregar aba de cartões
-        carregarAbaCartoes();
     }
 }
 
