@@ -232,17 +232,28 @@
 }
 .item-edit {
   display: flex;
-  flex-wrap: wrap;
-  gap: .4rem;
+  flex-direction: column;
+  gap: .5rem;
   width: 100%;
-  align-items: center;
 }
 .item-edit input {
-  flex: 1 1 7rem;
-  min-width: 0;
+  width: 100%;
   padding: .4rem .6rem;
-  border: 1px solid #D1D5DB;
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
   font-size: .9rem;
 }
-.item-edit .btn-add { flex: 0 0 auto; padding: .4rem .8rem; }
+.item-edit-acoes { display: flex; gap: .4rem; }
+.item-edit-acoes .btn-add { flex: 1; padding: .4rem .8rem; }
+
+/* Coluna de recorrências: sem scroll interno, texto completo */
+.menu-list--livre {
+  max-height: none;
+  overflow: visible;
+}
+.item-descricao--full {
+  max-height: none;
+  overflow: visible;
+  display: block;
+  -webkit-line-clamp: unset;
+}
