@@ -29,15 +29,16 @@
 .tipo-selector {
     display: flex;
     gap: var(--spacing-sm);
-    background: var(--light);
+    background: var(--surface-3);
     padding: var(--spacing-sm);
     border-radius: var(--radius-sm);
 }
 
 .tipo-btn {
     padding: 0.6rem 1.2rem;
-    background: white;
-    border: 2px solid transparent;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 2px solid var(--border);
     border-radius: var(--radius-xs);
     font-weight: var(--font-weight-semibold);
     cursor: pointer;
@@ -47,15 +48,19 @@
     text-align: center;
 }
 
-.tipo-btn:hover {
-    background: var(--light);
-}
+/* Cores iguais às dos cards do dashboard */
+.tipo-btn[data-tipo="entradas"] { color: var(--receita-text); }
+.tipo-btn[data-tipo="saidas"]   { color: var(--despesa-text); }
 
-.tipo-btn.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-    box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+.tipo-btn[data-tipo="entradas"].active {
+    background: var(--receita-bg);
+    color: var(--receita-text);
+    border-color: var(--receita-border);
+}
+.tipo-btn[data-tipo="saidas"].active {
+    background: var(--despesa-bg);
+    color: var(--despesa-text);
+    border-color: var(--despesa-border);
 }
 
 /* Linhas do formulário */
