@@ -219,15 +219,39 @@ function metodoSelecionado() {
  * Calcula resumo do mês
  */
 function calcularResumoMes() {
-    const entradas = estadoApp.transacoes.entradas.reduce((acc, t) => acc + t.valor, 0);
-    const saidas = estadoApp.transacoes.saidas.reduce((acc, t) => acc + t.valor, 0);
-    
-    estadoApp.resumo = {
-        entradas: parseFloat(entradas.toFixed(2)),
-        saidas: parseFloat(saidas.toFixed(2)),
-        balanco: parseFloat((entradas - saidas).toFixed(2))
+    const hoje = new Date().toISOString().slice(0, 10);
+    const r2 = n => parseFloat(n.toFixed(2));
+
+    // Para cada transação: total (Semanal usa valorMes/Y) e "atual" (já realizado)
+    const somar = lista => {
+        let total = 0, atual = 0;
+        lista.forEach(t => {
+            const tot = (t.valorMes != null ? t.valorMes : t.valor) || 0;
+            let realizado;
+            if (t.tipoRecorrencia === 'Semanal' && t.valorMes != null) {
+                realizado = t.valor || 0;                 // X (sessões já ocorridas)
+            } else {
+                realizado = (!t.pendente && String(t.data).slice(0, 10) <= hoje) ? tot : 0;
+            }
+            total += tot;
+            atual += realizado;
+        });
+        return { total: r2(total), atual: r2(atual), pendente: r2(total - atual) };
     };
-    
+
+    const e = somar(estadoApp.transacoes.entradas);
+    const s = somar(estadoApp.transacoes.saidas);
+
+    estadoApp.resumo = {
+        entradas: e.total,
+        saidas: s.total,
+        balanco: r2(e.total - s.total),
+        entradasAtual: e.atual,
+        entradasAReceber: e.pendente,
+        saidasAtual: s.atual,
+        saidasAPagar: s.pendente
+    };
+
     console.log('📈 Resumo calculado:', estadoApp.resumo);
 }
 

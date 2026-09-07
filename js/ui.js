@@ -33,6 +33,13 @@ function atualizarResumo() {
     
     if (totalEntradasEl) totalEntradasEl.textContent = resumo.entradas;
     if (totalSaidasEl) totalSaidasEl.textContent = resumo.saidas;
+
+    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = formatarMoeda(v || 0); };
+    setTxt('entradasAtual', estadoApp.resumo.entradasAtual);
+    setTxt('entradasAReceber', estadoApp.resumo.entradasAReceber);
+    setTxt('saidasAtual', estadoApp.resumo.saidasAtual);
+    setTxt('saidasAPagar', estadoApp.resumo.saidasAPagar);
+
     if (balancoEl) {
         balancoEl.textContent = resumo.balanco;
 
