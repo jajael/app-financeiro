@@ -10,10 +10,9 @@
     margin-bottom: var(--spacing-xl);
 }
 
-/* Receitas e Despesas ocupam a linha inteira; Balanço + Gasto diário dividem */
+/* Grade 2x2: Receitas | Despesas ; Balanço | Gasto diário */
 .summary-card.entradas,
 .summary-card.saidas {
-    grid-column: 1 / -1;
     cursor: pointer;   /* abre a aba correspondente */
 }
 
@@ -34,17 +33,21 @@
 .card-linhas .linha b {
     order: 1;
     flex: 0 0 auto;
-    min-width: 5.25rem;
+    min-width: 3.5rem;
     text-align: right;
     font-weight: var(--font-weight-bold);
 }
 .card-linhas .linha i {
     order: 2;
-    flex: 0 0 auto;
-    padding-left: 0.5rem;
+    flex: 0 1 auto;
+    min-width: 0;
+    padding-left: 0.4rem;
     font-style: normal;
     opacity: 0.75;
     text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .card-linhas .linha.total {
     margin-top: 0.35rem;
