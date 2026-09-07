@@ -30,6 +30,7 @@ header.header {
 
 /* Barra de mês — largura inteira, entre o header e os cards */
 .month-bar {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -37,6 +38,15 @@ header.header {
     padding: var(--spacing-sm) var(--spacing-md);
     background: var(--surface);
     border-bottom: 1px solid var(--border);
+}
+/* Engrenagem "Configuração" fixada à direita da barra do mês */
+.month-bar .month-btn--config {
+    position: absolute;
+    right: var(--spacing-md);
+    top: 0;
+    bottom: 0;
+    margin: auto 0;
+    height: 2rem;
 }
 .month-bar .current-month {
     font-weight: var(--font-weight-bold);

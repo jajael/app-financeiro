@@ -45,17 +45,17 @@
         grid-template-columns: 1fr 1fr;
     }
 
-    /* Tabs: 3 linhas — Lançamento / Receitas·Despesas / Próximas·Configuração */
+    /* Tabs: Lançamento (linha inteira) + Receitas·Despesas·Próximas na mesma linha */
     .tabs {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: repeat(3, 1fr);
         gap: 0.25rem;
         overflow: visible;
         border-bottom: none;
     }
     .tabs .tab-btn {
-        padding: var(--spacing-sm);
-        font-size: var(--font-size-sm);
+        padding: 0.4rem 0.2rem;
+        font-size: 0.78rem;
         text-align: center;
         border: 1px solid var(--border);
         border-radius: var(--radius-sm);
@@ -68,7 +68,10 @@
     .tabs [data-tab="entradas"] { order: 1; }
     .tabs [data-tab="saidas"]   { order: 2; }
     .tabs [data-tab="proximas"] { order: 3; }
-    .tabs [data-tab="menus"]    { order: 4; }
+
+    /* Barra do mês: mais estreita p/ caber a engrenagem à direita */
+    .month-bar { gap: var(--spacing-sm); }
+    .month-bar .current-month { min-width: 8rem; }
 
     /* Formulário */
     .form-transacao {
