@@ -352,3 +352,11 @@
 .underline-on-hover:hover::after {
     transform: scaleX(1);
 }
+
+/* ============================================================
+ * Sem animações de entrada/posição — elas provocavam o
+ * aparecimento momentâneo de scrollbar ao renderizar conteúdo.
+ * ============================================================ */
+*, *::before, *::after {
+    animation: none !important;
+}

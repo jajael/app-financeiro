@@ -1,9 +1,21 @@
 /**
- * UI DE MENUS
+ * UI DE CONFIGURAÇÃO
  * Categorias, Métodos de pagamento (inclui cartões) e Tipos de recorrência.
  */
 
-/** Recarrega a aba de menus e, em seguida, os dropdowns do formulário */
+// Tipos de recorrência: fixos, não editáveis. Só descrição.
+const RECORRENCIAS_INFO = [
+  ['Pontual', 'Acontece uma única vez, sem repetição.'],
+  ['Conta', 'Repete todo mês no dia de vencimento informado, ajustado para o dia útil mais próximo.'],
+  ['Parcelada', 'Divide o valor em parcelas mensais — uma transação por mês, cada uma na sua competência.'],
+  ['Último dia útil do mês', 'Vence sempre no último dia útil de cada mês (data calculada automaticamente).'],
+  ['Primeiro dia útil do mês', 'Vence sempre no primeiro dia útil de cada mês (data calculada automaticamente).'],
+  ['Semanal', 'Repete a cada 7 dias. Pode fixar um dia da semana ou deixar sem dia fixo.']
+];
+
+let menusAtual = null; // cache dos itens carregados (para edição inline)
+
+/** Recarrega a aba de configuração e, em seguida, os dropdowns do formulário */
 async function recarregarMenus() {
   await carregarAbaMenus();
   if (typeof carregarMenus === 'function') await carregarMenus(); // atualiza form na hora
@@ -11,10 +23,11 @@ async function recarregarMenus() {
 
 async function carregarAbaMenus() {
   const menus = await carregarMenusCompleto();
+  menusAtual = menus;
 
   if (!menus) {
     document.querySelector(SELECTORS.menusContainer).innerHTML =
-      '<p class="empty-state">Erro ao carregar menus</p>';
+      '<p class="empty-state">Erro ao carregar configuração</p>';
     return;
   }
 
@@ -54,15 +67,16 @@ async function carregarAbaMenus() {
 
       <div class="menu-section">
         <h3>🔁 Tipos de recorrência</h3>
-        <div class="menu-list" id="recorrenciasList"></div>
-        <div class="add-item-form">
-          <select id="novaRecorrenciaKind">
-            <option value="">Adicionar tipo...</option>
-            ${RECORRENCIAS_KINDS
-              .filter(k => k !== 'Pontual' && !menus.recorrencias.some(r => r.nome === k))
-              .map(k => `<option value="${k}">${k}</option>`).join('')}
-          </select>
-          <button onclick="adicionarNovaRecorrencia()" class="btn-add">+ Adicionar</button>
+        <p class="menu-hint">Tipos fixos do sistema. Você escolhe um deles ao lançar uma transação.</p>
+        <div class="menu-list" id="recorrenciasList">
+          ${RECORRENCIAS_INFO.map(([nome, desc]) => `
+            <div class="menu-item ativo">
+              <div class="item-info">
+                <div class="item-nome">${nome}</div>
+                <div class="item-descricao">${desc}</div>
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>
 
@@ -73,7 +87,6 @@ async function carregarAbaMenus() {
 
   renderizarItemsMenu('Categoria', 'categoriasList', menus.categorias);
   renderizarItemsMenu('Método', 'metodosList', menus.metodos);
-  renderizarItemsMenu('Recorrência', 'recorrenciasList', menus.recorrencias);
 }
 
 /** Liga os campos condicionais do formulário de método */
@@ -86,7 +99,7 @@ function configurarFormMetodo() {
 
   kind.addEventListener('change', () => {
     const v = kind.value;
-    det.hidden = !v || v === 'Dinheiro';
+    det.hidden = !v;
     cartao.hidden = v !== 'Crédito';
   });
 
@@ -98,10 +111,13 @@ function configurarFormMetodo() {
   melhor.addEventListener('input', () => { melhor.dataset.editado = '1'; soNumeros(melhor, 2); });
 }
 
+/* ---------- Render ---------- */
+
 function renderizarItemsMenu(tipo, containerId, itens) {
   const container = document.getElementById(containerId);
   if (!itens || !itens.length) {
     container.innerHTML = `<p class="empty-text">Nada cadastrado</p>`;
+    container.onclick = null;
     return;
   }
 
@@ -112,7 +128,7 @@ function renderizarItemsMenu(tipo, containerId, itens) {
     let titulo = item.nome;
     let sub = '';
     if (tipo === 'Categoria') {
-      sub = item.descricao || '-';
+      sub = item.descricao || '';
     } else if (tipo === 'Método') {
       titulo = rotuloMetodo(item);
       if (item.metodoKind === 'Crédito') {
@@ -125,61 +141,152 @@ function renderizarItemsMenu(tipo, containerId, itens) {
       }
     }
 
-    // Itens fixos: Dinheiro (método) e Pontual (recorrência) não podem ser removidos
-    const fixo = (tipo === 'Método' && (item.metodoKind === 'Dinheiro' || item.nome === 'Dinheiro'))
-              || (tipo === 'Recorrência' && item.nome === 'Pontual');
-    const editavel = tipo === 'Categoria' || (tipo === 'Método' && item.metodoKind !== 'Dinheiro');
+    // Dinheiro é método fixo: sem ações
+    const fixo = tipo === 'Método' && (item.metodoKind === 'Dinheiro' || item.nome === 'Dinheiro');
+
+    const acoes = fixo ? '' : `
+      <div class="item-actions">
+        <button class="btn-icon" data-act="editar" data-tipo="${tipo}" data-id="${item.linha}" title="Editar">✏️</button>
+        <button class="btn-icon ${item.status === 'Ativo' ? 'btn-warning' : 'btn-success'}"
+                data-act="${item.status === 'Ativo' ? 'desativar' : 'ativar'}" data-id="${item.linha}"
+                title="${item.status === 'Ativo' ? 'Desativar' : 'Ativar'}">${item.status === 'Ativo' ? '⊘' : '↻'}</button>
+        <button class="btn-icon btn-danger" data-act="remover" data-id="${item.linha}" title="Remover">🗑️</button>
+      </div>`;
 
     return `
-      <div class="menu-item ${statusClass}">
+      <div class="menu-item ${statusClass}" data-id="${item.linha}" data-tipo="${tipo}">
         <div class="item-info">
           <div class="item-nome">${titulo}</div>
           ${sub ? `<div class="item-descricao">${sub}</div>` : ''}
         </div>
         <div class="item-status">${fixo ? 'fixo' : statusLabel}</div>
-        <div class="item-actions">
-          ${editavel ? `<button class="btn-icon" onclick="editarItemMenuUI(${item.linha}, '${tipo}')" title="Editar">✏️</button>` : ''}
-          ${fixo ? '' : (item.status === 'Ativo'
-            ? `<button class="btn-icon btn-warning" onclick="desativarItemMenuUI(${item.linha})" title="Desativar">⊘</button>`
-            : `<button class="btn-icon btn-success" onclick="ativarItemMenuUI(${item.linha})" title="Ativar">↻</button>`)}
-          ${fixo ? '' : `<button class="btn-icon btn-danger" onclick="removerItemMenuUI(${item.linha})" title="Remover">🗑️</button>`}
-        </div>
+        ${acoes}
       </div>
     `;
   }).join('');
+
+  container.onclick = onMenuListClick;
+}
+
+/* ---------- Ações (sem prompt/confirm nativos) ---------- */
+
+function onMenuListClick(e) {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id = Number(btn.dataset.id);
+  const tipo = btn.dataset.tipo;
+  const row = btn.closest('.menu-item');
+
+  if (act === 'ativar')    return acaoMenu(() => ativarItemMenuAPI(id));
+  if (act === 'desativar') return acaoMenu(() => desativarItemMenuAPI(id));
+  if (act === 'remover')   return confirmarRemocao(btn, id);
+  if (act === 'editar')    return abrirEdicaoInline(row, id, tipo);
+}
+
+async function acaoMenu(fn) {
+  if (await fn()) recarregarMenus();
+}
+
+/** Remoção em 2 cliques (sem confirm nativo) */
+function confirmarRemocao(btn, id) {
+  if (btn.dataset.armed) {
+    acaoMenu(() => removerItemMenuAPI(id));
+    return;
+  }
+  const original = btn.textContent;
+  btn.dataset.armed = '1';
+  btn.textContent = 'remover?';
+  btn.classList.add('armed');
+  setTimeout(() => {
+    delete btn.dataset.armed;
+    btn.textContent = original;
+    btn.classList.remove('armed');
+  }, 3000);
+}
+
+/** Edição inline: troca a linha por campos + Salvar/Cancelar */
+function abrirEdicaoInline(row, id, tipo) {
+  const lista = tipo === 'Categoria' ? menusAtual?.categorias : menusAtual?.metodos;
+  const item = (lista || []).find(i => i.linha === id);
+  if (!item) return;
+  const esc = s => String(s || '').replace(/"/g, '&quot;');
+
+  if (tipo === 'Categoria') {
+    row.innerHTML = `
+      <div class="item-edit">
+        <input type="text" class="edt-nome" value="${esc(item.nome)}" placeholder="Nome">
+        <input type="text" class="edt-desc" value="${esc(item.descricao)}" placeholder="Descrição">
+        <button class="btn-add edt-salvar">Salvar</button>
+        <button class="btn-icon edt-cancelar" title="Cancelar">✕</button>
+      </div>`;
+    row.querySelector('.edt-cancelar').onclick = recarregarMenus;
+    row.querySelector('.edt-salvar').onclick = async () => {
+      const nome = row.querySelector('.edt-nome').value.trim();
+      if (!nome) return mostrarNotificacao('Informe o nome', 'info');
+      if (await editarItemMenuAPI(id, { nome, descricao: row.querySelector('.edt-desc').value.trim() }))
+        recarregarMenus();
+    };
+    return;
+  }
+
+  // Método (PIX/Débito ou Crédito)
+  const ehCredito = item.metodoKind === 'Crédito';
+  row.innerHTML = `
+    <div class="item-edit">
+      <input type="text" class="edt-banco" value="${esc(item.banco)}" placeholder="Banco">
+      ${ehCredito ? `
+        <input type="text" class="edt-fech" inputmode="numeric" maxlength="2" value="${item.diaFechamento || ''}" placeholder="Fechamento">
+        <input type="text" class="edt-venc" inputmode="numeric" maxlength="2" value="${item.diaVencimento || ''}" placeholder="Vencimento">
+        <input type="text" class="edt-melhor" inputmode="numeric" maxlength="2" value="${item.melhorDiaCompra || ''}" placeholder="Melhor dia">
+      ` : ''}
+      <button class="btn-add edt-salvar">Salvar</button>
+      <button class="btn-icon edt-cancelar" title="Cancelar">✕</button>
+    </div>`;
+  row.querySelector('.edt-cancelar').onclick = recarregarMenus;
+  row.querySelectorAll('input[inputmode="numeric"]').forEach(inp =>
+    inp.addEventListener('input', () => soNumeros(inp, 2)));
+  row.querySelector('.edt-salvar').onclick = async () => {
+    const banco = row.querySelector('.edt-banco').value.trim();
+    if (!banco) return mostrarNotificacao('Informe o banco', 'info');
+    const campos = { banco, nome: `${item.metodoKind} — ${banco}` };
+    if (ehCredito) {
+      const fech = parseInt(row.querySelector('.edt-fech').value, 10);
+      const venc = parseInt(row.querySelector('.edt-venc').value, 10);
+      const melhorIn = parseInt(row.querySelector('.edt-melhor').value, 10);
+      if (!(fech >= 1 && fech <= 31)) return mostrarNotificacao('Fechamento inválido', 'erro');
+      if (!(venc >= 1 && venc <= 31)) return mostrarNotificacao('Vencimento inválido', 'erro');
+      campos.dia_fechamento = fech;
+      campos.dia_vencimento = venc;
+      campos.melhor_dia_compra = melhorIn || sugerirMelhorDiaCompra(fech) || null;
+    }
+    if (await editarItemMenuAPI(id, campos)) recarregarMenus();
+  };
 }
 
 /* ---------- Adicionar ---------- */
 
 async function adicionarNovaCategoria() {
-  const nome = document.getElementById('novaCategoriaInput').value.trim();
-  const descricao = document.getElementById('novaCategoriDescInput').value.trim();
+  const nomeEl = document.getElementById('novaCategoriaInput');
+  const descEl = document.getElementById('novaCategoriDescInput');
+  const nome = nomeEl.value.trim();
   if (!nome) return mostrarNotificacao('Digite o nome da categoria', 'info');
 
-  if (await adicionarItemMenuAPI('Categoria', nome, { descricao })) recarregarMenus();
-}
-
-async function adicionarNovaRecorrencia() {
-  const nome = document.getElementById('novaRecorrenciaKind').value;
-  if (!nome) return mostrarNotificacao('Escolha o tipo de recorrência', 'info');
-
-  if (await adicionarItemMenuAPI('Recorrência', nome)) recarregarMenus();
+  if (await adicionarItemMenuAPI('Categoria', nome, { descricao: descEl.value.trim() })) {
+    nomeEl.value = ''; descEl.value = '';
+    recarregarMenus();
+  }
 }
 
 async function adicionarNovoMetodo() {
   const kind = document.getElementById('novoMetodoKind').value;
   if (!kind) return mostrarNotificacao('Escolha o tipo de método', 'info');
 
-  if (kind === 'Dinheiro') {
-    if (await adicionarItemMenuAPI('Método', 'Dinheiro', { metodo_kind: 'Dinheiro' })) recarregarMenus();
-    return;
-  }
-
   const banco = document.getElementById('metodoBanco').value.trim();
   if (!banco) return mostrarNotificacao('Informe o banco', 'info');
 
   const extra = { metodo_kind: kind, banco };
-  let nome = `${kind} — ${banco}`;
+  const nome = `${kind} — ${banco}`;
 
   if (kind === 'Crédito') {
     const fech = parseInt(document.getElementById('metodoFech').value, 10);
@@ -194,59 +301,4 @@ async function adicionarNovoMetodo() {
   }
 
   if (await adicionarItemMenuAPI('Método', nome, extra)) recarregarMenus();
-}
-
-/* ---------- Editar / status / remover ---------- */
-
-async function editarItemMenuUI(linha, tipo) {
-  if (tipo === 'Método') return editarMetodoUI(linha);
-
-  const novoNome = prompt(`Editar ${tipo.toLowerCase()}:`, '');
-  if (novoNome === null || !novoNome.trim()) return;
-
-  const campos = { nome: novoNome.trim() };
-  if (tipo === 'Categoria') campos.descricao = prompt('Descrição (opcional):', '') || '';
-
-  if (await editarItemMenuAPI(linha, campos)) recarregarMenus();
-}
-
-async function editarMetodoUI(linha) {
-  const menus = await carregarMenusCompleto();
-  const item = menus && menus.metodos.find(m => m.linha === linha);
-  if (!item) return;
-
-  if (item.metodoKind === 'Dinheiro') {
-    return mostrarNotificacao('Dinheiro não tem detalhes para editar', 'info');
-  }
-
-  const banco = prompt('Banco:', item.banco || '');
-  if (banco === null) return;
-  const campos = { banco: banco.trim(), nome: `${item.metodoKind} — ${banco.trim()}` };
-
-  if (item.metodoKind === 'Crédito') {
-    const fech = parseInt(prompt('Dia de fechamento:', item.diaFechamento || ''), 10);
-    const venc = parseInt(prompt('Dia de vencimento:', item.diaVencimento || ''), 10);
-    const melhorIn = prompt('Melhor dia de compra (vazio = calcular):', item.melhorDiaCompra || '');
-    campos.dia_fechamento = fech;
-    campos.dia_vencimento = venc;
-    campos.melhor_dia_compra = (melhorIn && melhorIn.trim())
-      ? parseInt(melhorIn, 10)
-      : sugerirMelhorDiaCompra(fech) || null;
-  }
-
-  if (await editarItemMenuAPI(linha, campos)) recarregarMenus();
-}
-
-async function desativarItemMenuUI(linha) {
-  if (!confirm('Desativar este item?')) return;
-  if (await desativarItemMenuAPI(linha)) recarregarMenus();
-}
-
-async function ativarItemMenuUI(linha) {
-  if (await ativarItemMenuAPI(linha)) recarregarMenus();
-}
-
-async function removerItemMenuUI(linha) {
-  if (!confirm('Remover este item? Esta ação não pode ser desfeita.')) return;
-  if (await removerItemMenuAPI(linha)) recarregarMenus();
 }

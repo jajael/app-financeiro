@@ -183,26 +183,21 @@ const ORDEM_RECORRENCIA = ['Pontual', 'Conta', 'Parcelada',
     'Último dia útil do mês', 'Primeiro dia útil do mês', 'Semanal'];
 
 /**
- * Preenche o dropdown de recorrência a partir dos tipos ativos no Menus.
- * "Pontual" está sempre presente.
+ * Preenche o dropdown de recorrência. Tipos fixos do sistema (todos sempre).
  */
 function preencherDropdownRecorrencias() {
     const sel = document.querySelector(SELECTORS.tipoRecorrencia);
     if (!sel) return;
     const atual = sel.value;
 
-    const ativos = new Set(estadoApp.menus.recorrencias || []);
-    ativos.add('Pontual');
-    const lista = ORDEM_RECORRENCIA.filter(t => ativos.has(t));
-
     sel.innerHTML = '';
-    lista.forEach(t => {
+    ORDEM_RECORRENCIA.forEach(t => {
         const o = document.createElement('option');
         o.value = t;
         o.textContent = t === 'Pontual' ? 'Pontual (uma única vez)' : t;
         sel.appendChild(o);
     });
-    sel.value = lista.includes(atual) ? atual : 'Pontual';
+    sel.value = ORDEM_RECORRENCIA.includes(atual) ? atual : 'Pontual';
     if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
 }
 
