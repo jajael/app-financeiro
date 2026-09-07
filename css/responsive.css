@@ -32,9 +32,7 @@
     .header-info > * { flex: 0 0 auto; }
 
     /* Main */
-    main.main {
-        padding: var(--spacing-lg);
-    }
+    :root { --pad-main: var(--spacing-lg); }
 
     /* Dashboard: Balanço e Gasto diário continuam dividindo a linha */
     .dashboard {
@@ -157,9 +155,7 @@
     }
 
     /* Main */
-    main.main {
-        padding: var(--spacing-md);
-    }
+    :root { --pad-main: var(--spacing-md); }
 
     /* Dashboard cards */
     .summary-card {
@@ -342,8 +338,8 @@
         max-width: 1400px;
     }
 
-    main.main {
-        padding: var(--spacing-xl) 2.5rem;
+    :root {
+        --pad-main: 2.5rem;
     }
 
     .dashboard {
@@ -376,8 +372,8 @@
 
 /* ============ ORIENTAÇÃO ============ */
 @media (orientation: landscape) and (max-height: 600px) {
-    main.main {
-        padding: var(--spacing-md);
+    :root {
+        --pad-main: var(--spacing-md);
     }
 
     .dashboard {

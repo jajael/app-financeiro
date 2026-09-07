@@ -32,19 +32,21 @@
 }
 .card-linhas .linha b {
     order: 1;
-    flex: 0 0 auto;
-    min-width: 3.5rem;
+    flex: 0 0 4.5rem;      /* coluna fixa -> valores SEMPRE alinhados */
     text-align: right;
+    white-space: nowrap;
     font-weight: var(--font-weight-bold);
 }
 .card-linhas .linha i {
     order: 2;
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-width: 0;
     padding-left: 0.4rem;
     font-style: normal;
-    opacity: 0.75;
+    opacity: 0.7;
     text-align: left;
+    /* menor e encolhe conforme a largura da tela */
+    font-size: clamp(0.5rem, 2.4vw, 0.66rem);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
