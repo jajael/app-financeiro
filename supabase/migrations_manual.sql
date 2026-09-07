@@ -88,3 +88,4 @@ update public.menu_itens set nome = 'Conta' where tipo = 'Recorrência' and nome
 -- ============================================================
 alter table public.transacoes add column if not exists grupo_id uuid;
 create index if not exists transacoes_grupo_idx on public.transacoes (grupo_id, competencia);
+alter table public.transacoes add column if not exists pendente boolean not null default false;

@@ -23,11 +23,14 @@ create table if not exists public.transacoes (
   proxima_data      date,
   competencia       date not null default date_trunc('month', now())::date,
   status            text default 'Ativa',
+  grupo_id          uuid,        -- liga as ocorrências de uma recorrência / parcelamento
+  pendente          boolean not null default false,  -- ocorrência "mês seguinte" aguardando OK
   user_id           uuid default auth.uid(),
   criado_em         timestamptz default now()
 );
 
 create index if not exists transacoes_tipo_data_idx   on public.transacoes (tipo, data);
+create index if not exists transacoes_grupo_idx       on public.transacoes (grupo_id, competencia);
 create index if not exists transacoes_competencia_idx  on public.transacoes (tipo, competencia);
 create index if not exists transacoes_proxima_data_idx on public.transacoes (proxima_data);
 

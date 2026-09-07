@@ -22,6 +22,7 @@ function mapearTransacao(row) {
         status: row.status || 'Ativa',
         cartaoId: row.cartao_id || null,
         grupoId: row.grupo_id || null,
+        pendente: !!row.pendente,
         competencia: row.competencia || '',
         diaRecorrencia: row.dia_recorrencia || '',
         diaSemana: row.dia_semana ?? null
@@ -176,16 +177,13 @@ function montarRegistro(dados) {
     };
 }
 
-// Tipos que se repetem indefinidamente (materializados por um horizonte)
+// Tipos que se repetem "rolando" um mês por vez (mês atual + 1 pendente)
 const RECORRENTES = ['Conta', 'Semanal', 'Último dia útil do mês', 'Primeiro dia útil do mês'];
-const HORIZONTE_MESES = 12;   // Conta / dia útil
-const HORIZONTE_SEMANAS = 26; // Semanal
 
 /**
  * Adiciona nova transação.
  * - Parcelada: uma linha por parcela.
- * - Conta / Semanal / Último/Primeiro dia útil: gera as ocorrências dos
- *   próximos meses (cada uma na sua competência).
+ * - Conta / Semanal / dia útil: mês atual (confirmado) + próximo mês (pendente).
  * - Pontual: uma linha.
  */
 async function adicionarTransacaoAPI(dados) {
@@ -202,37 +200,64 @@ async function adicionarTransacaoAPI(dados) {
     return mapearTransacao(data);
 }
 
-/**
- * Gera as linhas de uma série recorrente (Conta / Semanal / dia útil),
- * a partir de `dados`, com `total` ocorrências, todas no mesmo grupo.
- */
-function gerarSerieRecorrente(dados, grupoId, total) {
-    const tipo = dados.tipoRecorrencia;
-    const base = montarRegistro(dados);
-    base.grupo_id = grupoId;
-
-    const datas = [base.data];
-    for (let i = 1; i < total; i++) {
-        const prox = calcularProximaData(datas[i - 1], tipo, dados.diaRecorrencia, dados.diaSemana);
-        if (!prox) break;
-        datas.push(prox);
-    }
-
-    return datas.map((dt, i) => ({
-        ...base,
-        data: dt,
-        competencia: i === 0 ? base.competencia : competenciaDe(dt),
-        proxima_data: datas[i + 1] || null
-    }));
+/** Clona os campos de negócio de uma linha para gerar a próxima ocorrência */
+function ocorrenciaSeguinte(row, novaData) {
+    return {
+        tipo: row.tipo,
+        valor: row.valor,
+        metodo: row.metodo,
+        categoria: row.categoria,
+        descricao: row.descricao,
+        forma_pagamento: row.forma_pagamento,
+        tipo_recorrencia: row.tipo_recorrencia,
+        dia_recorrencia: row.dia_recorrencia,
+        dia_semana: row.dia_semana,
+        status: row.status,
+        grupo_id: row.grupo_id,
+        data: novaData,
+        competencia: competenciaDe(novaData),
+        proxima_data: null,
+        pendente: true
+    };
 }
 
 async function adicionarRecorrenteAPI(dados) {
-    const total = dados.tipoRecorrencia === 'Semanal' ? HORIZONTE_SEMANAS : HORIZONTE_MESES;
-    const registros = gerarSerieRecorrente(dados, crypto.randomUUID(), total);
+    const grupoId = crypto.randomUUID();
+    const tipo = dados.tipoRecorrencia;
+    const atual = { ...montarRegistro(dados), grupo_id: grupoId, pendente: false };
+
+    const proxData = calcularProximaData(atual.data, tipo, dados.diaRecorrencia, dados.diaSemana);
+    atual.proxima_data = proxData || null;
+
+    const registros = [atual];
+    if (proxData) registros.push(ocorrenciaSeguinte(atual, proxData));
 
     const { data, error } = await sb.from('transacoes').insert(registros).select();
     if (error) throw error;
     return (data || []).map(mapearTransacao);
+}
+
+/**
+ * Confirma uma ocorrência pendente: marca como confirmada e cria a próxima
+ * (mês seguinte) também pendente.
+ */
+async function confirmarPendenteAPI(id) {
+    const { data: row, error: e1 } = await sb
+        .from('transacoes').select('*').eq('id', id).single();
+    if (e1) throw e1;
+
+    const proxData = calcularProximaData(row.data, row.tipo_recorrencia, row.dia_recorrencia, row.dia_semana);
+
+    const { error: e2 } = await sb.from('transacoes')
+        .update({ pendente: false, proxima_data: proxData || null })
+        .eq('id', id);
+    if (e2) throw e2;
+
+    if (proxData && row.grupo_id) {
+        const { error: e3 } = await sb.from('transacoes').insert(ocorrenciaSeguinte(row, proxData));
+        if (e3) throw e3;
+    }
+    return { mensagem: 'Confirmado' };
 }
 
 async function adicionarParceladoAPI(dados) {
@@ -263,88 +288,63 @@ async function adicionarParceladoAPI(dados) {
     return (data || []).map(mapearTransacao);
 }
 
-/** Nº de meses de `compA` (YYYY-MM-01) até `compB`, inclusivo */
-function mesesInclusive(compA, compB) {
-    const [ya, ma] = compA.slice(0, 7).split('-').map(Number);
-    const [yb, mb] = compB.slice(0, 7).split('-').map(Number);
-    return Math.max(1, (yb - ya) * 12 + (mb - ma) + 1);
-}
+// Campos "de negócio" que uma edição propaga para a ocorrência pendente da série
+const CAMPOS_CASCATA = ['valor', 'metodo', 'categoria', 'descricao',
+    'dia_recorrencia', 'dia_semana', 'forma_pagamento'];
 
 /**
- * Edita uma transação. Se ela faz parte de uma série (grupo_id), a alteração
- * cascateia para essa ocorrência e todas as SEGUINTES (meses anteriores ficam
- * como estavam).
+ * Edita uma transação. Se faz parte de uma série (grupo_id), a alteração dos
+ * campos de negócio também é aplicada à ocorrência pendente (o "mês seguinte"),
+ * desde que ela seja posterior. Meses já confirmados não são tocados.
  */
 async function editarTransacaoAPI(dados) {
     if (!dados.id) throw new Error('ID é obrigatório para editar');
 
     const { data: alvo, error: e1 } = await sb
         .from('transacoes')
-        .select('grupo_id, competencia, tipo_recorrencia')
+        .select('grupo_id, competencia, pendente')
         .eq('id', dados.id)
         .single();
     if (e1) throw e1;
 
-    // Sem série -> update simples
-    if (!alvo.grupo_id) {
-        const registro = montarRegistro(dados);
-        delete registro.tipo;
-        const { data, error } = await sb.from('transacoes')
-            .update(registro).eq('id', dados.id).select().single();
-        if (error) throw error;
-        return mapearTransacao(data);
-    }
+    const registro = montarRegistro(dados);
+    delete registro.tipo;
 
-    // Parcelada: propaga campos para as parcelas seguintes, sem regerar
-    if (alvo.tipo_recorrencia === 'Parcelada') {
-        const registro = montarRegistro(dados);
-        ['tipo', 'data', 'competencia', 'proxima_data', 'grupo_id'].forEach(k => delete registro[k]);
-        const { error } = await sb.from('transacoes')
-            .update(registro)
-            .eq('grupo_id', alvo.grupo_id)
-            .gte('competencia', alvo.competencia);
-        if (error) throw error;
-        return { mensagem: 'Parcelas atualizadas' };
-    }
-
-    // Recorrente: apaga do mês editado pra frente e regera com os novos valores
-    const { data: irmaos } = await sb.from('transacoes')
-        .select('competencia').eq('grupo_id', alvo.grupo_id)
-        .order('competencia', { ascending: false }).limit(1);
-    const ultimaComp = irmaos?.[0]?.competencia || alvo.competencia;
-
-    const total = alvo.tipo_recorrencia === 'Semanal'
-        ? HORIZONTE_SEMANAS
-        : mesesInclusive(alvo.competencia, ultimaComp);
-
-    await sb.from('transacoes').delete()
-        .eq('grupo_id', alvo.grupo_id)
-        .gte('competencia', alvo.competencia);
-
-    const registros = gerarSerieRecorrente(dados, alvo.grupo_id, total);
-    const { data, error } = await sb.from('transacoes').insert(registros).select();
+    const { data, error } = await sb.from('transacoes')
+        .update(registro).eq('id', dados.id).select().single();
     if (error) throw error;
-    return (data || []).map(mapearTransacao);
+
+    // Propaga para o pendente da série (se houver e for posterior)
+    if (alvo.grupo_id && !alvo.pendente) {
+        const patch = {};
+        CAMPOS_CASCATA.forEach(k => { if (k in registro) patch[k] = registro[k]; });
+        await sb.from('transacoes')
+            .update(patch)
+            .eq('grupo_id', alvo.grupo_id)
+            .eq('pendente', true)
+            .gt('competencia', alvo.competencia);
+    }
+
+    return mapearTransacao(data);
 }
 
 /**
- * Deleta uma transação. Se faz parte de uma série, apaga essa ocorrência e
- * todas as SEGUINTES do mesmo grupo.
+ * Deleta uma transação. Se faz parte de uma série, também remove a ocorrência
+ * pendente (encerra a repetição). Meses já confirmados permanecem.
  */
 async function deletarTransacaoAPI(id) {
     const { data: alvo, error: e1 } = await sb
         .from('transacoes').select('grupo_id, competencia').eq('id', id).single();
     if (e1) throw e1;
 
-    if (alvo.grupo_id) {
-        const { error } = await sb.from('transacoes').delete()
-            .eq('grupo_id', alvo.grupo_id)
-            .gte('competencia', alvo.competencia);
-        if (error) throw error;
-        return { mensagem: 'Série apagada a partir deste mês' };
-    }
-
     const { error } = await sb.from('transacoes').delete().eq('id', id);
     if (error) throw error;
-    return { mensagem: 'Transação deletada' };
+
+    if (alvo.grupo_id) {
+        await sb.from('transacoes').delete()
+            .eq('grupo_id', alvo.grupo_id)
+            .eq('pendente', true)
+            .gte('competencia', alvo.competencia);
+    }
+    return { mensagem: 'Transação removida' };
 }

@@ -133,17 +133,23 @@ function gerarHTMLTransacao(trans, tipo) {
         meta += '</div>';
     }
     
+    const tagPendente = trans.pendente
+        ? '<span class="pendente-badge">a confirmar</span>' : '';
+    const botaoOk = trans.pendente
+        ? `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>` : '';
+
     return `
-        <div class="despesa-item ${tipo}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
+        <div class="despesa-item ${tipo}${trans.pendente ? ' pendente' : ''}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             <div class="despesa-info">
                 <div class="despesa-categoria">
-                    ${trans.categoria} ${badgeRecorrencia}
+                    ${trans.categoria} ${badgeRecorrencia} ${tagPendente}
                 </div>
                 ${meta}
                 <div class="despesa-descricao">${trans.descricao || 'Sem descrição'} • ${dataFormatada}</div>
             </div>
             <div class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${valorFormatado}</div>
             <div class="despesa-actions">
+                ${botaoOk}
                 <button class="btn-icon" data-act="editar-trans" data-id="${trans.id}" title="Editar">✏️</button>
                 <button class="btn-icon btn-danger" data-act="excluir-trans" data-id="${trans.id}" title="Excluir">🗑️</button>
             </div>
@@ -160,7 +166,9 @@ function onListaTransacaoClick(e) {
         .find(t => t.id === id);
     if (!trans) return;
 
-    if (btn.dataset.act === 'editar-trans') {
+    if (btn.dataset.act === 'confirmar-trans') {
+        confirmarPendente(id);
+    } else if (btn.dataset.act === 'editar-trans') {
         const tipo = estadoApp.transacoes.entradas.some(t => t.id === id) ? 'entradas' : 'saidas';
         iniciarEdicaoTransacao(trans, tipo);
     } else if (btn.dataset.act === 'excluir-trans') {
@@ -185,6 +193,18 @@ async function excluirTransacao(id) {
     } catch (e) {
         console.error(e);
         mostrarNotificacao('Erro ao excluir', 'erro');
+    }
+}
+
+async function confirmarPendente(id) {
+    try {
+        await confirmarPendenteAPI(id);
+        mostrarNotificacao('✓ Mês confirmado', 'sucesso');
+        await recarregarDados();
+        atualizarUI();
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacao('Erro ao confirmar', 'erro');
     }
 }
 
