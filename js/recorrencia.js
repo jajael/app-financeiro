@@ -174,6 +174,15 @@ function hojeISO() {
   return formatarDataISO(new Date());
 }
 
+/** Data de vencimento (dia do mês, ajustado p/ dia útil) na competência dada */
+function dataVencimento(competenciaISO, dia) {
+  const diaNum = parseInt(dia, 10);
+  if (!competenciaISO || !diaNum) return '';
+  const c = parseDataLocal(competenciaISO);
+  const ultimo = new Date(c.getFullYear(), c.getMonth() + 1, 0).getDate();
+  return formatarDataISO(ajustarDiaUtil(new Date(c.getFullYear(), c.getMonth(), Math.min(diaNum, ultimo))));
+}
+
 /** Soma `n` meses a uma data 'YYYY-MM-DD', preservando o dia (limitado ao fim do mês) */
 function addMeses(dataISO, n) {
   const d = parseDataLocal(dataISO);

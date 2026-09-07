@@ -116,39 +116,7 @@
                     
                     <input type="hidden" id="tipoTransacao" value="entradas">
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="data">Data:</label>
-                            <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="valor">Valor:</label>
-                            <input type="number" id="valor" step="0.01" placeholder="0,00" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="metodo">Método:</label>
-                            <select id="metodo" required>
-                                <option value="">Selecione...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="categoria">Categoria:</label>
-                            <select id="categoria" required>
-                                <option value="">-- Selecione uma categoria --</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-row" id="competenciaGroup" hidden>
-                        <div class="form-group">
-                            <label for="competencia">Competência:</label>
-                            <input type="text" id="competencia" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
-                        </div>
-                    </div>
-
+                    <!-- 1) Recorrência e derivados -->
                     <div class="form-row">
                         <div class="form-group">
                             <label for="tipoRecorrencia">Recorrência:</label>
@@ -157,6 +125,7 @@
                         <div class="form-group" id="diaRecorrenciaGroup" hidden>
                             <label for="diaRecorrencia">Dia de vencimento:</label>
                             <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
+                            <label class="inline-check"><input type="checkbox" id="pagarVencimento"> pagar no vencimento</label>
                         </div>
                         <div class="form-group" id="parceleGroup" hidden>
                             <label for="parcelas">Parcelas:</label>
@@ -175,17 +144,54 @@
                                 <option value="6">Sábado</option>
                             </select>
                         </div>
-                        <div class="form-group full-width" id="semanasChipsGroup" hidden>
+                        <div class="form-group" id="dataCalculadaGroup" hidden>
+                            <label for="dataCalculada">Data (automática):</label>
+                            <input type="text" id="dataCalculada" class="campo-travado" readonly tabindex="-1">
+                        </div>
+                    </div>
+                    <div class="form-row" id="semanasChipsRow" hidden>
+                        <div class="form-group full-width" id="semanasChipsGroup">
                             <label>Semanas do mês <span class="hint-inline">(o valor é por sessão)</span>:</label>
                             <div id="semanasChips" class="semanas-chips"></div>
                             <div id="semanasResumo" class="semanas-resumo"></div>
                         </div>
-                        <div class="form-group" id="dataCalculadaGroup" hidden>
-                            <label for="dataCalculada">Data (automática):</label>
-                            <input type="text" id="dataCalculada" readonly tabindex="-1">
+                    </div>
+
+                    <!-- 2) Data e valor -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="data">Data:</label>
+                            <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="valor">Valor:</label>
+                            <input type="number" id="valor" step="0.01" placeholder="0,00" required>
                         </div>
                     </div>
 
+                    <!-- 3) Método e categoria -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="metodo">Método:</label>
+                            <select id="metodo" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="categoria">Categoria:</label>
+                            <select id="categoria" required>
+                                <option value="">-- Selecione uma categoria --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row" id="competenciaGroup" hidden>
+                        <div class="form-group">
+                            <label for="competencia">Competência:</label>
+                            <input type="text" id="competencia" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <!-- 4) Descrição -->
                     <div class="form-group full-width">
                         <label for="descricao">Descrição (opcional):</label>
                         <input type="text" id="descricao" placeholder="Ex: Compra no mercado, Aluguel, etc">

@@ -404,3 +404,12 @@
   font-weight: 600;
   color: #1F2937;
 }
+
+/* Campo travado por valor automático (aparência de desabilitado) */
+.form-group input.campo-travado,
+.form-group input[readonly].campo-travado {
+  background: #EEF0F3;
+  color: #6B7280;
+  border-color: #E5E7EB;
+  cursor: not-allowed;
+}

@@ -251,6 +251,8 @@ function limparFormulario() {
         form.reset();
         document.querySelector(SELECTORS.data).value = dataHojeBR();
         document.querySelector(SELECTORS.tipoTransacao).value = 'entradas';
+        const pv = document.getElementById('pagarVencimento');
+        if (pv) pv.checked = false;
         if (typeof semanasMarcadas !== 'undefined') semanasMarcadas = new Set();
         if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
         if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
@@ -274,6 +276,7 @@ function obterDadosFormulario() {
         formaPagamento: tipoRecorrencia === 'Parcelada' ? 'Parcelada' : 'À vista',
         tipoRecorrencia,
         diaRecorrencia,
+        pagarVencimento: !!document.getElementById('pagarVencimento')?.checked,
         diaSemana: document.getElementById('diaSemana')?.value ?? '',
         semanas: typeof semanasMarcadas !== 'undefined' ? [...semanasMarcadas].sort() : [],
         valorSessao: parseFloat(document.querySelector(SELECTORS.valor).value) || 0,

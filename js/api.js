@@ -45,7 +45,8 @@ function mapearTransacao(row) {
         quitadoEm: row.quitado_em || null,
         competencia: row.competencia || '',
         diaRecorrencia: row.dia_recorrencia || '',
-        diaSemana: row.dia_semana ?? null
+        diaSemana: row.dia_semana ?? null,
+        pagarNoVencimento: !!row.pagar_no_vencimento
     };
 }
 
@@ -193,8 +194,15 @@ function montarRegistro(dados) {
         dia_semana: dados.diaSemana === '' || dados.diaSemana == null ? null : parseInt(dados.diaSemana, 10),
         proxima_data: calcularProximaData(dados.data, tipoRecorrencia, dados.diaRecorrencia, dados.diaSemana),
         competencia: dados.competencia || competenciaDe(dados.data),
-        status: dados.status || 'Ativa'
+        status: dados.status || 'Ativa',
+        pagar_no_vencimento: !!dados.pagarVencimento
     };
+
+    // "Pagar no vencimento" (Conta/Parcelada): data do lançamento = data de vencimento
+    if (reg.pagar_no_vencimento && (tipoRecorrencia === 'Conta' || tipoRecorrencia === 'Parcelada')) {
+        const venc = dataVencimento(reg.competencia, reg.dia_recorrencia);
+        if (venc) reg.data = venc;
+    }
 
     // Semanal com dia fixo: valor por sessão + semanas marcadas; valor gravado = X
     const semanas = Array.isArray(dados.semanas) ? dados.semanas.slice().sort() : [];
@@ -263,6 +271,7 @@ function ocorrenciaSeguinte(row, novaData) {
         tipo_recorrencia: row.tipo_recorrencia,
         dia_recorrencia: row.dia_recorrencia,
         dia_semana: row.dia_semana,
+        pagar_no_vencimento: row.pagar_no_vencimento,
         status: row.status,
         grupo_id: row.grupo_id,
         data: novaData,

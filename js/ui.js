@@ -297,6 +297,8 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
 
     const diaRec = document.getElementById('diaRecorrencia');
     if (diaRec) diaRec.value = trans.diaRecorrencia || '';
+    const pv = document.getElementById('pagarVencimento');
+    if (pv) pv.checked = !!trans.pagarNoVencimento;
     const diaSem = document.getElementById('diaSemana');
     if (diaSem) diaSem.value = trans.diaSemana ?? '';
     const parc = document.getElementById('parcelas');
@@ -456,7 +458,7 @@ function atualizarCamposRecorrencia() {
         if (iso) diaInput.value = String(parseInt(iso.slice(8, 10), 10));
     }
 
-    // Campo cinza com a data calculada (último/primeiro dia útil)
+    // Campo cinza com a data calculada (último/primeiro/5º dia útil)
     if (ehCalculada) {
         const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
         const campo = document.getElementById('dataCalculada');
@@ -464,11 +466,40 @@ function atualizarCamposRecorrencia() {
     }
 
     // Semanal: chips das ocorrências do dia da semana no mês
-    const grupoChips = document.getElementById('semanasChipsGroup');
     const dowVal = document.getElementById('diaSemana')?.value ?? '';
     const mostrarChips = ehSemanal && dowVal !== '';
-    if (grupoChips) grupoChips.hidden = !mostrarChips;
+    set('semanasChipsRow', mostrarChips);
     if (mostrarChips) renderSemanasChips();
+
+    // "Pagar no vencimento": trava a data do lançamento no dia do vencimento
+    aplicarPagarVencimento();
+}
+
+/**
+ * Quando "pagar no vencimento" está marcado, a data do lançamento fica igual à
+ * data de vencimento (dia informado, na competência atual) e o campo Data trava.
+ */
+function aplicarPagarVencimento() {
+    const chk = document.getElementById('pagarVencimento');
+    const dataEl = document.querySelector(SELECTORS.data);
+    if (!chk || !dataEl) return;
+
+    const grupoDia = document.getElementById('diaRecorrenciaGroup');
+    const ativo = chk.checked && grupoDia && !grupoDia.hidden;
+
+    if (ativo) {
+        const dia = document.getElementById('diaRecorrencia').value;
+        const compBR = document.getElementById('competencia')?.value;
+        const compISO = parseCompetencia(compBR || '') ||
+            competenciaDe(parseDataBR(dataEl.value) || hojeISO());
+        const venc = dataVencimento(compISO, dia);
+        if (venc) dataEl.value = isoParaDataBR(venc);
+        dataEl.readOnly = true;
+        dataEl.classList.add('campo-travado');
+    } else {
+        dataEl.readOnly = false;
+        dataEl.classList.remove('campo-travado');
+    }
 }
 
 // Conjunto de datas (YYYY-MM-DD) marcadas nas chips do formulário

@@ -73,9 +73,16 @@ function configurarEventListeners() {
         });
     }
 
-    // Dia da recorrência: só números, 2 dígitos
+    // Dia da recorrência: só números, 2 dígitos; recalcula "pagar no vencimento"
     const diaRec = document.getElementById('diaRecorrencia');
-    if (diaRec) diaRec.addEventListener('input', () => soNumeros(diaRec, 2));
+    if (diaRec) diaRec.addEventListener('input', () => {
+        soNumeros(diaRec, 2);
+        if (typeof aplicarPagarVencimento === 'function') aplicarPagarVencimento();
+    });
+
+    // Checkbox "pagar no vencimento"
+    const pagarVenc = document.getElementById('pagarVencimento');
+    if (pagarVenc) pagarVenc.addEventListener('change', aplicarPagarVencimento);
 
     // Semanal: dia da semana -> refaz as chips; valor -> atualiza o resumo X/Y
     const diaSem = document.getElementById('diaSemana');
