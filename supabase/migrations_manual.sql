@@ -82,3 +82,9 @@ delete from public.menu_itens where tipo = 'Método' and nome = 'Crédito' and m
 alter table public.transacoes add column if not exists dia_semana smallint;
 alter table public.transacoes drop column if exists eh_vencimento;
 update public.menu_itens set nome = 'Conta' where tipo = 'Recorrência' and nome = 'Mensal';
+
+-- ============================================================
+-- 6) Séries de recorrência (edição/exclusão em cascata para frente)
+-- ============================================================
+alter table public.transacoes add column if not exists grupo_id uuid;
+create index if not exists transacoes_grupo_idx on public.transacoes (grupo_id, competencia);
