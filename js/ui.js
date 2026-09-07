@@ -12,9 +12,11 @@ function atualizarUI() {
     if (mesEl) {
         const full = mesEl.querySelector('.mes-full');
         const curto = mesEl.querySelector('.mes-curto');
+        const mini = mesEl.querySelector('.mes-mini');
         if (full && curto) {
             full.textContent = obterMesAnoFormatado(estadoApp.mesAtual);
             curto.textContent = obterMesAnoCurto(estadoApp.mesAtual);
+            if (mini) mini.textContent = obterMesAnoMini(estadoApp.mesAtual);
         } else {
             mesEl.textContent = obterMesAnoFormatado(estadoApp.mesAtual);
         }

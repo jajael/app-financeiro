@@ -236,10 +236,16 @@ function obterMesAnoFormatado(data) {
     return mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1);
 }
 
-/** Versão curta: "SET/2026" (para telas muito estreitas) */
+/** Versão curta: "SET/2026" (para telas estreitas) */
 function obterMesAnoCurto(data) {
     const m = data.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
     return `${m}/${data.getFullYear()}`;
+}
+
+/** Versão mínima: "09/26" (para telas muito estreitas) */
+function obterMesAnoMini(data) {
+    const mm = String(data.getMonth() + 1).padStart(2, '0');
+    return `${mm}/${String(data.getFullYear()).slice(-2)}`;
 }
 
 /**
