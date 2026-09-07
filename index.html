@@ -151,15 +151,6 @@
                             <label for="tipoRecorrencia">Recorrência:</label>
                             <select id="tipoRecorrencia" required></select>
                         </div>
-                        <div class="form-group" id="diaRecorrenciaGroup" hidden>
-                            <label for="diaRecorrencia">Dia de vencimento:</label>
-                            <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
-                            <label class="inline-check"><input type="checkbox" id="pagarVencimento"> <span id="pagarVencimentoLabel">pagar no vencimento</span></label>
-                        </div>
-                        <div class="form-group" id="parceleGroup" hidden>
-                            <label for="parcelas">Parcelas:</label>
-                            <input type="number" id="parcelas" min="1" max="48" value="1">
-                        </div>
                         <div class="form-group" id="diaSemanaGroup" hidden>
                             <label for="diaSemana">Dia da semana:</label>
                             <select id="diaSemana">
@@ -198,6 +189,19 @@
                         <div class="form-group">
                             <label for="valor">Valor:</label>
                             <input type="number" id="valor" step="0.01" placeholder="0,00" required>
+                        </div>
+                    </div>
+
+                    <!-- 2b) Dia do vencimento / parcelas -->
+                    <div class="form-row" id="vencimentoRow" hidden>
+                        <div class="form-group" id="diaRecorrenciaGroup" hidden>
+                            <label for="diaRecorrencia">Dia de vencimento:</label>
+                            <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
+                            <label class="inline-check"><input type="checkbox" id="pagarVencimento"> <span id="pagarVencimentoLabel">pagar no vencimento</span></label>
+                        </div>
+                        <div class="form-group" id="parceleGroup" hidden>
+                            <label for="parcelas">Parcelas:</label>
+                            <input type="number" id="parcelas" min="1" max="48" value="1">
                         </div>
                     </div>
 

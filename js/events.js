@@ -77,7 +77,7 @@ function configurarEventListeners() {
     const diaRec = document.getElementById('diaRecorrencia');
     if (diaRec) diaRec.addEventListener('input', () => {
         soNumeros(diaRec, 2);
-        if (typeof aplicarPagarVencimento === 'function') aplicarPagarVencimento();
+        if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
     });
 
     // Checkbox "pagar no vencimento"
