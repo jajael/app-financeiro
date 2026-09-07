@@ -6,7 +6,7 @@
 // Tipos de recorrência: fixos, não editáveis. Só descrição.
 const RECORRENCIAS_INFO = [
   ['Pontual', 'Acontece uma única vez, sem repetição.'],
-  ['Mensal', 'Repete todo mês no dia informado, ajustado para o dia útil mais próximo. Nas despesas aparece como "Conta".'],
+  ['Mensal / Conta', 'Repete todo mês no dia informado, ajustado para o dia útil mais próximo. Nas despesas aparece como "Conta".'],
   ['Parcelada', 'Divide o valor em parcelas mensais — uma transação por mês, cada uma na sua competência.'],
   ['Primeiro dia útil do mês', 'Vence sempre no primeiro dia útil de cada mês (data calculada automaticamente).'],
   ['Até o 5º dia útil do mês', 'Fica pendente de OK; se você não confirmar, é confirmado automaticamente no 5º dia útil do mês.'],
@@ -43,10 +43,18 @@ async function carregarAbaMenus() {
       </div>
 
       <div class="menu-section" data-sub="cat">
-        <h3>📂 Categorias
-          <button type="button" class="h3-add" onclick="abrirNovaCategoria()" title="Nova categoria">+</button>
-        </h3>
-        <div class="menu-list" id="categoriasList"></div>
+        <div class="cat-subgrupo">
+          <h4>📤 Categorias de despesa
+            <button type="button" class="h3-add" onclick="abrirNovaCategoria('saidas')" title="Nova categoria de despesa">+</button>
+          </h4>
+          <div class="menu-list" id="categoriasDespesaList"></div>
+        </div>
+        <div class="cat-subgrupo">
+          <h4>📥 Categorias de receita
+            <button type="button" class="h3-add" onclick="abrirNovaCategoria('entradas')" title="Nova categoria de receita">+</button>
+          </h4>
+          <div class="menu-list" id="categoriasReceitaList"></div>
+        </div>
       </div>
 
       <div class="menu-section" data-sub="met" hidden>
@@ -77,7 +85,8 @@ async function carregarAbaMenus() {
   configurarSubtabsConfig();
   mostrarSubConfig(subConfigAtiva);
 
-  renderizarItemsMenu('Categoria', 'categoriasList', menus.categorias);
+  renderizarItemsMenu('Categoria', 'categoriasDespesaList', menus.categoriasDespesa);
+  renderizarItemsMenu('Categoria', 'categoriasReceitaList', menus.categoriasReceita);
   renderizarItemsMenu('Método', 'metodosList', menus.metodos);
 }
 

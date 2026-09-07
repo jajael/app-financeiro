@@ -230,8 +230,11 @@ function mostrarSugestoes(e) {
     
     if (!container) return;
     
-    const categorias = estadoApp.menus.categorias.length > 0 
-        ? estadoApp.menus.categorias 
+    const listaTipo = estadoApp.tipoAtual === 'entradas'
+        ? estadoApp.menus.categoriasReceita
+        : estadoApp.menus.categoriasDespesa;
+    const categorias = (listaTipo && listaTipo.length > 0)
+        ? listaTipo
         : (CATEGORIAS_PADRAO[estadoApp.tipoAtual] || []);
     
     if (!valor) {

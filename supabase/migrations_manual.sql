@@ -120,3 +120,20 @@ alter table public.transacoes add column if not exists pagar_no_vencimento boole
 -- ============================================================
 update public.transacoes set tipo_recorrencia = 'Mensal' where tipo_recorrencia = 'Conta';
 update public.menu_itens  set nome = 'Mensal'            where tipo = 'Recorrência' and nome = 'Conta';
+
+-- ============================================================
+-- 11) Categorias separadas por tipo de transação (receita x despesa)
+--     Já aplicado via MCP (apply_migration menu_itens_categoria_tipo).
+-- ============================================================
+alter table public.menu_itens
+  add column if not exists categoria_tipo text
+  check (categoria_tipo in ('entradas', 'saidas'));
+
+update public.menu_itens
+   set categoria_tipo = 'entradas'
+ where tipo = 'Categoria' and categoria_tipo is null
+   and nome in ('Salário','Bônus','13º','PL','PLR','Freelance','Devolução','Investimento');
+
+update public.menu_itens
+   set categoria_tipo = 'saidas'
+ where tipo = 'Categoria' and categoria_tipo is null;

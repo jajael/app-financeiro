@@ -525,12 +525,21 @@ function atualizarLabelsPorTipo() {
 
     // Recorrência "Mensal" aparece como "Conta" nas despesas -> refaz o dropdown
     if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
+    // Categorias são específicas de receita x despesa
+    if (typeof preencherDropdownCategorias === 'function') preencherDropdownCategorias();
 }
 
-/** Diálogo rápido para criar uma categoria a partir do formulário */
-function abrirNovaCategoria() {
+/**
+ * Diálogo rápido para criar uma categoria.
+ * @param {'saidas'|'entradas'} [catTipo] tipo da categoria; se omitido usa o tipo atual do formulário
+ */
+function abrirNovaCategoria(catTipo) {
+    const tipo = (catTipo === 'entradas' || catTipo === 'saidas')
+        ? catTipo
+        : (estadoApp.tipoAtual === 'entradas' ? 'entradas' : 'saidas');
+    const rotulo = tipo === 'entradas' ? 'receita' : 'despesa';
     mostrarDialogo({
-        titulo: 'Nova categoria',
+        titulo: `Nova categoria de ${rotulo}`,
         corpoHTML: `
             <div class="campo"><label for="dlgCatNome">Nome</label>
                 <input type="text" id="dlgCatNome" placeholder="Ex: Mercado" autocomplete="off"></div>
@@ -541,12 +550,15 @@ function abrirNovaCategoria() {
             { label: 'Adicionar', primario: true, onClick: async (ov) => {
                 const nome = ov.querySelector('#dlgCatNome').value.trim();
                 if (!nome) { mostrarNotificacao('Informe o nome', 'info'); return true; }
-                const ok = await adicionarItemMenuAPI('Categoria', nome, { descricao: ov.querySelector('#dlgCatDesc').value.trim() });
+                const ok = await adicionarItemMenuAPI('Categoria', nome, {
+                    descricao: ov.querySelector('#dlgCatDesc').value.trim(),
+                    categoria_tipo: tipo
+                });
                 if (!ok) return true;
                 await carregarMenus();
                 if (typeof carregarAbaMenus === "function") await carregarAbaMenus();
                 const sel = document.querySelector(SELECTORS.categoria);
-                if (sel) sel.value = nome;
+                if (sel && tipo === (estadoApp.tipoAtual === 'entradas' ? 'entradas' : 'saidas')) sel.value = nome;
             } }
         ]
     });

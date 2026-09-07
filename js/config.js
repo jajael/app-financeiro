@@ -17,18 +17,17 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const CATEGORIAS_PADRAO = {
   entradas: [
     'Salário',
-    'Freelance',
-    'Investimento',
     'Bônus',
-    'Devolução',
-    'Outro'
+    '13º',
+    'PL',
+    'Freelance',
+    'Devolução'
   ],
   saidas: [
     'Alimentação',
     'Alimentação app',
-    'Assinatura',
-    'Bebida alcoólica',
-    'Casa',
+    'Assinaturas',
+    'Contas',
     'Compras',
     'Compras online',
     'Lazer',
@@ -36,8 +35,7 @@ const CATEGORIAS_PADRAO = {
     'Saúde',
     'Serviços',
     'Transporte app',
-    'Transporte público',
-    'Outro'
+    'Transporte'
   ]
 };
 

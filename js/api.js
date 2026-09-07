@@ -125,15 +125,18 @@ async function carregarMenusAPI() {
         if (error) throw error;
         const itens = (data || []).map(mapearItemMenu);
 
+        const cats = itens.filter(i => i.tipo === 'Categoria');
         return {
-            categorias: itens.filter(i => i.tipo === 'Categoria').map(i => i.nome),
+            categorias: cats.map(i => i.nome),
+            categoriasDespesa: cats.filter(c => c.categoriaTipo !== 'entradas').map(i => i.nome),
+            categoriasReceita: cats.filter(c => c.categoriaTipo === 'entradas').map(i => i.nome),
             // métodos como objetos (o formulário precisa do tipo/fechamento p/ competência)
             metodos: itens.filter(i => i.tipo === 'Método'),
             recorrencias: itens.filter(i => i.tipo === 'Recorrência').map(i => i.nome)
         };
     } catch (error) {
         console.error('Erro ao carregar menus:', error);
-        return { categorias: [], metodos: [] };
+        return { categorias: [], categoriasDespesa: [], categoriasReceita: [], metodos: [] };
     }
 }
 
