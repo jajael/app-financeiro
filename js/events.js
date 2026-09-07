@@ -96,14 +96,12 @@ function configurarEventListeners() {
     const pagarVenc = document.getElementById('pagarVencimento');
     if (pagarVenc) pagarVenc.addEventListener('change', aplicarPagarVencimento);
 
-    // Recorrências "dia útil fixo": competência (mm/aaaa) + antecipar p/ mês anterior
+    // Recorrências "dia útil fixo": competência (mm/aaaa)
     const compRec = document.getElementById('compRecorrente');
     if (compRec) compRec.addEventListener('input', () => {
         mascaraCompetencia(compRec);
         atualizarCamposRecorrencia();
     });
-    const antMes = document.getElementById('anteciparMesAnterior');
-    if (antMes) antMes.addEventListener('change', atualizarCamposRecorrencia);
 
     // Botões "+" para criar categoria/método sem sair do lançamento
     const btnCat = document.getElementById('btnNovaCategoria');

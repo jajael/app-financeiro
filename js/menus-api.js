@@ -13,7 +13,8 @@ const CATEGORIAS_DESPESA_SEED = ['Alimentação', 'Alimentação app', 'Assinatu
 const CATEGORIAS_RECEITA_SEED = ['Salário', 'Bônus', '13º', 'PL', 'Freelance', 'Devolução'];
 // Vocabulário fixo de tipos de recorrência (não vão para o banco)
 const RECORRENCIAS_KINDS = ['Pontual', 'Mensal', 'Parcelada',
-  'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês', 'Semanal'];
+  'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês',
+  'Último dia útil do mês anterior', 'Semanal'];
 
 /**
  * Se o usuário atual ainda não tem nenhum item de menu, cria o conjunto padrão.
