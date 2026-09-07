@@ -122,6 +122,8 @@ async function carregarMenus() {
         const menus = await carregarMenusAPI();
         
         estadoApp.menus.categorias = menus.categorias || [];
+        estadoApp.menus.categoriasDespesa = menus.categoriasDespesa || [];
+        estadoApp.menus.categoriasReceita = menus.categoriasReceita || [];
         estadoApp.menus.metodos = menus.metodos || [];
         estadoApp.menus.recorrencias = menus.recorrencias || [];
 
@@ -138,7 +140,10 @@ async function carregarMenus() {
         console.log('Usando categorias padrão...');
         
         // Usar fallback
-        estadoApp.menus.categorias = CATEGORIAS_PADRAO[estadoApp.tipoAtual] || [];
+        estadoApp.menus.categoriasDespesa = CATEGORIAS_PADRAO.saidas || [];
+        estadoApp.menus.categoriasReceita = CATEGORIAS_PADRAO.entradas || [];
+        estadoApp.menus.categorias = [...estadoApp.menus.categoriasDespesa, ...estadoApp.menus.categoriasReceita];
+        preencherDropdownCategorias();
         
         return false;
     }
@@ -155,8 +160,13 @@ function preencherDropdownCategorias() {
     }
     
     selectCategoria.innerHTML = '<option value="">-- Selecione uma categoria --</option>';
-    
-    estadoApp.menus.categorias.forEach(categoria => {
+
+    // Lista específica conforme o tipo do lançamento (receita x despesa)
+    const lista = estadoApp.tipoAtual === 'entradas'
+        ? estadoApp.menus.categoriasReceita
+        : estadoApp.menus.categoriasDespesa;
+
+    (lista && lista.length ? lista : estadoApp.menus.categorias).forEach(categoria => {
         const option = document.createElement('option');
         option.value = categoria;
         option.textContent = categoria;

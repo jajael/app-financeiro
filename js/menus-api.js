@@ -5,11 +5,12 @@
  * "linha" nas funções abaixo = coluna id (bigint) da tabela.
  */
 
-// Conjunto padrão criado para cada novo usuário (inclui visitantes)
-const CATEGORIAS_PADRAO_SEED = ['Salário', 'Freelance', 'Investimento', 'Bônus', 'Devolução',
-    'Alimentação', 'Alimentação app', 'Assinatura', 'Casa', 'Compras',
-    'Compras online', 'Lazer', 'Mercado', 'Saúde', 'Serviços',
-    'Transporte app', 'Transporte público', 'Outro'];
+// Conjunto padrão criado para cada novo usuário (inclui visitantes).
+// Categorias são separadas por tipo de transação: despesa (saidas) x receita (entradas).
+const CATEGORIAS_DESPESA_SEED = ['Alimentação', 'Alimentação app', 'Assinaturas', 'Contas',
+    'Compras', 'Compras online', 'Lazer', 'Mercado', 'Saúde', 'Serviços',
+    'Transporte app', 'Transporte'];
+const CATEGORIAS_RECEITA_SEED = ['Salário', 'Bônus', '13º', 'PL', 'Freelance', 'Devolução'];
 // Vocabulário fixo de tipos de recorrência (não vão para o banco)
 const RECORRENCIAS_KINDS = ['Pontual', 'Mensal', 'Parcelada',
   'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês', 'Semanal'];
@@ -28,7 +29,8 @@ async function semearMenusPadraoSeVazio() {
 
         // Recorrências são tipos fixos do sistema — não vão para o banco.
         const linhas = [
-            ...CATEGORIAS_PADRAO_SEED.map(nome => ({ tipo: 'Categoria', nome })),
+            ...CATEGORIAS_DESPESA_SEED.map(nome => ({ tipo: 'Categoria', nome, categoria_tipo: 'saidas' })),
+            ...CATEGORIAS_RECEITA_SEED.map(nome => ({ tipo: 'Categoria', nome, categoria_tipo: 'entradas' })),
             { tipo: 'Método', nome: 'Dinheiro', metodo_kind: 'Dinheiro' },
             { tipo: 'Método', nome: 'PIX/Débito', metodo_kind: 'PIX/Débito' }
         ];
@@ -50,6 +52,7 @@ function mapearItemMenu(row) {
         nome: row.nome,
         descricao: row.descricao || '',
         status: row.status || 'Ativo',
+        categoriaTipo: row.categoria_tipo || null,   // 'saidas' | 'entradas' (só Categoria)
         metodoKind: row.metodo_kind || null,
         banco: row.banco || '',
         diaFechamento: row.dia_fechamento || null,
@@ -77,8 +80,11 @@ async function carregarMenusCompleto() {
         if (error) throw error;
 
         const itens = (data || []).map(mapearItemMenu);
+        const categorias = itens.filter(i => i.tipo === 'Categoria');
         return {
-            categorias: itens.filter(i => i.tipo === 'Categoria'),
+            categorias,
+            categoriasDespesa: categorias.filter(c => c.categoriaTipo !== 'entradas'),
+            categoriasReceita: categorias.filter(c => c.categoriaTipo === 'entradas'),
             metodos: itens.filter(i => i.tipo === 'Método'),
             recorrencias: itens.filter(i => i.tipo === 'Recorrência')
         };

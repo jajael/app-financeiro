@@ -24,6 +24,8 @@ let estadoApp = {
     // Menus dinâmicos
     menus: {
         categorias: [],
+        categoriasDespesa: [],
+        categoriasReceita: [],
         metodos: [],
         recorrencias: []
     },
@@ -51,7 +53,7 @@ function resetarEstado() {
     estadoApp.transacoes.entradas = [];
     estadoApp.transacoes.saidas = [];
     estadoApp.resumo = { entradas: 0, saidas: 0, balanco: 0 };
-    estadoApp.menus = { categorias: [], metodos: [], recorrencias: [] };
+    estadoApp.menus = { categorias: [], categoriasDespesa: [], categoriasReceita: [], metodos: [], recorrencias: [] };
     estadoApp.erro = null;
 }
 

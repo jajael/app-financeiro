@@ -51,6 +51,7 @@ create table if not exists public.menu_itens (
   id                bigint generated always as identity primary key,
   tipo              text not null check (tipo in ('Categoria', 'Método', 'Recorrência')),
   nome              text not null,
+  categoria_tipo    text check (categoria_tipo in ('entradas', 'saidas')),  -- só Categoria: receita x despesa
   descricao         text default '',
   status            text not null default 'Ativo' check (status in ('Ativo', 'Inativo')),
   metodo_kind       text,
