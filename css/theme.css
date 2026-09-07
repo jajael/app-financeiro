@@ -102,6 +102,47 @@ input.campo-travado,
 .tab-btn.active { color: var(--primary); }
 .tab-content { color: var(--text); }
 
+/* Receitas / Despesas nas cores dos cards do dashboard */
+.tab-btn[data-tab="entradas"] { color: var(--receita-text); }
+.tab-btn[data-tab="saidas"]   { color: var(--despesa-text); }
+.tab-btn[data-tab="entradas"]:hover,
+.tab-btn[data-tab="entradas"].active { color: var(--receita-text); }
+.tab-btn[data-tab="saidas"]:hover,
+.tab-btn[data-tab="saidas"].active { color: var(--despesa-text); }
+.tab-btn[data-tab="entradas"].active { border-bottom-color: var(--receita-text); }
+.tab-btn[data-tab="saidas"].active { border-bottom-color: var(--despesa-text); }
+
+/* "+ Lançamento": botão principal, sempre em destaque */
+.tab-btn[data-tab="adicionar"],
+.tab-btn[data-tab="adicionar"]:hover,
+.tab-btn[data-tab="adicionar"].active {
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border-color: var(--primary);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .tabs [data-tab="entradas"] {
+        background: var(--receita-bg);
+        border-color: var(--receita-border);
+    }
+    .tabs [data-tab="saidas"] {
+        background: var(--despesa-bg);
+        border-color: var(--despesa-border);
+    }
+    .tabs [data-tab="entradas"].active { box-shadow: inset 0 0 0 2px var(--receita-text); }
+    .tabs [data-tab="saidas"].active  { box-shadow: inset 0 0 0 2px var(--despesa-text); }
+
+    .tabs [data-tab="adicionar"] {
+        padding: 0.7rem;
+        font-size: var(--font-size-base);
+        box-shadow: var(--shadow-md);
+    }
+    .tabs [data-tab="adicionar"].active { box-shadow: 0 0 0 2px var(--primary), var(--shadow-md); }
+}
+
 /* ---------- Chips / semanas ---------- */
 .semanas-chips .chip {
     background-color: var(--surface-2);
