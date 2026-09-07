@@ -26,55 +26,45 @@
 @keyframes slideInDown {
     from {
         opacity: 0;
-        transform: translateY(-20px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
 @keyframes slideInUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
 @keyframes slideInLeft {
     from {
         opacity: 0;
-        transform: translateX(-20px);
     }
     to {
         opacity: 1;
-        transform: translateX(0);
     }
 }
 
 @keyframes slideInRight {
     from {
         opacity: 0;
-        transform: translateX(20px);
     }
     to {
         opacity: 1;
-        transform: translateX(0);
     }
 }
 
 @keyframes slideOutLeft {
     from {
         opacity: 1;
-        transform: translateX(0);
     }
     to {
         opacity: 0;
-        transform: translateX(-20px);
     }
 }
 
@@ -90,56 +80,44 @@
 
 @keyframes pulse-scale {
     0%, 100% {
-        transform: scale(1);
     }
     50% {
-        transform: scale(1.05);
     }
 }
 
 /* Bounce */
 @keyframes bounce {
     0%, 100% {
-        transform: translateY(0);
     }
     50% {
-        transform: translateY(-10px);
     }
 }
 
 /* Spin */
 @keyframes spin {
     from {
-        transform: rotate(0deg);
     }
     to {
-        transform: rotate(360deg);
     }
 }
 
 /* Heart beat */
 @keyframes heartbeat {
     0%, 100% {
-        transform: scale(1);
     }
     25% {
-        transform: scale(1.1);
     }
     50% {
-        transform: scale(1);
     }
 }
 
 /* Shake */
 @keyframes shake {
     0%, 100% {
-        transform: translateX(0);
     }
     10%, 30%, 50%, 70%, 90% {
-        transform: translateX(-5px);
     }
     20%, 40%, 60%, 80% {
-        transform: translateX(5px);
     }
 }
 
@@ -170,11 +148,9 @@
 @keyframes notificationSlide {
     from {
         opacity: 0;
-        transform: translateX(100%) translateY(-100px);
     }
     to {
         opacity: 1;
-        transform: translateX(0) translateY(0);
     }
 }
 
@@ -195,22 +171,18 @@
 @keyframes scaleIn {
     from {
         opacity: 0;
-        transform: scale(0.95);
     }
     to {
         opacity: 1;
-        transform: scale(1);
     }
 }
 
 @keyframes scaleOut {
     from {
         opacity: 1;
-        transform: scale(1);
     }
     to {
         opacity: 0;
-        transform: scale(0.95);
     }
 }
 
@@ -218,11 +190,9 @@
 @keyframes rotateIn {
     from {
         opacity: 0;
-        transform: rotate(-10deg);
     }
     to {
         opacity: 1;
-        transform: rotate(0deg);
     }
 }
 
@@ -292,7 +262,6 @@
 
 .elevate-on-hover:hover {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    transform: translateY(-4px);
 }
 
 /* Efeito de glow */
@@ -344,19 +313,34 @@
     right: 0;
     height: 2px;
     background: currentColor;
-    transform: scaleX(0);
     transform-origin: left;
     transition: transform 0.3s ease;
 }
 
 .underline-on-hover:hover::after {
-    transform: scaleX(1);
 }
 
 /* ============================================================
- * Sem animações de entrada/posição — elas provocavam o
- * aparecimento momentâneo de scrollbar ao renderizar conteúdo.
+ * SEM ANIMAÇÕES DE POSIÇÃO — em qualquer estado (hover/active/focus,
+ * keyframes ou transições). Elas causavam "pulos" e scrollbar
+ * momentânea ao renderizar/interagir.
  * ============================================================ */
+
+/* 1) Nenhum keyframe roda */
 *, *::before, *::after {
     animation: none !important;
+}
+
+/* 2) Nenhuma transição de transform (só cor/sombra/opacidade transicionam) */
+*, *::before, *::after {
+    transition-property: background-color, color, border-color, box-shadow,
+        opacity, fill, stroke, filter, outline-color !important;
+}
+
+/* 3) Nenhum deslocamento em estados de interação */
+*:hover, *:active, *:focus, *:focus-visible, *:focus-within,
+*:hover::before, *:hover::after,
+*:active::before, *:active::after,
+*:focus::before, *:focus::after {
+    transform: none !important;
 }

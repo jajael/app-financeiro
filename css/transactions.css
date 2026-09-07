@@ -21,7 +21,6 @@
 }
 
 .despesa-item:hover {
-    transform: translateX(4px);
     box-shadow: var(--shadow-sm);
 }
 
@@ -147,11 +146,9 @@
 @keyframes slideInLeft {
     from {
         opacity: 0;
-        transform: translateX(-20px);
     }
     to {
         opacity: 1;
-        transform: translateX(0);
     }
 }
 

@@ -29,7 +29,6 @@
 
 .category-item:hover {
     background: rgba(79, 70, 229, 0.1);
-    transform: translateX(4px);
 }
 
 /* Cor da categoria */
@@ -187,11 +186,9 @@
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
