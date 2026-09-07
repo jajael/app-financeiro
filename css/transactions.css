@@ -13,6 +13,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: .7rem;
     padding: var(--spacing-md);
     background: var(--light);
     border-left: 4px solid var(--secondary);
@@ -37,43 +38,37 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
 }
 
-/* Linha 1: dia + categoria + valor (à direita) */
+/* Dia do mês em destaque, à esquerda; ao lado cabem as 3 linhas */
+.despesa-dia {
+    flex: 0 0 auto;
+    align-self: center;
+    font-size: 2rem;
+    line-height: 1;
+    font-weight: var(--font-weight-bold);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    min-width: 1.6em;
+    text-align: center;
+}
+
+/* Linha 1: valor + badges */
 .despesa-topo {
     display: flex;
     align-items: baseline;
     gap: .4rem;
-}
-
-/* Linha 2: badges de recorrência / pendente */
-.despesa-badges {
-    display: flex;
     flex-wrap: wrap;
-    gap: .3rem;
-}
-
-.despesa-dia {
-    font-weight: var(--font-weight-bold);
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-}
-
-.despesa-categoria {
-    font-weight: var(--font-weight-semibold);
-    color: var(--text);
-    margin: 0;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 /* Linha 2: método */
 .despesa-metodo {
     font-size: var(--font-size-sm);
     color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Badge de recorrência */
@@ -125,17 +120,19 @@
     color: var(--dark);
 }
 
-/* Linha 3: descrição */
+/* Linha 3: "Categoria: descrição" */
 .despesa-descricao {
     font-size: var(--font-size-sm);
     color: var(--gray);
     margin: 0;
     line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* Valor (fica ao fim da linha 1) */
+/* Valor (linha 1) */
 .despesa-valor {
-    margin-left: auto;
     font-size: 1rem;
     font-weight: var(--font-weight-bold);
     color: var(--danger);
