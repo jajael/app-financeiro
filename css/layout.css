@@ -157,10 +157,23 @@ header.header {
 }
 
 /* Main */
+:root { --pad-main: var(--spacing-xl); }
 main.main {
     flex: 1;
-    padding: var(--spacing-xl);
+    padding: var(--pad-main);
     overflow-y: auto;
+}
+
+/* A partir das abas, o fundo é branco ocupando 100% da largura */
+.tab-content.active {
+    background: var(--surface);
+    color: var(--text);
+    margin-left: calc(-1 * var(--pad-main));
+    margin-right: calc(-1 * var(--pad-main));
+    padding: var(--spacing-lg) var(--pad-main) var(--spacing-xl);
+    border-radius: 0;
+    border-top: 1px solid var(--border);
+    min-height: 60vh;
 }
 
 /* Footer */
