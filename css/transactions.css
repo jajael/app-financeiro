@@ -309,3 +309,28 @@
 .dialogo-acoes { display: flex; gap: .6rem; justify-content: flex-end; flex-wrap: wrap; }
 
 .despesa-valor .valor-meta { font-weight: 400; opacity: .6; font-size: .85em; }
+
+/* Agrupamento Fixas / Pontuais */
+.grupo-cab {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 1.25rem 0 .5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  font-size: .8rem;
+  color: var(--dark);
+  border-bottom: 2px solid var(--light);
+  padding-bottom: .3rem;
+}
+.grupo-cab:first-child { margin-top: 0; }
+.grupo-sub {
+  display: flex;
+  justify-content: space-between;
+  margin: .6rem 0 .3rem;
+  font-weight: 600;
+  font-size: .82rem;
+  color: var(--gray);
+  padding-left: .25rem;
+}
