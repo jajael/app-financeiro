@@ -230,9 +230,14 @@ input.campo-travado,
     margin-bottom: var(--spacing-md);
     font-size: var(--font-size-lg);
 }
-.summary-card { padding: var(--spacing-md); }
-.summary-card .amount { font-size: 1.5rem; }
-.card-linhas .linha.total .amount { font-size: 1.25rem; }
+.summary-card { padding: var(--spacing-sm) var(--spacing-md); }
+.summary-card h3 { font-size: 0.68rem; margin-bottom: 0.3rem; }
+.summary-card .amount { font-size: 1.2rem; }
+.summary-card .sub { font-size: 0.66rem; }
+.card-linhas { gap: 0.2rem; }
+.card-linhas .linha { font-size: 0.72rem; }
+.card-linhas .linha.total { margin-top: 0.25rem; padding-top: 0.25rem; font-size: 0.78rem; }
+.card-linhas .linha.total .amount { font-size: 1rem; }
 .despesa-item { padding: 0.5rem 0.7rem; }
 .menu-section { padding: var(--spacing-md); }
 .dashboard { gap: var(--spacing-md); }

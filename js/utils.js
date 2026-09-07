@@ -13,17 +13,12 @@ function formatarMoeda(valor) {
     }).format(valor);
 }
 
-/** Valor curto para a barra de resumo: "R$ 4,8k", "R$ 155", "-R$ 1,2k" */
-function formatarMoedaCompacta(valor) {
-    const n = Number(valor) || 0;
-    const sinal = n < 0 ? '-' : '';
-    const abs = Math.abs(n);
-    if (abs >= 1000) {
-        const k = abs / 1000;
-        const txt = k >= 100 ? Math.round(k) : k.toFixed(1).replace('.', ',');
-        return `${sinal}R$ ${txt}k`;
-    }
-    return `${sinal}R$ ${Math.round(abs)}`;
+/** Número BR completo, sem símbolo de moeda: "5.000,00", "-1.234,56" */
+function formatarNumeroBR(valor) {
+    return new Intl.NumberFormat('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(Number(valor) || 0);
 }
 
 /**

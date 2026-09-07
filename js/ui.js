@@ -57,8 +57,8 @@ function atualizarResumo() {
         if (gdSub) gdSub.textContent = `${dias} dia${dias === 1 ? '' : 's'} restante${dias === 1 ? '' : 's'}`;
     }
 
-    // Espelha os totais no resumo compacto (barra fixa) — valor curto
-    const setMini = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = formatarMoedaCompacta(v || 0); };
+    // Espelha os totais no resumo compacto (barra fixa) — número completo, sem "R$"
+    const setMini = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = formatarNumeroBR(v || 0); };
     setMini('miniEntradas', estadoApp.resumo.entradas);
     setMini('miniSaidas', estadoApp.resumo.saidas);
     setMini('miniBalanco', estadoApp.resumo.balanco);
@@ -219,10 +219,10 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
         metodoLinha = `<div class="despesa-metodo">${trans.formaPagamento}</div>`;
     }
     const catChip = chip(cor(cores.categoria, trans.categoria), trans.categoria);
-    const catLinha = trans.descricao
-        ? `${catChip}<span class="desc-extra">${trans.descricao}</span>`
-        : catChip;
+    const descLinha = trans.descricao
+        ? `<div class="despesa-desc-linha">${trans.descricao}</div>` : '';
 
+    // Box completo: uma coisa por linha — valor / método / categoria / descrição
     return `
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             ${lado}
@@ -232,7 +232,8 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
                     ${tagPendente}
                 </div>
                 ${metodoLinha}
-                <div class="despesa-descricao">${catLinha}</div>
+                <div class="despesa-cat">${catChip}</div>
+                ${descLinha}
             </div>
             <div class="despesa-actions">${acoes}</div>
         </div>
@@ -242,7 +243,19 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
 /** Delegação de clique nas listas de transações */
 function onListaTransacaoClick(e) {
     const el = e.target.closest('[data-act]');
-    if (!el) return;
+    if (!el) {
+        // Clique em qualquer outra parte do box: expande/retrai
+        // (ignora cliques em controles como o checkbox "quitar")
+        if (e.target.closest('label, input, button, a')) return;
+        const item = e.target.closest('.despesa-item');
+        if (item && item.dataset.id) {
+            const idItem = Number(item.dataset.id);
+            const t = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
+                .find(x => x.id === idItem);
+            if (t) alternarExpandirTransacao(idItem);
+        }
+        return;
+    }
     const id = Number(el.dataset.id);
     const trans = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
         .find(t => t.id === id);

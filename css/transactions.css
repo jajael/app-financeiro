@@ -19,6 +19,7 @@
     border-left: 4px solid var(--secondary);
     border-radius: var(--radius-sm);
     transition: all var(--transition-normal);
+    cursor: pointer;   /* o box inteiro expande/retrai */
 }
 
 .despesa-item:hover {
@@ -90,10 +91,12 @@
     white-space: nowrap;
     vertical-align: middle;
 }
-.desc-extra {
-    margin-left: .4rem;
-    color: var(--text-muted);
+/* Box completo: uma coisa por linha */
+.despesa-cat { line-height: 1.3; }
+.despesa-desc-linha {
     font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    line-height: 1.35;
     word-break: break-word;
 }
 
