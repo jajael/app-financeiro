@@ -440,7 +440,7 @@ function cancelarEdicaoTransacao(voltarParaOrigem = true) {
     semanasMarcadas = new Set();
     limparFormulario();
     const btn = document.querySelector('.btn-submit');
-    if (btn) btn.textContent = 'Adicionar Lançamento';
+    if (btn) btn.textContent = 'Adicionar';
     const cancelar = document.getElementById('cancelarEdicao');
     if (cancelar) cancelar.hidden = true;
     // Cancelar pelo botão: volta para a tela onde o usuário estava

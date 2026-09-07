@@ -285,6 +285,8 @@ function limparFormulario() {
         const pv = document.getElementById('pagarVencimento');
         if (pv) pv.checked = false;
         if (typeof semanasMarcadas !== 'undefined') semanasMarcadas = new Set();
+        const btnSub = document.querySelector('.btn-submit');
+        if (btnSub && !estadoApp.editandoId) btnSub.textContent = 'Adicionar';
         if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
         if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
         if (typeof atualizarLabelsPorTipo === 'function') atualizarLabelsPorTipo();

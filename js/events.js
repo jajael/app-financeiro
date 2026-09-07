@@ -54,6 +54,13 @@ function configurarEventListeners() {
     const cancelar = document.getElementById('cancelarEdicao');
     if (cancelar) cancelar.addEventListener('click', cancelarEdicaoTransacao);
 
+    // Botão "×" do formulário: cancela a edição em curso ou apenas limpa
+    const btnLimparForm = document.getElementById('btnLimparForm');
+    if (btnLimparForm) btnLimparForm.addEventListener('click', () => {
+        if (estadoApp.editandoId) cancelarEdicaoTransacao();
+        else limparFormulario();
+    });
+
     // Campo Data: máscara dd/mm/aaaa + recalcular competência
     const dataInput = document.querySelector(SELECTORS.data);
     if (dataInput) {
