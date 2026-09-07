@@ -195,11 +195,14 @@ function preencherDropdownRecorrencias() {
     if (!sel) return;
     const atual = sel.value;
 
+    // O tipo "Mensal" aparece como "Conta" nas despesas
+    const ehDespesa = document.querySelector(SELECTORS.tipoTransacao)?.value === 'saidas';
+
     sel.innerHTML = '';
     ORDEM_RECORRENCIA.forEach(t => {
         const o = document.createElement('option');
         o.value = t;
-        o.textContent = t;
+        o.textContent = (t === 'Mensal' && ehDespesa) ? 'Conta' : t;
         sel.appendChild(o);
     });
     sel.value = ORDEM_RECORRENCIA.includes(atual) ? atual : 'Pontual';
