@@ -37,23 +37,24 @@ header.header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
 }
-/* Grupo "← Mês →" centralizado no espaço livre */
+/* Grupo "← Mês →" encostado à esquerda */
 .month-nav {
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: var(--spacing-sm);
     min-width: 0;
 }
-/* Toggle "Configurações" à direita */
+/* Toggle "Configurações" encostado à direita */
 .month-bar .month-btn--config {
     flex: 0 0 auto;
+    margin-left: auto;
     display: inline-flex;
     align-items: center;
     gap: .3rem;
     white-space: nowrap;
-    font-size: var(--font-size-sm);
+    font-size: 0.68rem;
 }
 .month-bar .current-month {
     font-weight: var(--font-weight-bold);
