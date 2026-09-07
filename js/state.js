@@ -27,7 +27,8 @@ let estadoApp = {
         categoriasDespesa: [],
         categoriasReceita: [],
         metodos: [],
-        recorrencias: []
+        recorrencias: [],
+        cores: { categoria: {}, metodo: {}, recorrencia: {} }
     },
 
     // Id da transação sendo editada (null = criando)
@@ -53,7 +54,7 @@ function resetarEstado() {
     estadoApp.transacoes.entradas = [];
     estadoApp.transacoes.saidas = [];
     estadoApp.resumo = { entradas: 0, saidas: 0, balanco: 0 };
-    estadoApp.menus = { categorias: [], categoriasDespesa: [], categoriasReceita: [], metodos: [], recorrencias: [] };
+    estadoApp.menus = { categorias: [], categoriasDespesa: [], categoriasReceita: [], metodos: [], recorrencias: [], cores: { categoria: {}, metodo: {}, recorrencia: {} } };
     estadoApp.erro = null;
 }
 

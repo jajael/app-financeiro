@@ -46,6 +46,27 @@ const CORES_CATEGORIAS = [
     '#F1948A', '#85C1E2', '#F8B195', '#C39BD3', '#F1948A'
 ];
 
+// Paleta dos "chips" (métodos / categorias / recorrências).
+// Se o item não tiver cor escolhida, sugere-se uma da paleta de forma estável pelo nome.
+const PALETA_CHIPS = [
+    '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16', '#22C55E',
+    '#10B981', '#14B8A6', '#06B6D4', '#0EA5E9', '#3B82F6', '#6366F1',
+    '#8B5CF6', '#A855F7', '#D946EF', '#EC4899', '#F43F5E', '#64748B'
+];
+
+/** Cor sugerida (estável) para um nome, quando o usuário não escolheu uma */
+function corPadraoChip(nome) {
+    let h = 0;
+    const s = String(nome || '');
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return PALETA_CHIPS[h % PALETA_CHIPS.length];
+}
+
+/** Cor efetiva de um item de menu (escolhida ou sugerida) */
+function corDoItemMenu(item) {
+    return (item && item.cor) || corPadraoChip(item && item.nome);
+}
+
 // Temas de cores para balanço
 const TEMAS_BALANCO = {
   negativo: {

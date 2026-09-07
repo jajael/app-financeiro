@@ -27,12 +27,14 @@ async function semearMenusPadraoSeVazio() {
         if (error) throw error;
         if (count && count > 0) return false;
 
-        // Recorrências são tipos fixos do sistema — não vão para o banco.
+        const cor = n => (typeof corPadraoChip === 'function' ? corPadraoChip(n) : null);
         const linhas = [
-            ...CATEGORIAS_DESPESA_SEED.map(nome => ({ tipo: 'Categoria', nome, categoria_tipo: 'saidas' })),
-            ...CATEGORIAS_RECEITA_SEED.map(nome => ({ tipo: 'Categoria', nome, categoria_tipo: 'entradas' })),
-            { tipo: 'Método', nome: 'Dinheiro', metodo_kind: 'Dinheiro' },
-            { tipo: 'Método', nome: 'PIX/Débito', metodo_kind: 'PIX/Débito' }
+            ...CATEGORIAS_DESPESA_SEED.map(nome => ({ tipo: 'Categoria', nome, categoria_tipo: 'saidas', cor: cor(nome) })),
+            ...CATEGORIAS_RECEITA_SEED.map(nome => ({ tipo: 'Categoria', nome, categoria_tipo: 'entradas', cor: cor(nome) })),
+            { tipo: 'Método', nome: 'Dinheiro', metodo_kind: 'Dinheiro', cor: cor('Dinheiro') },
+            { tipo: 'Método', nome: 'PIX/Débito', metodo_kind: 'PIX/Débito', cor: cor('PIX/Débito') },
+            // Recorrências: só guardam a cor do chip (o vocabulário é fixo no código)
+            ...RECORRENCIAS_KINDS.map(nome => ({ tipo: 'Recorrência', nome, cor: cor(nome) }))
         ];
         const { error: insErr } = await sb.from('menu_itens').insert(linhas);
         if (insErr) throw insErr;
@@ -44,6 +46,31 @@ async function semearMenusPadraoSeVazio() {
     }
 }
 
+let _recorrenciasGarantidas = false;
+/**
+ * Garante que existem linhas tipo='Recorrência' (uma por RECORRENCIAS_KINDS)
+ * para guardar a cor do chip. Para usuários antigos que não têm essas linhas.
+ */
+async function garantirRecorrenciasNoBanco() {
+    if (_recorrenciasGarantidas) return;
+    try {
+        const { data, error } = await sb.from('menu_itens')
+            .select('nome').eq('tipo', 'Recorrência');
+        if (error) throw error;
+        const existentes = new Set((data || []).map(r => r.nome));
+        const faltando = RECORRENCIAS_KINDS.filter(n => !existentes.has(n));
+        if (faltando.length) {
+            const cor = n => (typeof corPadraoChip === 'function' ? corPadraoChip(n) : null);
+            await sb.from('menu_itens').insert(
+                faltando.map(nome => ({ tipo: 'Recorrência', nome, cor: cor(nome) }))
+            );
+        }
+        _recorrenciasGarantidas = true;
+    } catch (e) {
+        console.error('Erro ao garantir recorrências no banco:', e);
+    }
+}
+
 function mapearItemMenu(row) {
     return {
         linha: row.id,
@@ -52,6 +79,7 @@ function mapearItemMenu(row) {
         nome: row.nome,
         descricao: row.descricao || '',
         status: row.status || 'Ativo',
+        cor: row.cor || null,
         categoriaTipo: row.categoria_tipo || null,   // 'saidas' | 'entradas' (só Categoria)
         metodoKind: row.metodo_kind || null,
         banco: row.banco || '',
@@ -72,6 +100,7 @@ function rotuloMetodo(item) {
  */
 async function carregarMenusCompleto() {
     try {
+        await garantirRecorrenciasNoBanco();
         const { data, error } = await sb
             .from('menu_itens')
             .select('*')

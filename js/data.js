@@ -125,6 +125,7 @@ async function carregarMenus() {
         estadoApp.menus.categoriasDespesa = menus.categoriasDespesa || [];
         estadoApp.menus.categoriasReceita = menus.categoriasReceita || [];
         estadoApp.menus.metodos = menus.metodos || [];
+        estadoApp.menus.cores = menus.cores || { categoria: {}, metodo: {}, recorrencia: {} };
         estadoApp.menus.recorrencias = menus.recorrencias || [];
 
         console.log('✓ Menus carregados:', estadoApp.menus);
