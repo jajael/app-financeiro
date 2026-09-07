@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Adicionar CSS das animações
     adicionarEstilosDinamicos();
 
+    // Tema claro/escuro
+    configurarTema();
+
     // Configurar event listeners
     configurarEventListeners();
 
@@ -49,6 +52,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 /**
  * Adiciona estilos dinâmicos necessários
  */
+/**
+ * Tema claro/escuro: lê a preferência salva, liga o botão do cabeçalho.
+ */
+function configurarTema() {
+    const btn = document.getElementById('btnTema');
+
+    const temaEfetivo = () => {
+        const attr = document.documentElement.dataset.theme;
+        if (attr === 'dark' || attr === 'light') return attr;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    };
+
+    const aplicar = (tema) => {
+        document.documentElement.dataset.theme = tema;
+        try { localStorage.setItem('tema', tema); } catch (e) {}
+        if (btn) btn.textContent = tema === 'dark' ? '☀️' : '🌙';
+    };
+
+    if (btn) {
+        btn.textContent = temaEfetivo() === 'dark' ? '☀️' : '🌙';
+        btn.addEventListener('click', () => aplicar(temaEfetivo() === 'dark' ? 'light' : 'dark'));
+    }
+}
+
 function adicionarEstilosDinamicos() {
     const css = `
         /* Animações */

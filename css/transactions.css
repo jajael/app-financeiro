@@ -210,27 +210,6 @@
     }
 }
 
-/* Modo dark */
-@media (prefers-color-scheme: dark) {
-    .despesa-item {
-        background: #2d2d2d;
-    }
-
-    .despesa-item:hover {
-        background: #3d3d3d;
-    }
-
-    .despesa-categoria {
-        color: #fff;
-    }
-
-    .despesa-descricao,
-    .despesa-meta,
-    .meta-item {
-        color: #aaa;
-    }
-}
-
 /* Ações por transação (editar / excluir) */
 .despesa-item { position: relative; }
 .despesa-actions {

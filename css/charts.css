@@ -233,23 +233,3 @@
     }
 }
 
-/* Modo dark */
-@media (prefers-color-scheme: dark) {
-    .chart-container {
-        background: #1a1a1a;
-        border-color: #333;
-    }
-
-    .category-item {
-        background: #2d2d2d;
-    }
-
-    .category-name,
-    .stat-value {
-        color: #fff;
-    }
-
-    .bar-track {
-        background: #333;
-    }
-}

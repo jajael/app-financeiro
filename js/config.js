@@ -51,19 +51,19 @@ const CORES_CATEGORIAS = [
 // Temas de cores para balanço
 const TEMAS_BALANCO = {
   negativo: {
-    bg: '#FEE2E2',
-    border: '#FECACA',
-    color: '#991B1B'
+    bg: 'var(--despesa-bg)',
+    border: 'var(--despesa-border)',
+    color: 'var(--despesa-text)'
   },
   positivo: {
-    bg: '#DCFCE7',
-    border: '#86EFAC',
-    color: '#166534'
+    bg: 'var(--receita-bg)',
+    border: 'var(--receita-border)',
+    color: 'var(--receita-text)'
   },
   neutro: {
-    bg: '#FEF3C7',
-    border: '#FCD34D',
-    color: '#B45309'
+    bg: 'var(--balanco-bg)',
+    border: 'var(--balanco-border)',
+    color: 'var(--balanco-text)'
   }
 };
 
