@@ -71,7 +71,10 @@
 
     /* Barra do mês: mais estreita p/ caber a engrenagem à direita */
     .month-bar { gap: var(--spacing-sm); }
-    .month-bar .current-month { min-width: 8rem; }
+    .month-bar .month-nav { gap: 0.4rem; }
+    .month-bar .current-month { min-width: 0; font-size: var(--font-size-sm); }
+    .month-bar .month-btn--config { font-size: 0.72rem; padding: 0.3rem 0.5rem; }
+    .month-bar .month-nav .month-btn { padding: 0.3rem 0.55rem; }
 
     /* Formulário */
     .form-transacao {

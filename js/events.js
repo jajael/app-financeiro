@@ -36,7 +36,17 @@ function configurarEventListeners() {
 
     // Engrenagem "Configuração" na barra do mês
     const btnConfig = document.getElementById('btnConfig');
-    if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus'));
+    if (btnConfig) btnConfig.addEventListener('click', () => {
+        const emConfig = document.querySelector('.tab-content.active')?.id === 'menus';
+        if (emConfig) {
+            // toggle: sai da Configuração e volta para a aba anterior
+            mudarAba(estadoApp.abaAntesConfig || 'entradas');
+        } else {
+            estadoApp.abaAntesConfig = document.querySelector('.tab-content.active')?.id || 'entradas';
+            mudarAba('menus');
+        }
+        btnConfig.setAttribute('aria-pressed', String(!emConfig));
+    });
 
     // Cards de Receitas/Despesas do dashboard abrem a aba correspondente
     document.querySelector('.summary-card.entradas')?.addEventListener('click', () => mudarAba('entradas'));
@@ -201,7 +211,8 @@ function mudarAba(novaAba) {
     // Adicionar classe active
     document.getElementById(novaAba)?.classList.add('active');
     document.querySelector(`[data-tab="${novaAba}"]`)?.classList.add('active');
-    
+    document.getElementById('btnConfig')?.setAttribute('aria-pressed', String(novaAba === 'menus'));
+
     // Ações específicas
     if (novaAba === 'saidas') {
         // Renderizar gráfico após pequeno delay
