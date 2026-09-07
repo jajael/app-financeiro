@@ -220,10 +220,6 @@ input.campo-travado,
 .notificacao { color: #fff; }
 
 /* ---------- Configuração (menus.css) ---------- */
-.menu-section {
-    background-color: var(--surface);
-    border: 1px solid var(--border);
-}
 .menu-item {
     background-color: var(--surface-2);
     border-color: var(--border);
@@ -302,9 +298,22 @@ input.campo-travado,
 .summary-card.balanco .amount, .summary-card.gasto-diario .amount { font-size: 1rem; }
 .summary-card.gasto-diario .sub { font-size: 0.6rem; margin: 0; opacity: .7; }
 .despesa-item { padding: 0.5rem 0.7rem; }
-.menu-section { padding: var(--spacing-md); }
+.menu-section { padding: 0; }
 
 /* Ritmo vertical padronizado entre os blocos: 1rem em todos */
 .dashboard { gap: var(--spacing-md); margin-bottom: var(--spacing-md); }
 .tabs { gap: var(--spacing-sm); margin-bottom: var(--spacing-md); }
 .tab-content { min-height: 0; }
+
+/* Arredondamento uniforme dos "boxes" */
+.summary-card,
+.tabs .tab-btn,
+.subtabs .subtab,
+#btnConfig,
+.cat-subgrupo,
+.menu-item,
+.rec-grupo,
+.despesa-item,
+.form-transacao,
+.transacoes-container,
+.proximas-container { border-radius: var(--radius); }

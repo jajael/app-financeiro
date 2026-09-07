@@ -39,9 +39,9 @@ async function carregarAbaMenus() {
     <div class="menus-gerenciamento">
 
       <div class="subtabs" role="tablist">
-        <button class="subtab active" data-sub="cat">📂 Categorias</button>
-        <button class="subtab" data-sub="met">💳 Métodos</button>
-        <button class="subtab" data-sub="rec">🔁 Recorrências</button>
+        <button class="subtab active" data-sub="cat">Categorias</button>
+        <button class="subtab" data-sub="met">Métodos</button>
+        <button class="subtab" data-sub="rec">Recorrências</button>
       </div>
 
       <div class="menu-section" data-sub="cat">

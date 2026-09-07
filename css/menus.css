@@ -4,7 +4,7 @@
  */
 
 .menus-gerenciamento {
-  padding: var(--spacing-md);
+  padding: 0;
 }
 
 /* Sub-abas: Categorias / Métodos / Recorrências */
@@ -15,16 +15,19 @@
   flex-wrap: wrap;
 }
 .subtabs .subtab {
-  flex: 1 1 auto;
-  padding: 0.5rem 0.9rem;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.45rem 0.4rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text-muted);
   font-weight: 600;
-  font-size: var(--font-size-sm);
+  font-size: 0.78rem;
   cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .subtabs .subtab.active {
   background: var(--primary);
@@ -32,13 +35,13 @@
   border-color: var(--primary);
 }
 
+/* Sem painel externo: as sub-seções da Configuração alinham com o resto */
 .menu-section {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  box-shadow: var(--shadow-sm);
-  animation: fadeIn 0.3s ease-in-out;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 .menu-section h3 {
