@@ -43,18 +43,20 @@ async function carregarAbaMenus() {
       </div>
 
       <div class="menu-section" data-sub="cat">
-        <div class="cat-subgrupo">
-          <h4>📤 Categorias de despesa
-            <button type="button" class="h3-add" onclick="abrirNovaCategoria('saidas')" title="Nova categoria de despesa">+</button>
-          </h4>
+        <details class="cat-subgrupo">
+          <summary>
+            <span class="cat-subgrupo-titulo">📤 Categorias de despesa</span>
+            <button type="button" class="h3-add" onclick="event.preventDefault();event.stopPropagation();abrirNovaCategoria('saidas')" title="Nova categoria de despesa">+</button>
+          </summary>
           <div class="menu-list" id="categoriasDespesaList"></div>
-        </div>
-        <div class="cat-subgrupo">
-          <h4>📥 Categorias de receita
-            <button type="button" class="h3-add" onclick="abrirNovaCategoria('entradas')" title="Nova categoria de receita">+</button>
-          </h4>
+        </details>
+        <details class="cat-subgrupo">
+          <summary>
+            <span class="cat-subgrupo-titulo">📥 Categorias de receita</span>
+            <button type="button" class="h3-add" onclick="event.preventDefault();event.stopPropagation();abrirNovaCategoria('entradas')" title="Nova categoria de receita">+</button>
+          </summary>
           <div class="menu-list" id="categoriasReceitaList"></div>
-        </div>
+        </details>
       </div>
 
       <div class="menu-section" data-sub="met" hidden>
@@ -236,14 +238,14 @@ function abrirEdicaoInline(row, id, tipo) {
   const ehCredito = item.metodoKind === 'Crédito';
   row.innerHTML = `
     <div class="item-edit">
-      <div class="campo"><label>Banco</label>
+      <div class="campo"><label>Banco ${ehCredito ? '' : '<span class="opt">(opcional)</span>'}</label>
         <input type="text" class="edt-banco" value="${esc(item.banco)}"></div>
       ${ehCredito ? `
-        <div class="campo"><label>Fechamento (dia)</label>
-          <input type="text" class="edt-fech" inputmode="numeric" maxlength="2" value="${item.diaFechamento || ''}"></div>
         <div class="campo"><label>Vencimento (dia)</label>
           <input type="text" class="edt-venc" inputmode="numeric" maxlength="2" value="${item.diaVencimento || ''}"></div>
-        <div class="campo"><label>Melhor dia</label>
+        <div class="campo"><label>Fechamento (dia) <span class="opt">(opcional)</span></label>
+          <input type="text" class="edt-fech" inputmode="numeric" maxlength="2" value="${item.diaFechamento || ''}"></div>
+        <div class="campo"><label>Melhor dia <span class="opt">(opcional)</span></label>
           <input type="text" class="edt-melhor" inputmode="numeric" maxlength="2" value="${item.melhorDiaCompra || ''}"></div>
       ` : ''}
       <div class="item-edit-acoes">
@@ -256,17 +258,19 @@ function abrirEdicaoInline(row, id, tipo) {
     inp.addEventListener('input', () => soNumeros(inp, 2)));
   row.querySelector('.edt-salvar').onclick = async () => {
     const banco = row.querySelector('.edt-banco').value.trim();
-    if (!banco) return mostrarNotificacao('Informe o banco', 'info');
-    const campos = { banco, nome: `${item.metodoKind} — ${banco}` };
+    if (ehCredito && !banco) return mostrarNotificacao('Informe o banco', 'info');
+    const campos = { banco, nome: banco ? `${item.metodoKind} — ${banco}` : item.metodoKind };
     if (ehCredito) {
-      const fech = parseInt(row.querySelector('.edt-fech').value, 10);
+      const fechRaw = row.querySelector('.edt-fech').value.trim();
+      const fech = parseInt(fechRaw, 10);
       const venc = parseInt(row.querySelector('.edt-venc').value, 10);
       const melhorIn = parseInt(row.querySelector('.edt-melhor').value, 10);
-      if (!(fech >= 1 && fech <= 31)) return mostrarNotificacao('Fechamento inválido', 'erro');
       if (!(venc >= 1 && venc <= 31)) return mostrarNotificacao('Vencimento inválido', 'erro');
-      campos.dia_fechamento = fech;
+      const temFech = fech >= 1 && fech <= 31;
+      if (fechRaw && !temFech) return mostrarNotificacao('Fechamento inválido', 'erro');
       campos.dia_vencimento = venc;
-      campos.melhor_dia_compra = melhorIn || sugerirMelhorDiaCompra(fech) || null;
+      campos.dia_fechamento = temFech ? fech : null;
+      campos.melhor_dia_compra = melhorIn || (temFech ? sugerirMelhorDiaCompra(fech) : null) || null;
     }
     if (await editarItemMenuAPI(id, campos)) recarregarMenus();
   };

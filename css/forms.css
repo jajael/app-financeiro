@@ -106,7 +106,7 @@
     padding: 0.5rem 0.7rem;
     border: 1px solid var(--light);
     border-radius: var(--radius-sm);
-    font-size: 0.92rem;
+    font-size: 0.82rem;
     transition: all var(--transition-normal);
     font-family: var(--font-family);
     background: white;
@@ -281,7 +281,7 @@
     .form-group select,
     .form-group textarea {
         padding: 0.5rem 0.7rem;
-        font-size: 16px;   /* evita zoom no iOS ao focar */
+        font-size: 0.85rem;
     }
 
     .btn-submit {
@@ -419,10 +419,10 @@
 .dialogo-corpo { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1rem; }
 .dialogo-corpo input,
 .dialogo-corpo select {
-  padding: .55rem .7rem;
+  padding: .5rem .7rem;
   border: 1px solid #D1D5DB;
   border-radius: 8px;
-  font-size: .95rem;
+  font-size: .85rem;
   width: 100%;
 }
 .dialogo-corpo .dialogo-linha { display: flex; gap: .4rem; flex-wrap: wrap; }
