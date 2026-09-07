@@ -6,7 +6,7 @@
 // Tipos de recorrência: fixos, não editáveis. Só descrição.
 const RECORRENCIAS_INFO = [
   ['Pontual', 'Acontece uma única vez, sem repetição.'],
-  ['Mensal / Conta', 'Repete todo mês no dia informado. Despesa ("Conta"): você define a data do pagamento e o dia do vencimento; marcando "pagar no vencimento" a data trava no vencimento. Receita: a data é automática, no próximo dia útil.'],
+  ['Mensal / Conta', 'Repete todo mês no dia informado, ajustado para o dia útil mais próximo.'],
   ['Parcelada', 'Divide o valor em parcelas mensais — uma transação por mês, cada uma na sua competência. Na receita, cada parcela cai no próximo dia útil.'],
   ['Primeiro dia útil do mês', 'Apenas receitas. Informe a competência (mm/aaaa); a data sai no primeiro dia útil desse mês. Marque "mês anterior" para antecipar.'],
   ['Até o 5º dia útil do mês', 'Apenas receitas. Data no 5º dia útil da competência; fica pendente de OK e se confirma sozinho nessa data. Pode antecipar para o mês anterior.'],
@@ -121,6 +121,15 @@ function renderizarItemsMenu(tipo, containerId, itens) {
     return;
   }
 
+  // Métodos: ordem fixa Dinheiro -> PIX/Débito -> Crédito (depois por nome)
+  if (tipo === 'Método') {
+    const rank = m => (m.metodoKind === 'Dinheiro' || m.nome === 'Dinheiro') ? 0
+      : m.metodoKind === 'PIX/Débito' ? 1
+      : m.metodoKind === 'Crédito' ? 2 : 3;
+    itens = [...itens].sort((a, b) =>
+      rank(a) - rank(b) || String(a.nome).localeCompare(String(b.nome), 'pt-BR'));
+  }
+
   container.innerHTML = itens.map(item => {
     const statusClass = item.status === 'Ativo' ? 'ativo' : 'inativo';
     const statusLabel = item.status === 'Ativo' ? '✓ Ativo' : '✗ Inativo';
@@ -130,13 +139,16 @@ function renderizarItemsMenu(tipo, containerId, itens) {
     if (tipo === 'Categoria') {
       sub = item.descricao || '';
     } else if (tipo === 'Método') {
-      titulo = rotuloMetodo(item);
       if (item.metodoKind === 'Crédito') {
-        sub = `fecha dia ${item.diaFechamento || '?'} · vence dia ${item.diaVencimento || '?'}`
-            + (item.melhorDiaCompra ? ` · melhor compra dia ${item.melhorDiaCompra}` : '');
+        titulo = `Crédito - ${item.banco || '?'}`;
+        const linha2 = [`Vira ${item.diaFechamento || '?'}`];
+        if (item.melhorDiaCompra) linha2.push(`Melhor dia ${item.melhorDiaCompra}`);
+        sub = `Vcto ${item.diaVencimento || '?'}<br>${linha2.join(' · ')}`;
       } else if (item.metodoKind === 'PIX/Débito') {
-        sub = item.banco ? `banco: ${item.banco}` : 'PIX/Débito';
+        titulo = item.banco || 'PIX/Débito';
+        sub = item.banco ? 'PIX/Débito' : '';
       } else {
+        titulo = 'Dinheiro';
         sub = 'dinheiro';
       }
     }
