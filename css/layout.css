@@ -65,6 +65,13 @@ header.header {
     text-align: center;
     white-space: nowrap;
 }
+.current-month .mes-curto { display: none; }
+/* Telas muito estreitas: "SET/2026" no lugar de "Setembro de 2026" */
+@media (max-width: 360px) {
+    .current-month .mes-full { display: none; }
+    .current-month .mes-curto { display: inline; }
+    .month-bar .current-month { min-width: 0; }
+}
 .month-bar .month-btn {
     background: var(--surface-2);
     color: var(--text);

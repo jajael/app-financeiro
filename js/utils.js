@@ -236,6 +236,12 @@ function obterMesAnoFormatado(data) {
     return mesFormatado.charAt(0).toUpperCase() + mesFormatado.slice(1);
 }
 
+/** Versão curta: "SET/2026" (para telas muito estreitas) */
+function obterMesAnoCurto(data) {
+    const m = data.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase();
+    return `${m}/${data.getFullYear()}`;
+}
+
 /**
  * Debounce para evitar múltiplas chamadas
  */

@@ -17,6 +17,7 @@ const RECORRENCIAS_INFO = [
 
 let menusAtual = null; // cache dos itens carregados (para edição inline)
 let subConfigAtiva = 'cat'; // sub-aba selecionada na Configuração
+let subConfigAnterior = null; // para o comportamento de toggle
 
 /** Recarrega a aba de configuração e, em seguida, os dropdowns do formulário */
 async function recarregarMenus() {
@@ -108,6 +109,7 @@ async function carregarAbaMenus() {
 }
 
 function mostrarSubConfig(sub) {
+  if (sub !== subConfigAtiva) subConfigAnterior = subConfigAtiva;
   subConfigAtiva = sub;
   document.querySelectorAll('.menus-gerenciamento .subtab').forEach(b =>
     b.classList.toggle('active', b.dataset.sub === sub));
@@ -122,7 +124,14 @@ function configurarSubtabsConfig() {
   if (!barra) return;
   barra.addEventListener('click', e => {
     const btn = e.target.closest('.subtab');
-    if (btn) mostrarSubConfig(btn.dataset.sub);
+    if (!btn) return;
+    let sub = btn.dataset.sub;
+    // toggle: clicar na sub-aba já ativa volta para a anterior
+    if (sub === subConfigAtiva) {
+      if (subConfigAnterior && subConfigAnterior !== sub) sub = subConfigAnterior;
+      else return;
+    }
+    mostrarSubConfig(sub);
   });
 }
 

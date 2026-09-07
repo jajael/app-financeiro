@@ -42,23 +42,16 @@ function configurarEventListeners() {
         });
     });
 
-    // Engrenagem "Configuração" na barra do mês
+    // Engrenagem "Configuração" na barra do mês (toggle tratado em mudarAba)
     const btnConfig = document.getElementById('btnConfig');
-    if (btnConfig) btnConfig.addEventListener('click', () => {
-        const emConfig = document.querySelector('.tab-content.active')?.id === 'menus';
-        if (emConfig) {
-            // toggle: sai da Configuração e volta para a aba anterior
-            mudarAba(estadoApp.abaAntesConfig || 'entradas');
-        } else {
-            estadoApp.abaAntesConfig = document.querySelector('.tab-content.active')?.id || 'entradas';
-            mudarAba('menus');
-        }
-        btnConfig.setAttribute('aria-pressed', String(!emConfig));
-    });
+    if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus'));
 
-    // Cards de Receitas/Despesas do dashboard abrem a aba correspondente
-    document.querySelector('.summary-card.entradas')?.addEventListener('click', () => mudarAba('entradas'));
-    document.querySelector('.summary-card.saidas')?.addEventListener('click', () => mudarAba('saidas'));
+    // Cards de Receitas/Despesas do dashboard abrem a aba correspondente (sem toggle)
+    const abrirAba = alvo => {
+        if (document.querySelector('.tab-content.active')?.id !== alvo) mudarAba(alvo);
+    };
+    document.querySelector('.summary-card.entradas')?.addEventListener('click', () => abrirAba('entradas'));
+    document.querySelector('.summary-card.saidas')?.addEventListener('click', () => abrirAba('saidas'));
     
     // Formulário
     const form = document.querySelector(SELECTORS.formTransacao);
@@ -211,13 +204,19 @@ function mudarTipoTransacao(tipo) {
  * Muda aba ativa
  */
 function mudarAba(novaAba) {
-    console.log(`📑 Mudando para aba: ${novaAba}`);
+    const ativa = document.querySelector('.tab-content.active')?.id;
 
-    // Lembra a última aba que não seja o formulário (para o "×" voltar)
-    const ativa = document.querySelector('.tab-btn.active, #btnConfig.active')?.dataset.tab;
-    if (ativa && ativa !== 'adicionar' && novaAba === 'adicionar') {
-        estadoApp.abaAnterior = ativa;
+    // Todos os botões do menu funcionam como toggle: clicar na aba já ativa
+    // volta para a aba anterior.
+    if (novaAba === ativa) {
+        if (estadoApp.abaAnterior && estadoApp.abaAnterior !== ativa) {
+            novaAba = estadoApp.abaAnterior;
+        } else {
+            return;
+        }
     }
+    if (ativa && ativa !== novaAba) estadoApp.abaAnterior = ativa;
+    console.log(`📑 Mudando para aba: ${novaAba}`);
 
     // Remover classe active
     document.querySelectorAll('.tab-content').forEach(tab => {
