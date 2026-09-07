@@ -507,6 +507,80 @@ function atualizarLabelsPorTipo() {
     if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
 }
 
+/** Diálogo rápido para criar uma categoria a partir do formulário */
+function abrirNovaCategoria() {
+    mostrarDialogo({
+        titulo: 'Nova categoria',
+        corpoHTML: `
+            <input type="text" id="dlgCatNome" placeholder="Nome da categoria" autocomplete="off">
+            <input type="text" id="dlgCatDesc" placeholder="Descrição (opcional)" autocomplete="off">`,
+        acoes: [
+            { label: 'Cancelar' },
+            { label: 'Adicionar', primario: true, onClick: async (ov) => {
+                const nome = ov.querySelector('#dlgCatNome').value.trim();
+                if (!nome) { mostrarNotificacao('Informe o nome', 'info'); return true; }
+                const ok = await adicionarItemMenuAPI('Categoria', nome, { descricao: ov.querySelector('#dlgCatDesc').value.trim() });
+                if (!ok) return true;
+                await carregarMenus();
+                const sel = document.querySelector(SELECTORS.categoria);
+                if (sel) sel.value = nome;
+            } }
+        ]
+    });
+}
+
+/** Diálogo rápido para criar um método a partir do formulário */
+function abrirNovoMetodo() {
+    const ov = mostrarDialogo({
+        titulo: 'Novo método',
+        corpoHTML: `
+            <select id="dlgMetKind">
+                <option value="">Tipo...</option>
+                <option value="PIX/Débito">PIX/Débito</option>
+                <option value="Crédito">Crédito</option>
+            </select>
+            <input type="text" id="dlgMetBanco" placeholder="Banco" autocomplete="off">
+            <div id="dlgMetCartao" class="dialogo-linha" hidden>
+                <input type="text" id="dlgMetFech" inputmode="numeric" maxlength="2" placeholder="Fechamento">
+                <input type="text" id="dlgMetVenc" inputmode="numeric" maxlength="2" placeholder="Vencimento">
+                <input type="text" id="dlgMetMelhor" inputmode="numeric" maxlength="2" placeholder="Melhor dia">
+            </div>`,
+        acoes: [
+            { label: 'Cancelar' },
+            { label: 'Adicionar', primario: true, onClick: async (o) => {
+                const kind = o.querySelector('#dlgMetKind').value;
+                const banco = o.querySelector('#dlgMetBanco').value.trim();
+                if (!kind) { mostrarNotificacao('Escolha o tipo', 'info'); return true; }
+                if (!banco) { mostrarNotificacao('Informe o banco', 'info'); return true; }
+                const extra = { metodo_kind: kind, banco };
+                const nome = `${kind} — ${banco}`;
+                if (kind === 'Crédito') {
+                    const fech = parseInt(o.querySelector('#dlgMetFech').value, 10);
+                    const venc = parseInt(o.querySelector('#dlgMetVenc').value, 10);
+                    const melhor = parseInt(o.querySelector('#dlgMetMelhor').value, 10) || sugerirMelhorDiaCompra(fech) || null;
+                    if (!(fech >= 1 && fech <= 31)) { mostrarNotificacao('Fechamento inválido', 'erro'); return true; }
+                    if (!(venc >= 1 && venc <= 31)) { mostrarNotificacao('Vencimento inválido', 'erro'); return true; }
+                    extra.dia_fechamento = fech;
+                    extra.dia_vencimento = venc;
+                    extra.melhor_dia_compra = melhor;
+                }
+                const ok = await adicionarItemMenuAPI('Método', nome, extra);
+                if (!ok) return true;
+                await carregarMenus();
+                const sel = document.querySelector(SELECTORS.metodo);
+                if (sel) sel.value = nome;
+                if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();
+            } }
+        ]
+    });
+    const kindSel = ov.querySelector('#dlgMetKind');
+    kindSel.addEventListener('change', () => {
+        ov.querySelector('#dlgMetCartao').hidden = kindSel.value !== 'Crédito';
+    });
+    ov.querySelectorAll('input[inputmode="numeric"]').forEach(inp =>
+        inp.addEventListener('input', () => soNumeros(inp, 2)));
+}
+
 /**
  * Quando "pagar no vencimento" está marcado, a data do lançamento fica igual à
  * data de vencimento (dia informado, na competência atual) e o campo Data trava.

@@ -129,25 +129,34 @@ function soNumeros(input, max) {
  * Diálogo modal simples (sem alert/confirm nativos).
  * @param {{titulo?:string, texto:string, acoes?:Array<{label:string, primario?:boolean, onClick?:Function}>}}
  */
-function mostrarDialogo({ titulo, texto, acoes }) {
+function mostrarDialogo({ titulo, texto, corpoHTML, acoes }) {
     const ov = document.createElement('div');
     ov.className = 'dialogo-overlay';
     ov.innerHTML = `
         <div class="dialogo">
             ${titulo ? `<h3>${titulo}</h3>` : ''}
-            <p>${texto}</p>
+            ${texto ? `<p>${texto}</p>` : ''}
+            ${corpoHTML ? `<div class="dialogo-corpo">${corpoHTML}</div>` : ''}
             <div class="dialogo-acoes"></div>
         </div>`;
+    const fechar = () => ov.remove();
     const box = ov.querySelector('.dialogo-acoes');
     (acoes && acoes.length ? acoes : [{ label: 'OK' }]).forEach(a => {
         const b = document.createElement('button');
         b.textContent = a.label;
         b.className = a.primario ? 'btn-add' : 'btn-cancelar';
-        b.onclick = () => { ov.remove(); if (a.onClick) a.onClick(); };
+        b.onclick = async () => {
+            // onClick recebe (ov, fechar); se retornar true, mantém o diálogo aberto
+            const manter = a.onClick ? await a.onClick(ov, fechar) : false;
+            if (manter !== true) fechar();
+        };
         box.appendChild(b);
     });
-    ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+    ov.addEventListener('click', e => { if (e.target === ov) fechar(); });
     document.body.appendChild(ov);
+    const primeiro = ov.querySelector('.dialogo-corpo input, .dialogo-corpo select');
+    if (primeiro) primeiro.focus();
+    return ov;
 }
 
 /** Máscara mm/aaaa */

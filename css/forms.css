@@ -413,3 +413,33 @@
   border-color: #E5E7EB;
   cursor: not-allowed;
 }
+
+/* Select com botão "+" ao lado (criar categoria/método no lançamento) */
+.campo-com-add { display: flex; gap: .4rem; align-items: stretch; }
+.campo-com-add select { flex: 1; min-width: 0; }
+.btn-mini-add {
+  flex: 0 0 auto;
+  width: 2.4rem;
+  border: 2px solid var(--light);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--primary);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+}
+.btn-mini-add:hover { background: var(--light); }
+
+/* Corpo de formulário dentro de mostrarDialogo() */
+.dialogo-corpo { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1rem; }
+.dialogo-corpo input,
+.dialogo-corpo select {
+  padding: .55rem .7rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: .95rem;
+  width: 100%;
+}
+.dialogo-corpo .dialogo-linha { display: flex; gap: .4rem; flex-wrap: wrap; }
+.dialogo-corpo .dialogo-linha input { flex: 1 1 6rem; }

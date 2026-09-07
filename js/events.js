@@ -84,6 +84,12 @@ function configurarEventListeners() {
     const pagarVenc = document.getElementById('pagarVencimento');
     if (pagarVenc) pagarVenc.addEventListener('change', aplicarPagarVencimento);
 
+    // Botões "+" para criar categoria/método sem sair do lançamento
+    const btnCat = document.getElementById('btnNovaCategoria');
+    if (btnCat) btnCat.addEventListener('click', abrirNovaCategoria);
+    const btnMet = document.getElementById('btnNovoMetodo');
+    if (btnMet) btnMet.addEventListener('click', abrirNovoMetodo);
+
     // Semanal: dia da semana -> refaz as chips; valor -> atualiza o resumo X/Y
     const diaSem = document.getElementById('diaSemana');
     if (diaSem) diaSem.addEventListener('change', atualizarCamposRecorrencia);
