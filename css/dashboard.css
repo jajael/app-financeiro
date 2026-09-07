@@ -206,12 +206,28 @@
 /* ============ Resumo compacto fixo (aparece ao rolar) ============ */
 .mini-resumo {
   display: flex;
+  flex-wrap: wrap;
   gap: .35rem;
   padding: .45rem .55rem;
   background: var(--surface);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
+
+/* 2ª linha: "+ Lançamento" ocupando a largura inteira */
+.mini-lancamento {
+  flex: 0 0 100%;
+  order: 2;
+  padding: .4rem;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-xs);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+.mini-lancamento .tab-mais { color: #FFD54A; font-weight: 800; margin-right: .15rem; }
 .mini-box {
   flex: 1 1 0;
   min-width: 0;
