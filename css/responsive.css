@@ -92,16 +92,16 @@
         flex: 1;
     }
 
-    /* Transações */
+    /* Transações: dia+valor / método / descrição, ações à direita */
     .despesa-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-md);
+        flex-direction: row;
+        align-items: center;
+        gap: var(--spacing-sm);
     }
 
     .despesa-valor {
-        width: 100%;
-        text-align: left;
+        width: auto;
+        text-align: right;
     }
 
     /* Gráficos */
@@ -236,12 +236,6 @@
     .recorrencia-badge {
         font-size: 0.7rem;
         padding: 0.15rem 0.3rem;
-    }
-
-    .despesa-meta {
-        flex-direction: column;
-        gap: var(--spacing-sm);
-        font-size: 0.75rem;
     }
 
     .despesa-descricao {
