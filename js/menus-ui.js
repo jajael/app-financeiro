@@ -8,8 +8,9 @@ const RECORRENCIAS_INFO = [
   ['Pontual', 'Acontece uma única vez, sem repetição.'],
   ['Conta', 'Repete todo mês no dia de vencimento informado, ajustado para o dia útil mais próximo.'],
   ['Parcelada', 'Divide o valor em parcelas mensais — uma transação por mês, cada uma na sua competência.'],
-  ['Último dia útil do mês', 'Vence sempre no último dia útil de cada mês (data calculada automaticamente).'],
   ['Primeiro dia útil do mês', 'Vence sempre no primeiro dia útil de cada mês (data calculada automaticamente).'],
+  ['Até o 5º dia útil do mês', 'Fica pendente de OK; se você não confirmar, é confirmado automaticamente no 5º dia útil do mês.'],
+  ['Último dia útil do mês', 'Vence sempre no último dia útil de cada mês (data calculada automaticamente).'],
   ['Semanal', 'Repete a cada 7 dias. Pode fixar um dia da semana ou deixar sem dia fixo.']
 ];
 

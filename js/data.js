@@ -12,8 +12,13 @@ async function carregarDados() {
     try {
         const mes = estadoApp.mesAtual.getMonth() + 1;
         const ano = estadoApp.mesAtual.getFullYear();
-        
+
         console.log(`📊 Carregando dados de ${mes}/${ano}...`);
+
+        // Auto-confirma "Até o 5º dia útil do mês" cujo prazo já passou
+        if (typeof autoConfirmarVencidos === 'function') {
+            try { await autoConfirmarVencidos(); } catch (e) { console.warn('autoConfirmar:', e); }
+        }
         
         // Carregar entradas
         const entradas = await carregarTransacoes('entradas', mes, ano);
@@ -180,7 +185,7 @@ function preencherDropdownMetodos() {
 
 // Ordem preferida de exibição dos tipos de recorrência
 const ORDEM_RECORRENCIA = ['Pontual', 'Conta', 'Parcelada',
-    'Último dia útil do mês', 'Primeiro dia útil do mês', 'Semanal'];
+    'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês', 'Semanal'];
 
 /**
  * Preenche o dropdown de recorrência. Tipos fixos do sistema (todos sempre).
