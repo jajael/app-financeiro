@@ -218,10 +218,10 @@ function montarRegistro(dados) {
         reg.valor = semanas.filter(d => d <= hoje).length * vs;       // X
     }
 
-    // "Até o 5º dia útil do mês": a data é sempre o 5º dia útil da competência
-    if (tipoRecorrencia === 'Até o 5º dia útil do mês') {
-        const c = parseDataLocal(reg.competencia);
-        reg.data = formatarDataISO(nthDiaUtilDoMes(c.getFullYear(), c.getMonth(), 5));
+    // "Dia útil fixo": a data sai da competência (opcionalmente antecipada p/ mês anterior)
+    if (RECORRENCIA_DIA_UTIL.includes(tipoRecorrencia) && reg.competencia) {
+        const antecipar = anteciparDeLinha(reg.data, reg.competencia);
+        reg.data = dataDiaUtilPorCompetencia(reg.competencia, tipoRecorrencia, antecipar);
         reg.proxima_data = calcularProximaData(reg.data, tipoRecorrencia);
     }
     return reg;
@@ -283,6 +283,14 @@ function ocorrenciaSeguinte(row, novaData) {
         pendente: true
     };
 
+    // "Dia útil fixo": avança a competência 1 mês e recalcula a data, mantendo a antecipação
+    if (RECORRENCIA_DIA_UTIL.includes(row.tipo_recorrencia) && row.competencia) {
+        const antecipar = anteciparDeLinha(row.data, row.competencia);
+        const proxComp = addMeses(row.competencia, 1);
+        base.competencia = proxComp;
+        base.data = dataDiaUtilPorCompetencia(proxComp, row.tipo_recorrencia, antecipar);
+    }
+
     // Semanal: o mês seguinte vem com TODAS as suas ocorrências marcadas (nada passou ainda)
     if (row.tipo_recorrencia === 'Semanal' && row.dia_semana != null && row.valor_sessao != null) {
         const d = parseDataLocal(novaData);
@@ -320,16 +328,14 @@ async function adicionarRecorrenteAPI(dados) {
 async function autoConfirmarVencidos() {
     for (let i = 0; i < 24; i++) {
         const { data: pend, error } = await sb.from('transacoes')
-            .select('id, competencia')
+            .select('id, data')
             .eq('tipo_recorrencia', AUTO_CONFIRMA)
             .eq('pendente', true);
         if (error || !pend || !pend.length) return;
 
         const hoje = hojeISO();
-        const vencidas = pend.filter(p => {
-            const [y, m] = p.competencia.slice(0, 7).split('-').map(Number);
-            return formatarDataISO(nthDiaUtilDoMes(y, m - 1, 5)) <= hoje;
-        });
+        // A própria data já é o 5º dia útil alvo (antecipado ou não)
+        const vencidas = pend.filter(p => p.data && p.data <= hoje);
         if (!vencidas.length) return;
 
         for (const p of vencidas) await confirmarPendenteAPI(p.id);

@@ -174,7 +174,10 @@
                             </select>
                         </div>
                         <div class="form-group" id="dataCalculadaGroup" hidden>
-                            <label for="dataCalculada">Data (automática):</label>
+                            <label for="compRecorrente">Competência (mm/aaaa):</label>
+                            <input type="text" id="compRecorrente" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
+                            <label class="inline-check"><input type="checkbox" id="anteciparMesAnterior"> <span id="anteciparLabel">pagar no mês anterior</span></label>
+                            <label for="dataCalculada" class="rotulo-secundario">Data (automática):</label>
                             <input type="text" id="dataCalculada" class="campo-travado" readonly tabindex="-1">
                         </div>
                     </div>
@@ -188,7 +191,7 @@
 
                     <!-- 2) Data e valor -->
                     <div class="form-row">
-                        <div class="form-group">
+                        <div class="form-group" id="dataGroup">
                             <label for="data">Data:</label>
                             <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
                         </div>

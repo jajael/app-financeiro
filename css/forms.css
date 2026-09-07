@@ -315,6 +315,9 @@
 }
 .inline-check input { width: auto; }
 
+/* 2º rótulo dentro do mesmo form-group (ex.: "Data (automática)") */
+.rotulo-secundario { margin-top: .5rem; }
+
 /* add-item-form: campos empilhados com label externo (design de Categorias) */
 .add-item-form {
     display: flex;

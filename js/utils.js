@@ -72,6 +72,11 @@ function validarFormularioTransacao(dados) {
         return { valido: false, erro: 'Informe a competência (mm/aaaa)' };
     }
 
+    if (typeof RECORRENCIA_DIA_UTIL !== 'undefined'
+        && RECORRENCIA_DIA_UTIL.includes(dados.tipoRecorrencia) && !dados.competencia) {
+        return { valido: false, erro: 'Informe a competência (mm/aaaa)' };
+    }
+
     if ((dados.tipoRecorrencia === 'Mensal' || dados.tipoRecorrencia === 'Parcelada')
         && !(parseInt(dados.diaRecorrencia, 10) >= 1 && parseInt(dados.diaRecorrencia, 10) <= 31)) {
         return { valido: false, erro: 'Informe o dia de vencimento (1-31)' };
@@ -280,6 +285,13 @@ function obterDadosFormulario() {
     const tipoRecorrencia = document.querySelector(SELECTORS.tipoRecorrencia).value;
     const diaRecorrencia = document.getElementById('diaRecorrencia')?.value || '';
 
+    // "Dia útil fixo": competência vem do próprio grupo; senão, do campo de Crédito
+    const ehDiaUtil = typeof RECORRENCIA_DIA_UTIL !== 'undefined'
+        && RECORRENCIA_DIA_UTIL.includes(tipoRecorrencia);
+    const compBR = ehDiaUtil
+        ? (document.getElementById('compRecorrente')?.value || '')
+        : (document.getElementById('competencia')?.value || '');
+
     return {
         tipo: document.querySelector(SELECTORS.tipoTransacao).value,
         data: parseDataBR(document.querySelector(SELECTORS.data).value),
@@ -294,7 +306,7 @@ function obterDadosFormulario() {
         semanas: typeof semanasMarcadas !== 'undefined' ? [...semanasMarcadas].sort() : [],
         valorSessao: parseFloat(document.querySelector(SELECTORS.valor).value) || 0,
         parcelas: parseInt(document.getElementById('parcelas')?.value, 10) || 1,
-        competencia: parseCompetencia(document.getElementById('competencia')?.value || ''),
+        competencia: parseCompetencia(compBR),
         descricao: document.querySelector(SELECTORS.descricao).value
     };
 }
