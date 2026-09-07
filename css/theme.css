@@ -33,7 +33,6 @@ footer.footer {
 .transacoes-container,
 .proximas-container,
 .analise-container,
-.menus-container,
 .menu-item,
 .despesa-item,
 .dialogo,
@@ -44,6 +43,8 @@ footer.footer {
     color: var(--text);
     border-color: var(--border);
 }
+
+.menus-container { background: transparent; color: var(--text); }
 
 .despesa-item:hover,
 .menu-item:hover,
@@ -150,3 +151,38 @@ input.campo-travado,
 
 /* ---------- Notificação (mostrarNotificacao usa cor inline; ok) ---------- */
 .notificacao { color: #fff; }
+
+/* ---------- Configuração (menus.css) ---------- */
+.menu-section {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+}
+.menu-item {
+    background-color: var(--surface-2);
+    border-color: var(--border);
+}
+.menu-item.inativo { border-left-color: var(--border-strong); }
+.menu-item:hover { background-color: var(--surface-3); }
+.item-nome { color: var(--text); }
+.item-descricao,
+.item-status,
+.menus-gerenciamento .empty-text,
+.menu-hint { color: var(--text-muted); }
+
+.add-item-form {
+    background-color: var(--surface-2);
+    border: 1px dashed var(--border-strong);
+}
+.add-item-form input,
+.add-item-form select {
+    background-color: var(--surface);
+    color: var(--text);
+    border-color: var(--border-strong);
+}
+.add-item-form input::placeholder { color: var(--text-muted); }
+
+.item-edit input {
+    background-color: var(--surface);
+    color: var(--text);
+    border-color: var(--border-strong);
+}
