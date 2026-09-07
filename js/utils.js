@@ -144,7 +144,7 @@ function mostrarDialogo({ titulo, texto, corpoHTML, acoes }) {
     (acoes && acoes.length ? acoes : [{ label: 'OK' }]).forEach(a => {
         const b = document.createElement('button');
         b.textContent = a.label;
-        b.className = a.primario ? 'btn-add' : 'btn-cancelar';
+        b.className = a.perigo ? 'btn-perigo' : (a.primario ? 'btn-add' : 'btn-cancelar');
         b.onclick = async () => {
             // onClick recebe (ov, fechar); se retornar true, mantém o diálogo aberto
             const manter = a.onClick ? await a.onClick(ov, fechar) : false;
