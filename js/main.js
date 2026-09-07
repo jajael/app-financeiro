@@ -60,14 +60,33 @@ function configurarMiniResumo() {
     const alvo = document.querySelector('.summary-card.gasto-diario');
     const ref = document.querySelector('.month-bar');   // fundo da barra fixa (não muda ao abrir o mini)
     const mini = document.getElementById('miniResumo');
+    const btnLanc = document.querySelector('.tabs [data-tab="adicionar"]');
+    const miniLanc = document.getElementById('miniLancamento');
     if (!alvo || !ref || !mini) return;
+
+    // "+ Lançamento" na 2ª linha da barra: abre o formulário
+    if (miniLanc) miniLanc.addEventListener('click', () => {
+        if (typeof mudarAba === 'function') mudarAba('adicionar');
+        const form = document.getElementById('adicionar');
+        if (form) {
+            form.scrollIntoView({ block: 'start' });
+            const topo = document.querySelector('.topo');
+            if (topo) window.scrollBy(0, -(topo.offsetHeight + 8));
+        }
+    });
 
     let raf = 0;
     const avaliar = () => {
         raf = 0;
+        const fundoBarra = ref.getBoundingClientRect().bottom;
         // Mostra quando o fundo do card "Gasto diário" já passou acima da barra do mês
-        const passou = alvo.getBoundingClientRect().bottom <= ref.getBoundingClientRect().bottom;
+        const passou = alvo.getBoundingClientRect().bottom <= fundoBarra;
         if (mini.hidden === passou) mini.hidden = !passou;
+        // 2ª linha: aparece quando o botão "+ Lançamento" também sai de vista
+        if (btnLanc && miniLanc) {
+            const passouLanc = btnLanc.getBoundingClientRect().bottom <= fundoBarra;
+            if (miniLanc.hidden === passouLanc) miniLanc.hidden = !passouLanc;
+        }
     };
     const agendar = () => { if (!raf) raf = requestAnimationFrame(avaliar); };
 
