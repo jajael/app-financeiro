@@ -224,6 +224,13 @@ function montarRegistro(dados) {
         reg.data = dataDiaUtilPorCompetencia(reg.competencia, tipoRecorrencia, antecipar);
         reg.proxima_data = calcularProximaData(reg.data, tipoRecorrencia);
     }
+
+    // Receita Mensal/Parcelada: a data é sempre o dia informado no próximo dia útil
+    if (reg.tipo === 'entradas' && (tipoRecorrencia === 'Mensal' || tipoRecorrencia === 'Parcelada')
+        && reg.competencia) {
+        reg.data = dataReceitaMensal(reg.competencia, reg.dia_recorrencia);
+        reg.proxima_data = calcularProximaData(reg.data, tipoRecorrencia, reg.dia_recorrencia);
+    }
     return reg;
 }
 
@@ -289,6 +296,13 @@ function ocorrenciaSeguinte(row, novaData) {
         const proxComp = addMeses(row.competencia, 1);
         base.competencia = proxComp;
         base.data = dataDiaUtilPorCompetencia(proxComp, row.tipo_recorrencia, antecipar);
+    }
+
+    // Receita Mensal: competência +1 mês, data no dia informado / próximo dia útil
+    if (row.tipo === 'entradas' && row.tipo_recorrencia === 'Mensal' && row.competencia) {
+        const proxComp = addMeses(row.competencia, 1);
+        base.competencia = proxComp;
+        base.data = dataReceitaMensal(proxComp, row.dia_recorrencia);
     }
 
     // Semanal: o mês seguinte vem com TODAS as suas ocorrências marcadas (nada passou ainda)
@@ -407,7 +421,10 @@ async function adicionarParceladoAPI(dados) {
             ...base,
             valor,
             parcela_num: num,
-            data: i === 0 ? base.data : addMeses(base.data, i),
+            data: i === 0 ? base.data
+                : (base.tipo === 'entradas'
+                    ? dataReceitaMensal(addMeses(base.competencia, i), base.dia_recorrencia)
+                    : addMeses(base.data, i)),
             competencia: i === 0 ? base.competencia : addMeses(base.competencia, i),
             proxima_data: i < n - 1 ? addMeses(base.competencia, i + 1) : null,
             descricao: descParcela(nome, num, n, valor, total)

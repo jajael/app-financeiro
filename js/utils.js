@@ -292,9 +292,25 @@ function obterDadosFormulario() {
         ? (document.getElementById('compRecorrente')?.value || '')
         : (document.getElementById('competencia')?.value || '');
 
+    const ehEntrada = document.querySelector(SELECTORS.tipoTransacao).value === 'entradas';
+    const mesExib = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
+        ? formatarDataISO(estadoApp.mesAtual) : hojeISO();
+
+    // Semanal não tem campo de data: usa a 1ª semana marcada (ou o mês em exibição)
+    const semanasSel = typeof semanasMarcadas !== 'undefined' ? [...semanasMarcadas].sort() : [];
+    let dataISO = parseDataBR(document.querySelector(SELECTORS.data).value);
+    let compFinal = compBR;
+    if (tipoRecorrencia === 'Semanal') {
+        dataISO = semanasSel[0] || mesExib;
+    } else if (ehEntrada && (tipoRecorrencia === 'Mensal' || tipoRecorrencia === 'Parcelada')) {
+        // Receita Mensal/Parcelada: competência = mês em exibição; data = próximo dia útil
+        compFinal = competenciaParaBR(mesExib);
+        dataISO = dataReceitaMensal(parseCompetencia(compFinal), diaRecorrencia);
+    }
+
     return {
         tipo: document.querySelector(SELECTORS.tipoTransacao).value,
-        data: parseDataBR(document.querySelector(SELECTORS.data).value),
+        data: dataISO,
         valor: parseFloat(document.querySelector(SELECTORS.valor).value),
         metodo: document.querySelector(SELECTORS.metodo).value,
         categoria: document.querySelector(SELECTORS.categoria).value,
@@ -303,10 +319,10 @@ function obterDadosFormulario() {
         diaRecorrencia,
         pagarVencimento: !!document.getElementById('pagarVencimento')?.checked,
         diaSemana: document.getElementById('diaSemana')?.value ?? '',
-        semanas: typeof semanasMarcadas !== 'undefined' ? [...semanasMarcadas].sort() : [],
+        semanas: semanasSel,
         valorSessao: parseFloat(document.querySelector(SELECTORS.valor).value) || 0,
         parcelas: parseInt(document.getElementById('parcelas')?.value, 10) || 1,
-        competencia: parseCompetencia(compBR),
+        competencia: parseCompetencia(compFinal),
         descricao: document.querySelector(SELECTORS.descricao).value
     };
 }

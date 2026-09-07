@@ -52,6 +52,27 @@ function ajustarDiaUtil(data) {
   return d;
 }
 
+/** Primeiro dia útil >= a data dada (avança, nunca volta atrás) */
+function proximoDiaUtil(data) {
+  const d = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+  for (let i = 0; i < 20 && ehFimDeSemanaOuFeriado(d); i++) d.setDate(d.getDate() + 1);
+  return d;
+}
+
+/**
+ * Data de uma receita Mensal/Parcelada: o dia informado dentro da competência,
+ * empurrado para o próximo dia útil (nunca para trás). Retorna 'YYYY-MM-DD'.
+ */
+function dataReceitaMensal(competenciaISO, dia) {
+  const c = parseDataLocal(competenciaISO || formatarDataISO(new Date()));
+  const y = c.getFullYear();
+  const m = c.getMonth();
+  const dnum = parseInt(dia, 10);
+  const ultimo = new Date(y, m + 1, 0).getDate();
+  const base = (dnum >= 1 && dnum <= 31) ? new Date(y, m, Math.min(dnum, ultimo)) : new Date(y, m, 1);
+  return formatarDataISO(proximoDiaUtil(base));
+}
+
 /** Último dia útil do mês (ano, mes 0-11) */
 function ultimoDiaUtilDoMes(ano, mes) {
   const d = new Date(ano, mes + 1, 0);

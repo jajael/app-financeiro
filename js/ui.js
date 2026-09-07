@@ -469,22 +469,42 @@ async function atualizarProximasTransacoes() {
  */
 function atualizarCamposRecorrencia() {
     const tipo = document.querySelector(SELECTORS.tipoRecorrencia).value;
+    const ehReceita = document.querySelector(SELECTORS.tipoTransacao)?.value === 'entradas';
     const comDia = tipo === 'Mensal' || tipo === 'Parcelada';
     const ehSemanal = tipo === 'Semanal';
-    const ehCalculada = tipo === 'Último dia útil do mês' || tipo === 'Primeiro dia útil do mês'
-        || tipo === 'Até o 5º dia útil do mês';
+    const ehCalculada = typeof RECORRENCIA_DIA_UTIL !== 'undefined'
+        && RECORRENCIA_DIA_UTIL.includes(tipo);
+    // Receita Mensal/Parcelada: a data é automática = próximo dia útil (sem checkbox)
+    const receitaAuto = ehReceita && comDia;
 
     const set = (id, mostrar) => { const el = document.getElementById(id); if (el) el.hidden = !mostrar; };
+    set('vencimentoRow', comDia);
     set('diaRecorrenciaGroup', comDia);
     set('parceleGroup', tipo === 'Parcelada');
     set('diaSemanaGroup', ehSemanal);
     set('dataCalculadaGroup', ehCalculada);
-    // Nesses tipos a data sai da competência -> o campo "Data" livre não faz sentido
-    set('dataGroup', !ehCalculada);
-    const dataMain = document.querySelector(SELECTORS.data);
-    if (dataMain) dataMain.required = !ehCalculada;
 
-    // Prefill do dia de vencimento com o dia da data digitada, se vazio
+    // Checkbox "pagar no vencimento": só despesa
+    const chkWrap = document.querySelector('#diaRecorrenciaGroup .inline-check');
+    if (chkWrap) chkWrap.hidden = ehReceita;
+    const chk = document.getElementById('pagarVencimento');
+    if (ehReceita && chk) chk.checked = false;
+
+    // Campo "Data" livre: escondido para dia-útil fixo e Semanal
+    const mostrarData = !ehCalculada && !ehSemanal;
+    set('dataGroup', mostrarData);
+    const dataMain = document.querySelector(SELECTORS.data);
+    if (dataMain) dataMain.required = mostrarData;
+
+    // Rótulo do campo Data conforme o contexto
+    const lblData = document.querySelector('label[for="data"]');
+    if (lblData) {
+        lblData.textContent = receitaAuto ? 'Data (próximo dia útil):'
+            : (!ehReceita && comDia) ? 'Data do pagamento:'
+            : 'Data:';
+    }
+
+    // Prefill do dia de vencimento/pagamento com o dia da data digitada, se vazio
     const diaInput = document.getElementById('diaRecorrencia');
     if (comDia && diaInput && !diaInput.value) {
         const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
@@ -503,8 +523,22 @@ function atualizarCamposRecorrencia() {
         const dataISO = compISO ? dataDiaUtilPorCompetencia(compISO, tipo, antecipar) : '';
         const campo = document.getElementById('dataCalculada');
         if (campo) campo.value = dataISO ? isoParaDataBR(dataISO) : '';
-        // mantém o #data (fonte usada pelo resto do fluxo) em sincronia
         if (dataMain && dataISO) dataMain.value = isoParaDataBR(dataISO);
+    }
+
+    // Receita Mensal/Parcelada: data automática = dia informado no próximo dia útil
+    if (dataMain) {
+        if (receitaAuto) {
+            dataMain.dataset.autoReceita = '1';
+            const compISO = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
+                ? formatarDataISO(estadoApp.mesAtual) : hojeISO();
+            const dia = document.getElementById('diaRecorrencia')?.value || '';
+            dataMain.value = isoParaDataBR(dataReceitaMensal(compISO, dia));
+            dataMain.readOnly = true;
+            dataMain.classList.add('campo-travado');
+        } else {
+            delete dataMain.dataset.autoReceita;
+        }
     }
 
     // Semanal: chips das ocorrências do dia da semana no mês
@@ -513,7 +547,7 @@ function atualizarCamposRecorrencia() {
     set('semanasChipsRow', mostrarChips);
     if (mostrarChips) renderSemanasChips();
 
-    // "Pagar no vencimento": trava a data do lançamento no dia do vencimento
+    // "Pagar no vencimento": trava a data do lançamento no dia do vencimento (despesa)
     aplicarPagarVencimento();
 }
 
@@ -660,6 +694,7 @@ function aplicarPagarVencimento() {
     const chk = document.getElementById('pagarVencimento');
     const dataEl = document.querySelector(SELECTORS.data);
     if (!chk || !dataEl) return;
+    if (dataEl.dataset.autoReceita === '1') return;  // já travado por "próximo dia útil"
 
     const grupoDia = document.getElementById('diaRecorrenciaGroup');
     const ativo = chk.checked && grupoDia && !grupoDia.hidden;
@@ -689,7 +724,9 @@ function renderSemanasChips() {
     const box = document.getElementById('semanasChips');
     if (!box) return;
     const dow = parseInt(document.getElementById('diaSemana').value, 10);
-    const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+    // Semanal não tem campo de data -> usa o mês em exibição
+    const iso = parseDataBR(document.querySelector(SELECTORS.data).value)
+        || (typeof estadoApp !== 'undefined' && estadoApp.mesAtual ? formatarDataISO(estadoApp.mesAtual) : hojeISO());
     if (!Number.isInteger(dow) || !iso) { box.innerHTML = ''; return; }
 
     const d = parseDataLocal(iso);
