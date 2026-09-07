@@ -149,7 +149,7 @@ function renderizarItemsMenu(tipo, containerId, itens) {
         sub = item.banco ? 'PIX/Débito' : '';
       } else {
         titulo = 'Dinheiro';
-        sub = 'dinheiro';
+        sub = '';
       }
     }
 
