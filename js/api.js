@@ -489,6 +489,13 @@ async function editarTransacaoAPI(dados) {
         .update(registro).eq('id', dados.id).select().single();
     if (error) throw error;
 
+    // Editar e salvar uma ocorrência recorrente PENDENTE já vale como "OK":
+    // confirma o mês e gera o próximo pendente.
+    if (alvo.pendente && alvo.grupo_id && RECORRENTES.includes(registro.tipo_recorrencia)) {
+        await confirmarPendenteAPI(dados.id);
+        return { mensagem: 'Alterações salvas e mês confirmado' };
+    }
+
     // Propaga para o pendente da série (não para Semanal: cada mês tem seus chips)
     if (alvo.grupo_id && !alvo.pendente && registro.tipo_recorrencia !== 'Semanal') {
         const patch = {};
