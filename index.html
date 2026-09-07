@@ -35,11 +35,6 @@
             <div class="header-content">
                 <h1>💰 Controle Financeiro</h1>
                 <div class="header-info">
-                    <span class="month-selector">
-                        <button id="prevMonth" class="month-btn">←</button>
-                        <span id="currentMonth" class="current-month">Setembro 2026</span>
-                        <button id="nextMonth" class="month-btn">→</button>
-                    </span>
                     <span id="modoTesteBadge" class="modo-teste-badge" hidden>🧪 modo teste</span>
                     <button id="btnApagarTudo" type="button" class="btn-apagar-tudo" hidden title="Apagar todos os dados de teste">🗑 Apagar tudo</button>
                     <button id="btnTema" type="button" title="Alternar tema claro/escuro">🌙</button>
@@ -47,6 +42,13 @@
                 </div>
             </div>
         </header>
+
+        <!-- Barra de navegação do mês (largura inteira) -->
+        <div class="month-bar">
+            <button id="prevMonth" class="month-btn">←</button>
+            <span id="currentMonth" class="current-month">Setembro 2026</span>
+            <button id="nextMonth" class="month-btn">→</button>
+        </div>
 
         <!-- Main Content -->
         <main class="main">
