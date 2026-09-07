@@ -102,17 +102,20 @@ input.campo-travado,
 .tab-btn.active { color: var(--primary); }
 .tab-content { color: var(--text); }
 
-/* Receitas / Despesas nas cores dos cards do dashboard */
-.tab-btn[data-tab="entradas"] { color: var(--receita-text); }
-.tab-btn[data-tab="saidas"]   { color: var(--despesa-text); }
+/* Receitas / Despesas nas cores dos cards do dashboard (sem detalhe roxo) */
+.tab-btn[data-tab="entradas"],
 .tab-btn[data-tab="entradas"]:hover,
 .tab-btn[data-tab="entradas"].active { color: var(--receita-text); }
+.tab-btn[data-tab="saidas"],
 .tab-btn[data-tab="saidas"]:hover,
 .tab-btn[data-tab="saidas"].active { color: var(--despesa-text); }
-.tab-btn[data-tab="entradas"].active { border-bottom-color: var(--receita-text); }
-.tab-btn[data-tab="saidas"].active { border-bottom-color: var(--despesa-text); }
 
-/* "+ Lançamento": botão principal, sempre em destaque */
+.tab-btn[data-tab="entradas"].active { border-bottom-color: var(--receita-text); }
+.tab-btn[data-tab="saidas"].active   { border-bottom-color: var(--despesa-text); }
+.tab-btn[data-tab="entradas"].active::after { background: var(--receita-text); }
+.tab-btn[data-tab="saidas"].active::after   { background: var(--despesa-text); }
+
+/* "+ Lançamento": botão principal, sempre em destaque; "+" com cor própria */
 .tab-btn[data-tab="adicionar"],
 .tab-btn[data-tab="adicionar"]:hover,
 .tab-btn[data-tab="adicionar"].active {
@@ -121,6 +124,11 @@ input.campo-travado,
     border-color: var(--primary);
     border-radius: var(--radius-sm);
     font-weight: 700;
+}
+.tab-mais {
+    color: #FFD54A;
+    font-weight: 800;
+    margin-right: .15rem;
 }
 
 @media (max-width: 768px) {
@@ -132,8 +140,19 @@ input.campo-travado,
         background: var(--despesa-bg);
         border-color: var(--despesa-border);
     }
-    .tabs [data-tab="entradas"].active { box-shadow: inset 0 0 0 2px var(--receita-text); }
-    .tabs [data-tab="saidas"].active  { box-shadow: inset 0 0 0 2px var(--despesa-text); }
+    /* Selecionado: verde/vermelho mais forte, sem roxo */
+    .tabs [data-tab="entradas"].active {
+        background: color-mix(in srgb, var(--receita-border) 55%, var(--receita-bg));
+        border-color: var(--receita-text);
+        box-shadow: none;
+        font-weight: 700;
+    }
+    .tabs [data-tab="saidas"].active {
+        background: color-mix(in srgb, var(--despesa-border) 55%, var(--despesa-bg));
+        border-color: var(--despesa-text);
+        box-shadow: none;
+        font-weight: 700;
+    }
 
     .tabs [data-tab="adicionar"] {
         padding: 0.7rem;
