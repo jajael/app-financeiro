@@ -10,7 +10,10 @@ const CATEGORIAS_PADRAO_SEED = ['Salário', 'Freelance', 'Investimento', 'Bônus
     'Alimentação', 'Alimentação app', 'Assinatura', 'Casa', 'Compras',
     'Compras online', 'Lazer', 'Mercado', 'Saúde', 'Serviços',
     'Transporte app', 'Transporte público', 'Outro'];
-const RECORRENCIAS_PADRAO_SEED = ['Pontual', 'Mensal', 'Parcelada', 'Último dia útil do mês'];
+// Vocabulário fixo de tipos de recorrência (Pontual é obrigatório/indeletável)
+const RECORRENCIAS_KINDS = ['Pontual', 'Conta', 'Parcelada',
+  'Último dia útil do mês', 'Primeiro dia útil do mês', 'Semanal'];
+const RECORRENCIAS_PADRAO_SEED = RECORRENCIAS_KINDS.slice();
 
 /**
  * Se o usuário atual ainda não tem nenhum item de menu, cria o conjunto padrão.

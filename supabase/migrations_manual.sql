@@ -75,3 +75,10 @@ drop table if exists public.cartoes;
 
 -- remove "Crédito" que vinha no seed padrão de métodos (agora é criado por banco)
 delete from public.menu_itens where tipo = 'Método' and nome = 'Crédito' and metodo_kind is null;
+
+-- ============================================================
+-- 5) Recorrência: "Semanal" + "Primeiro dia útil"; "Mensal" -> "Conta"
+-- ============================================================
+alter table public.transacoes add column if not exists dia_semana smallint;
+alter table public.transacoes drop column if exists eh_vencimento;
+update public.menu_itens set nome = 'Conta' where tipo = 'Recorrência' and nome = 'Mensal';

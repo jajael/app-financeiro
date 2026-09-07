@@ -52,36 +52,69 @@ function ajustarDiaUtil(data) {
   return d;
 }
 
-/** Último dia útil do mês de `data` */
-function ultimoDiaUtilDoMes(ano, mes /* 0-11 */) {
-  const ultimo = new Date(ano, mes + 1, 0);
-  while (ehFimDeSemanaOuFeriado(ultimo)) ultimo.setDate(ultimo.getDate() - 1);
-  return ultimo;
+/** Último dia útil do mês (ano, mes 0-11) */
+function ultimoDiaUtilDoMes(ano, mes) {
+  const d = new Date(ano, mes + 1, 0);
+  while (ehFimDeSemanaOuFeriado(d)) d.setDate(d.getDate() - 1);
+  return d;
+}
+
+/** Primeiro dia útil do mês (ano, mes 0-11) */
+function primeiroDiaUtilDoMes(ano, mes) {
+  const d = new Date(ano, mes, 1);
+  while (ehFimDeSemanaOuFeriado(d)) d.setDate(d.getDate() + 1);
+  return d;
+}
+
+/**
+ * Data em que ESTA ocorrência cai (para mostrar no formulário).
+ * Para "Último/Primeiro dia útil do mês" usa o mês da própria data.
+ */
+function dataDaOcorrencia(dataISO, tipo) {
+  if (!dataISO) return '';
+  const d = parseDataLocal(dataISO);
+  if (tipo === 'Último dia útil do mês') return formatarDataISO(ultimoDiaUtilDoMes(d.getFullYear(), d.getMonth()));
+  if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(d.getFullYear(), d.getMonth()));
+  return '';
 }
 
 /**
  * Próxima data da recorrência (string 'YYYY-MM-DD') ou null se Pontual.
- * @param {string} dataAtual  data base 'YYYY-MM-DD'
- * @param {string} tipo       Pontual | Mensal | Parcelada | Último dia útil do mês
- * @param {number|string} dia dia do mês (Mensal/Parcelada); vazio = usa o dia da dataAtual
+ * @param {string} dataAtual  'YYYY-MM-DD'
+ * @param {string} tipo       Pontual | Conta | Parcelada | Último dia útil do mês |
+ *                            Primeiro dia útil do mês | Semanal
+ * @param {number|string} dia      dia do mês (Conta/Parcelada)
+ * @param {number|string} diaSemana 0-6 (Semanal); '' = sem dia fixo -> +7 dias
  */
-function calcularProximaData(dataAtual, tipo, dia) {
+function calcularProximaData(dataAtual, tipo, dia, diaSemana) {
   if (!dataAtual || !tipo || tipo === 'Pontual') return null;
 
   const base = parseDataLocal(dataAtual);
+
+  if (tipo === 'Semanal') {
+    const alvo = new Date(base);
+    const dow = parseInt(diaSemana, 10);
+    if (Number.isInteger(dow) && dow >= 0 && dow <= 6) {
+      let delta = (dow - base.getDay() + 7) % 7;
+      if (delta === 0) delta = 7;
+      alvo.setDate(base.getDate() + delta);
+    } else {
+      alvo.setDate(base.getDate() + 7); // sem dia fixo
+    }
+    return formatarDataISO(alvo);
+  }
+
   let ano = base.getFullYear();
   let mes = base.getMonth() + 1; // próximo mês
   if (mes > 11) { mes = 0; ano += 1; }
 
-  if (tipo === 'Último dia útil do mês') {
-    return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
-  }
+  if (tipo === 'Último dia útil do mês') return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
+  if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(ano, mes));
 
-  // Mensal / Parcelada
+  // Conta / Parcelada
   const diaNum = parseInt(dia, 10) || base.getDate();
   const ultimoDoMes = new Date(ano, mes + 1, 0).getDate();
-  const alvo = new Date(ano, mes, Math.min(diaNum, ultimoDoMes));
-  return formatarDataISO(ajustarDiaUtil(alvo));
+  return formatarDataISO(ajustarDiaUtil(new Date(ano, mes, Math.min(diaNum, ultimoDoMes))));
 }
 
 /**

@@ -56,6 +56,7 @@ function configurarEventListeners() {
         dataInput.addEventListener('input', () => {
             mascaraDataBR(dataInput);
             recalcularCompetencia();
+            atualizarCamposRecorrencia();
         });
     }
 

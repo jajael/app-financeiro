@@ -258,18 +258,28 @@ async function atualizarProximasTransacoes() {
  */
 function atualizarCamposRecorrencia() {
     const tipo = document.querySelector(SELECTORS.tipoRecorrencia).value;
-    const comDia = tipo === 'Mensal' || tipo === 'Parcelada';
+    const comDia = tipo === 'Conta' || tipo === 'Parcelada';
+    const ehSemanal = tipo === 'Semanal';
+    const ehCalculada = tipo === 'Último dia útil do mês' || tipo === 'Primeiro dia útil do mês';
 
-    const diaGroup = document.getElementById('diaRecorrenciaGroup');
-    const parceleGroup = document.getElementById('parceleGroup');
-    if (diaGroup) diaGroup.hidden = !comDia;
-    if (parceleGroup) parceleGroup.hidden = tipo !== 'Parcelada';
+    const set = (id, mostrar) => { const el = document.getElementById(id); if (el) el.hidden = !mostrar; };
+    set('diaRecorrenciaGroup', comDia);
+    set('parceleGroup', tipo === 'Parcelada');
+    set('diaSemanaGroup', ehSemanal);
+    set('dataCalculadaGroup', ehCalculada);
 
-    // Prefill do dia: usa o dia da data digitada, se ainda estiver vazio
+    // Prefill do dia de vencimento com o dia da data digitada, se vazio
     const diaInput = document.getElementById('diaRecorrencia');
     if (comDia && diaInput && !diaInput.value) {
         const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
         if (iso) diaInput.value = String(parseInt(iso.slice(8, 10), 10));
+    }
+
+    // Campo cinza com a data calculada (último/primeiro dia útil)
+    if (ehCalculada) {
+        const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+        const campo = document.getElementById('dataCalculada');
+        if (campo) campo.value = iso ? isoParaDataBR(dataDaOcorrencia(iso, tipo)) : '';
     }
 }
 

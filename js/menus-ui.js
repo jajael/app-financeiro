@@ -37,7 +37,6 @@ async function carregarAbaMenus() {
         <div class="add-item-form metodo-form">
           <select id="novoMetodoKind">
             <option value="">Adicionar método...</option>
-            <option value="Dinheiro">Dinheiro</option>
             <option value="PIX/Débito">PIX/Débito</option>
             <option value="Crédito">Crédito</option>
           </select>
@@ -57,7 +56,12 @@ async function carregarAbaMenus() {
         <h3>🔁 Tipos de recorrência</h3>
         <div class="menu-list" id="recorrenciasList"></div>
         <div class="add-item-form">
-          <input type="text" id="novaRecorrenciaInput" placeholder="Nova recorrência...">
+          <select id="novaRecorrenciaKind">
+            <option value="">Adicionar tipo...</option>
+            ${RECORRENCIAS_KINDS
+              .filter(k => k !== 'Pontual' && !menus.recorrencias.some(r => r.nome === k))
+              .map(k => `<option value="${k}">${k}</option>`).join('')}
+          </select>
           <button onclick="adicionarNovaRecorrencia()" class="btn-add">+ Adicionar</button>
         </div>
       </div>
@@ -121,19 +125,24 @@ function renderizarItemsMenu(tipo, containerId, itens) {
       }
     }
 
+    // Itens fixos: Dinheiro (método) e Pontual (recorrência) não podem ser removidos
+    const fixo = (tipo === 'Método' && (item.metodoKind === 'Dinheiro' || item.nome === 'Dinheiro'))
+              || (tipo === 'Recorrência' && item.nome === 'Pontual');
+    const editavel = tipo === 'Categoria' || (tipo === 'Método' && item.metodoKind !== 'Dinheiro');
+
     return `
       <div class="menu-item ${statusClass}">
         <div class="item-info">
           <div class="item-nome">${titulo}</div>
           ${sub ? `<div class="item-descricao">${sub}</div>` : ''}
         </div>
-        <div class="item-status">${statusLabel}</div>
+        <div class="item-status">${fixo ? 'fixo' : statusLabel}</div>
         <div class="item-actions">
-          <button class="btn-icon" onclick="editarItemMenuUI(${item.linha}, '${tipo}')" title="Editar">✏️</button>
-          ${item.status === 'Ativo'
+          ${editavel ? `<button class="btn-icon" onclick="editarItemMenuUI(${item.linha}, '${tipo}')" title="Editar">✏️</button>` : ''}
+          ${fixo ? '' : (item.status === 'Ativo'
             ? `<button class="btn-icon btn-warning" onclick="desativarItemMenuUI(${item.linha})" title="Desativar">⊘</button>`
-            : `<button class="btn-icon btn-success" onclick="ativarItemMenuUI(${item.linha})" title="Ativar">↻</button>`}
-          <button class="btn-icon btn-danger" onclick="removerItemMenuUI(${item.linha})" title="Remover">🗑️</button>
+            : `<button class="btn-icon btn-success" onclick="ativarItemMenuUI(${item.linha})" title="Ativar">↻</button>`)}
+          ${fixo ? '' : `<button class="btn-icon btn-danger" onclick="removerItemMenuUI(${item.linha})" title="Remover">🗑️</button>`}
         </div>
       </div>
     `;
@@ -151,8 +160,8 @@ async function adicionarNovaCategoria() {
 }
 
 async function adicionarNovaRecorrencia() {
-  const nome = document.getElementById('novaRecorrenciaInput').value.trim();
-  if (!nome) return mostrarNotificacao('Digite o nome da recorrência', 'info');
+  const nome = document.getElementById('novaRecorrenciaKind').value;
+  if (!nome) return mostrarNotificacao('Escolha o tipo de recorrência', 'info');
 
   if (await adicionarItemMenuAPI('Recorrência', nome)) recarregarMenus();
 }

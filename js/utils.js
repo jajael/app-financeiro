@@ -69,9 +69,9 @@ function validarFormularioTransacao(dados) {
         return { valido: false, erro: 'Informe a competência (mm/aaaa)' };
     }
 
-    if ((dados.tipoRecorrencia === 'Mensal' || dados.tipoRecorrencia === 'Parcelada')
+    if ((dados.tipoRecorrencia === 'Conta' || dados.tipoRecorrencia === 'Parcelada')
         && !(parseInt(dados.diaRecorrencia, 10) >= 1 && parseInt(dados.diaRecorrencia, 10) <= 31)) {
-        return { valido: false, erro: 'Informe o dia da recorrência (1-31)' };
+        return { valido: false, erro: 'Informe o dia de vencimento (1-31)' };
     }
 
     return { valido: true };
@@ -220,8 +220,7 @@ function limparFormulario() {
         form.reset();
         document.querySelector(SELECTORS.data).value = dataHojeBR();
         document.querySelector(SELECTORS.tipoTransacao).value = 'entradas';
-        const venc = document.getElementById('ehVencimento');
-        if (venc) venc.checked = false;
+        if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
         if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
         if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();
     }
@@ -243,7 +242,7 @@ function obterDadosFormulario() {
         formaPagamento: tipoRecorrencia === 'Parcelada' ? 'Parcelada' : 'À vista',
         tipoRecorrencia,
         diaRecorrencia,
-        ehVencimento: !!document.getElementById('ehVencimento')?.checked,
+        diaSemana: document.getElementById('diaSemana')?.value ?? '',
         parcelas: parseInt(document.getElementById('parcelas')?.value, 10) || 1,
         competencia: parseCompetencia(document.getElementById('competencia')?.value || ''),
         descricao: document.querySelector(SELECTORS.descricao).value

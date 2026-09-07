@@ -152,23 +152,32 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="tipoRecorrencia">Recorrência:</label>
-                            <select id="tipoRecorrencia" required>
-                                <option value="Pontual">Pontual (uma única vez)</option>
-                                <option value="Mensal">Mensal</option>
-                                <option value="Parcelada">Parcelada</option>
-                                <option value="Último dia útil do mês">Último dia útil do mês</option>
-                            </select>
+                            <select id="tipoRecorrencia" required></select>
                         </div>
                         <div class="form-group" id="diaRecorrenciaGroup" hidden>
-                            <label for="diaRecorrencia">Dia:</label>
-                            <div class="dia-row">
-                                <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
-                                <label class="inline-check"><input type="checkbox" id="ehVencimento"> vencimento</label>
-                            </div>
+                            <label for="diaRecorrencia">Dia de vencimento:</label>
+                            <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
                         </div>
                         <div class="form-group" id="parceleGroup" hidden>
                             <label for="parcelas">Parcelas:</label>
                             <input type="number" id="parcelas" min="1" max="48" value="1">
+                        </div>
+                        <div class="form-group" id="diaSemanaGroup" hidden>
+                            <label for="diaSemana">Dia da semana:</label>
+                            <select id="diaSemana">
+                                <option value="">Sem dia fixo</option>
+                                <option value="0">Domingo</option>
+                                <option value="1">Segunda</option>
+                                <option value="2">Terça</option>
+                                <option value="3">Quarta</option>
+                                <option value="4">Quinta</option>
+                                <option value="5">Sexta</option>
+                                <option value="6">Sábado</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="dataCalculadaGroup" hidden>
+                            <label for="dataCalculada">Data (automática):</label>
+                            <input type="text" id="dataCalculada" readonly tabindex="-1">
                         </div>
                     </div>
 

@@ -18,8 +18,8 @@ create table if not exists public.transacoes (
   descricao         text default '',
   forma_pagamento   text default 'À vista',
   tipo_recorrencia  text default 'Pontual',
-  dia_recorrencia   smallint,
-  eh_vencimento     boolean not null default false,
+  dia_recorrencia   smallint,   -- dia de vencimento (Conta / Parcelada)
+  dia_semana        smallint,   -- 0=Dom .. 6=Sáb (Semanal); null = sem dia fixo
   proxima_data      date,
   competencia       date not null default date_trunc('month', now())::date,
   status            text default 'Ativa',

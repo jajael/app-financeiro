@@ -23,7 +23,7 @@ function mapearTransacao(row) {
         cartaoId: row.cartao_id || null,
         competencia: row.competencia || '',
         diaRecorrencia: row.dia_recorrencia || '',
-        ehVencimento: !!row.eh_vencimento
+        diaSemana: row.dia_semana ?? null
     };
 }
 
@@ -105,7 +105,8 @@ async function carregarMenusAPI() {
         return {
             categorias: itens.filter(i => i.tipo === 'Categoria').map(i => i.nome),
             // métodos como objetos (o formulário precisa do tipo/fechamento p/ competência)
-            metodos: itens.filter(i => i.tipo === 'Método')
+            metodos: itens.filter(i => i.tipo === 'Método'),
+            recorrencias: itens.filter(i => i.tipo === 'Recorrência').map(i => i.nome)
         };
     } catch (error) {
         console.error('Erro ao carregar menus:', error);
@@ -167,8 +168,8 @@ function montarRegistro(dados) {
         forma_pagamento: dados.formaPagamento || 'À vista',
         tipo_recorrencia: tipoRecorrencia,
         dia_recorrencia: parseInt(dados.diaRecorrencia, 10) || null,
-        eh_vencimento: !!dados.ehVencimento,
-        proxima_data: calcularProximaData(dados.data, tipoRecorrencia, dados.diaRecorrencia),
+        dia_semana: dados.diaSemana === '' || dados.diaSemana == null ? null : parseInt(dados.diaSemana, 10),
+        proxima_data: calcularProximaData(dados.data, tipoRecorrencia, dados.diaRecorrencia, dados.diaSemana),
         competencia: dados.competencia || competenciaDe(dados.data),
         status: dados.status || 'Ativa'
     };

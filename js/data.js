@@ -54,7 +54,7 @@ function carregarDadosSimulados() {
                 categoria: 'Salário',
                 descricao: 'Salário mensal',
                 formaPagamento: 'À vista',
-                tipoRecorrencia: 'Último útil do mês',
+                tipoRecorrencia: 'Último dia útil do mês',
                 proximaData: '2026-10-30',
                 status: 'Ativa'
             }
@@ -92,7 +92,7 @@ function carregarDadosSimulados() {
                 categoria: 'Casa',
                 descricao: 'Condomínio',
                 formaPagamento: 'À vista',
-                tipoRecorrencia: 'Mensal',
+                tipoRecorrencia: 'Conta',
                 proximaData: '2026-10-01',
                 status: 'Ativa'
             }
@@ -118,12 +118,14 @@ async function carregarMenus() {
         
         estadoApp.menus.categorias = menus.categorias || [];
         estadoApp.menus.metodos = menus.metodos || [];
+        estadoApp.menus.recorrencias = menus.recorrencias || [];
 
         console.log('✓ Menus carregados:', estadoApp.menus);
 
         // Preencher dropdowns
         preencherDropdownCategorias();
         preencherDropdownMetodos();
+        preencherDropdownRecorrencias();
 
         return true;
     } catch (error) {
@@ -174,6 +176,34 @@ function preencherDropdownMetodos() {
     });
     sel.value = atual;
     if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();
+}
+
+// Ordem preferida de exibição dos tipos de recorrência
+const ORDEM_RECORRENCIA = ['Pontual', 'Conta', 'Parcelada',
+    'Último dia útil do mês', 'Primeiro dia útil do mês', 'Semanal'];
+
+/**
+ * Preenche o dropdown de recorrência a partir dos tipos ativos no Menus.
+ * "Pontual" está sempre presente.
+ */
+function preencherDropdownRecorrencias() {
+    const sel = document.querySelector(SELECTORS.tipoRecorrencia);
+    if (!sel) return;
+    const atual = sel.value;
+
+    const ativos = new Set(estadoApp.menus.recorrencias || []);
+    ativos.add('Pontual');
+    const lista = ORDEM_RECORRENCIA.filter(t => ativos.has(t));
+
+    sel.innerHTML = '';
+    lista.forEach(t => {
+        const o = document.createElement('option');
+        o.value = t;
+        o.textContent = t === 'Pontual' ? 'Pontual (uma única vez)' : t;
+        sel.appendChild(o);
+    });
+    sel.value = lista.includes(atual) ? atual : 'Pontual';
+    if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
 }
 
 /** Método selecionado no formulário (objeto do menu) ou null */
