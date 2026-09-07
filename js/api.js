@@ -175,14 +175,21 @@ function montarRegistro(dados) {
     };
 }
 
+// Tipos que se repetem indefinidamente (materializados por um horizonte)
+const RECORRENTES = ['Conta', 'Semanal', 'Último dia útil do mês', 'Primeiro dia útil do mês'];
+const HORIZONTE_MESES = 12;   // Conta / dia útil
+const HORIZONTE_SEMANAS = 26; // Semanal
+
 /**
- * Adiciona nova transação. Se for "Parcelada", gera uma linha por parcela
- * (valor dividido, competência e data avançando mês a mês).
+ * Adiciona nova transação.
+ * - Parcelada: uma linha por parcela.
+ * - Conta / Semanal / Último/Primeiro dia útil: gera as ocorrências dos
+ *   próximos meses (cada uma na sua competência).
+ * - Pontual: uma linha.
  */
 async function adicionarTransacaoAPI(dados) {
-    if (dados.tipoRecorrencia === 'Parcelada') {
-        return adicionarParceladoAPI(dados);
-    }
+    if (dados.tipoRecorrencia === 'Parcelada') return adicionarParceladoAPI(dados);
+    if (RECORRENTES.includes(dados.tipoRecorrencia)) return adicionarRecorrenteAPI(dados);
 
     const { data, error } = await sb
         .from('transacoes')
@@ -192,6 +199,31 @@ async function adicionarTransacaoAPI(dados) {
 
     if (error) throw error;
     return mapearTransacao(data);
+}
+
+async function adicionarRecorrenteAPI(dados) {
+    const base = montarRegistro(dados);
+    const tipo = dados.tipoRecorrencia;
+    const total = tipo === 'Semanal' ? HORIZONTE_SEMANAS : HORIZONTE_MESES;
+
+    // Sequência de datas das ocorrências
+    const datas = [base.data];
+    for (let i = 1; i < total; i++) {
+        const prox = calcularProximaData(datas[i - 1], tipo, dados.diaRecorrencia, dados.diaSemana);
+        if (!prox) break;
+        datas.push(prox);
+    }
+
+    const registros = datas.map((dt, i) => ({
+        ...base,
+        data: dt,
+        competencia: i === 0 ? base.competencia : competenciaDe(dt),
+        proxima_data: datas[i + 1] || null
+    }));
+
+    const { data, error } = await sb.from('transacoes').insert(registros).select();
+    if (error) throw error;
+    return (data || []).map(mapearTransacao);
 }
 
 async function adicionarParceladoAPI(dados) {

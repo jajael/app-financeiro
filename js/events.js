@@ -50,6 +50,10 @@ function configurarEventListeners() {
     const metodo = document.querySelector(SELECTORS.metodo);
     if (metodo) metodo.addEventListener('change', atualizarCampoCredito);
 
+    // Cancelar edição de transação
+    const cancelar = document.getElementById('cancelarEdicao');
+    if (cancelar) cancelar.addEventListener('click', cancelarEdicaoTransacao);
+
     // Campo Data: máscara dd/mm/aaaa + recalcular competência
     const dataInput = document.querySelector(SELECTORS.data);
     if (dataInput) {
@@ -172,22 +176,24 @@ async function submeterFormulario(e) {
     }
     
     try {
-        // Chamar API
-        await adicionarTransacaoAPI(dados);
-        
-        mostrarNotificacao('✓ Transação adicionada com sucesso!', 'sucesso');
-        
-        // Limpar formulário
-        limparFormulario();
-        
+        if (estadoApp.editandoId) {
+            await editarTransacaoAPI({ id: estadoApp.editandoId, ...dados });
+            mostrarNotificacao('✓ Transação atualizada!', 'sucesso');
+            cancelarEdicaoTransacao();
+        } else {
+            await adicionarTransacaoAPI(dados);
+            mostrarNotificacao('✓ Transação adicionada com sucesso!', 'sucesso');
+            limparFormulario();
+        }
+
         // Recarregar dados
         await recarregarDados();
-        
+
         // Mudar para aba apropriada
         setTimeout(() => mudarAba(dados.tipo), 500);
-        
+
     } catch (error) {
-        console.error('Erro ao adicionar transação:', error);
+        console.error('Erro ao salvar transação:', error);
         mostrarNotificacao('❌ Erro ao salvar transação', 'erro');
     }
 }

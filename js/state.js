@@ -28,6 +28,9 @@ let estadoApp = {
         recorrencias: []
     },
 
+    // Id da transação sendo editada (null = criando)
+    editandoId: null,
+
     // Status de loading
     carregando: false,
     erro: null
