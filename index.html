@@ -45,10 +45,13 @@
             </header>
 
             <div class="month-bar">
-                <button id="prevMonth" class="month-btn">←</button>
-                <span id="currentMonth" class="current-month">Setembro 2026</span>
-                <button id="nextMonth" class="month-btn">→</button>
-                <button id="btnConfig" class="month-btn month-btn--config" data-tab="menus" title="Configuração">⚙️</button>
+                <div class="month-nav">
+                    <button id="prevMonth" class="month-btn">←</button>
+                    <span id="currentMonth" class="current-month">Setembro 2026</span>
+                    <button id="nextMonth" class="month-btn">→</button>
+                </div>
+                <button id="btnConfig" class="month-btn month-btn--config" data-tab="menus"
+                        aria-pressed="false" title="Configurações">⚙️ <span class="cfg-label">Configurações</span></button>
             </div>
 
             <!-- Resumo compacto: aparece ao rolar para além do dashboard -->
