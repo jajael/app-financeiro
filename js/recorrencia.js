@@ -93,6 +93,39 @@ function dataDaOcorrencia(dataISO, tipo) {
   return '';
 }
 
+/* ---------- Recorrências com data derivada da competência ---------- */
+
+/** Tipos cujo dia é um dia útil fixo do mês (a data sai da competência) */
+const RECORRENCIA_DIA_UTIL = [
+  'Primeiro dia útil do mês',
+  'Até o 5º dia útil do mês',
+  'Último dia útil do mês'
+];
+
+/**
+ * Data real de um lançamento "dia útil fixo" para uma dada competência.
+ * @param {string} competenciaISO  'YYYY-MM-01'
+ * @param {string} tipo            um de RECORRENCIA_DIA_UTIL
+ * @param {boolean} antecipar      true = paga/recebe no mês ANTERIOR à competência
+ *                                 (ex.: salário de setembro no último dia útil de agosto)
+ */
+function dataDiaUtilPorCompetencia(competenciaISO, tipo, antecipar) {
+  if (!competenciaISO) return '';
+  const c = parseDataLocal(competenciaISO);
+  let ano = c.getFullYear();
+  let mes = c.getMonth() - (antecipar ? 1 : 0);
+  if (mes < 0) { mes += 12; ano -= 1; }
+  if (tipo === 'Último dia útil do mês')  return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
+  if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(ano, mes));
+  if (tipo === 'Até o 5º dia útil do mês') return formatarDataISO(nthDiaUtilDoMes(ano, mes, 5));
+  return '';
+}
+
+/** Uma linha salva está "antecipada" se a data cai em mês anterior ao da competência */
+function anteciparDeLinha(dataISO, competenciaISO) {
+  return !!dataISO && !!competenciaISO && dataISO.slice(0, 7) !== competenciaISO.slice(0, 7);
+}
+
 /**
  * Próxima data da recorrência (string 'YYYY-MM-DD') ou null se Pontual.
  * @param {string} dataAtual  'YYYY-MM-DD'

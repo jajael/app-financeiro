@@ -327,6 +327,14 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
     const comp = document.getElementById('competencia');
     if (comp) { comp.value = competenciaParaBR(trans.competencia); comp.dataset.editado = comp.value ? '1' : ''; }
 
+    // Recorrências "dia útil fixo": restaura competência + antecipação
+    const ehDiaUtil = typeof RECORRENCIA_DIA_UTIL !== 'undefined'
+        && RECORRENCIA_DIA_UTIL.includes(trans.tipoRecorrencia);
+    const compRec = document.getElementById('compRecorrente');
+    if (compRec) compRec.value = ehDiaUtil ? competenciaParaBR(trans.competencia) : '';
+    const antChk = document.getElementById('anteciparMesAnterior');
+    if (antChk) antChk.checked = ehDiaUtil && anteciparDeLinha(trans.data, trans.competencia);
+
     atualizarCamposRecorrencia();
     atualizarCampoCredito();
 
@@ -471,6 +479,10 @@ function atualizarCamposRecorrencia() {
     set('parceleGroup', tipo === 'Parcelada');
     set('diaSemanaGroup', ehSemanal);
     set('dataCalculadaGroup', ehCalculada);
+    // Nesses tipos a data sai da competência -> o campo "Data" livre não faz sentido
+    set('dataGroup', !ehCalculada);
+    const dataMain = document.querySelector(SELECTORS.data);
+    if (dataMain) dataMain.required = !ehCalculada;
 
     // Prefill do dia de vencimento com o dia da data digitada, se vazio
     const diaInput = document.getElementById('diaRecorrencia');
@@ -479,11 +491,20 @@ function atualizarCamposRecorrencia() {
         if (iso) diaInput.value = String(parseInt(iso.slice(8, 10), 10));
     }
 
-    // Campo cinza com a data calculada (último/primeiro/5º dia útil)
+    // Data derivada da competência (último/primeiro/5º dia útil) + antecipação p/ mês anterior
     if (ehCalculada) {
-        const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+        const compEl = document.getElementById('compRecorrente');
+        const antEl = document.getElementById('anteciparMesAnterior');
+        if (compEl && !compEl.value && typeof estadoApp !== 'undefined' && estadoApp.mesAtual) {
+            compEl.value = competenciaParaBR(formatarDataISO(estadoApp.mesAtual));
+        }
+        const compISO = parseCompetencia(compEl ? compEl.value : '');
+        const antecipar = !!(antEl && antEl.checked);
+        const dataISO = compISO ? dataDiaUtilPorCompetencia(compISO, tipo, antecipar) : '';
         const campo = document.getElementById('dataCalculada');
-        if (campo) campo.value = iso ? isoParaDataBR(dataDaOcorrencia(iso, tipo)) : '';
+        if (campo) campo.value = dataISO ? isoParaDataBR(dataISO) : '';
+        // mantém o #data (fonte usada pelo resto do fluxo) em sincronia
+        if (dataMain && dataISO) dataMain.value = isoParaDataBR(dataISO);
     }
 
     // Semanal: chips das ocorrências do dia da semana no mês
@@ -522,6 +543,8 @@ function atualizarLabelsPorTipo() {
     if (lblDia) lblDia.textContent = ehReceita ? 'Dia do pagamento:' : 'Dia de vencimento:';
     const lblChk = document.getElementById('pagarVencimentoLabel');
     if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vencimento';
+    const lblAnt = document.getElementById('anteciparLabel');
+    if (lblAnt) lblAnt.textContent = ehReceita ? 'receber no mês anterior' : 'pagar no mês anterior';
 
     // Recorrência "Mensal" aparece como "Conta" nas despesas -> refaz o dropdown
     if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
