@@ -54,11 +54,16 @@ function configurarEventListeners() {
     const cancelar = document.getElementById('cancelarEdicao');
     if (cancelar) cancelar.addEventListener('click', cancelarEdicaoTransacao);
 
-    // Botão "×" do formulário: cancela a edição em curso ou apenas limpa
+    // Botão "×" do formulário: fecha o lançamento (cancela edição ou limpa) e
+    // volta para a aba anterior
     const btnLimparForm = document.getElementById('btnLimparForm');
     if (btnLimparForm) btnLimparForm.addEventListener('click', () => {
-        if (estadoApp.editandoId) cancelarEdicaoTransacao();
-        else limparFormulario();
+        if (estadoApp.editandoId) {
+            cancelarEdicaoTransacao();            // já volta para a aba de origem
+        } else {
+            limparFormulario();
+            mudarAba(estadoApp.abaAnterior || 'entradas');
+        }
     });
 
     // Campo Data: máscara dd/mm/aaaa + recalcular competência
@@ -172,7 +177,13 @@ function mudarTipoTransacao(tipo) {
  */
 function mudarAba(novaAba) {
     console.log(`📑 Mudando para aba: ${novaAba}`);
-    
+
+    // Lembra a última aba que não seja o formulário (para o "×" voltar)
+    const ativa = document.querySelector('.tab-btn.active')?.dataset.tab;
+    if (ativa && ativa !== 'adicionar' && novaAba === 'adicionar') {
+        estadoApp.abaAnterior = ativa;
+    }
+
     // Remover classe active
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
