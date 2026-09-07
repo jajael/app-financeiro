@@ -57,8 +57,8 @@ function atualizarResumo() {
         if (gdSub) gdSub.textContent = `${dias} dia${dias === 1 ? '' : 's'} restante${dias === 1 ? '' : 's'}`;
     }
 
-    // Espelha os totais no resumo compacto (barra fixa) — número completo, sem "R$"
-    const setMini = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = formatarNumeroBR(v || 0); };
+    // Espelha os totais no resumo compacto (barra fixa) — com "R$", sem centavos ",00"
+    const setMini = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = formatarMoeda(v || 0); };
     setMini('miniEntradas', estadoApp.resumo.entradas);
     setMini('miniSaidas', estadoApp.resumo.saidas);
     setMini('miniBalanco', estadoApp.resumo.balanco);

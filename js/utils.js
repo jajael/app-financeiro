@@ -17,16 +17,6 @@ function formatarMoeda(valor) {
     }).format(n);
 }
 
-/** Número BR sem símbolo de moeda. Omite os centavos quando forem ",00". */
-function formatarNumeroBR(valor) {
-    const n = Number(valor) || 0;
-    const semCentavos = Math.round(n * 100) % 100 === 0;
-    return new Intl.NumberFormat('pt-BR', {
-        minimumFractionDigits: semCentavos ? 0 : 2,
-        maximumFractionDigits: 2
-    }).format(n);
-}
-
 /**
  * Formata uma data para o padrão português
  */
