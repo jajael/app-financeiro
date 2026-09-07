@@ -19,6 +19,7 @@ create table if not exists public.transacoes (
   forma_pagamento   text default 'À vista',
   tipo_recorrencia  text default 'Pontual',
   dia_recorrencia   smallint,   -- dia de vencimento (Conta / Parcelada)
+  pagar_no_vencimento boolean not null default false,  -- trava a data no vencimento
   dia_semana        smallint,   -- 0=Dom .. 6=Sáb (Semanal); null = sem dia fixo
   valor_sessao      numeric(12,2), -- Semanal: valor por sessão
   semanas           jsonb,       -- Semanal: datas marcadas do mês (["YYYY-MM-DD", ...])

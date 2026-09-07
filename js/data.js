@@ -199,7 +199,7 @@ function preencherDropdownRecorrencias() {
     ORDEM_RECORRENCIA.forEach(t => {
         const o = document.createElement('option');
         o.value = t;
-        o.textContent = t === 'Pontual' ? 'Pontual (uma única vez)' : t;
+        o.textContent = t;
         sel.appendChild(o);
     });
     sel.value = ORDEM_RECORRENCIA.includes(atual) ? atual : 'Pontual';
