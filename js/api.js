@@ -226,10 +226,10 @@ function montarRegistro(dados) {
         reg.valor = semanas.filter(d => d <= hoje).length * vs;       // X
     }
 
-    // "Dia útil fixo": a data sai da competência (opcionalmente antecipada p/ mês anterior)
+    // "Dia útil fixo": a data sai da competência (o tipo "... do mês anterior"
+    // cai no mês anterior, mantendo a competência do mês escolhido)
     if (RECORRENCIA_DIA_UTIL.includes(tipoRecorrencia) && reg.competencia) {
-        const antecipar = anteciparDeLinha(reg.data, reg.competencia);
-        reg.data = dataDiaUtilPorCompetencia(reg.competencia, tipoRecorrencia, antecipar);
+        reg.data = dataDiaUtilPorCompetencia(reg.competencia, tipoRecorrencia);
         reg.proxima_data = calcularProximaData(reg.data, tipoRecorrencia);
     }
 
@@ -244,7 +244,7 @@ function montarRegistro(dados) {
 
 // Tipos que se repetem "rolando" um mês por vez (mês atual + 1 pendente)
 const RECORRENTES = ['Mensal', 'Semanal', 'Último dia útil do mês',
-    'Primeiro dia útil do mês', 'Até o 5º dia útil do mês'];
+    'Último dia útil do mês anterior', 'Primeiro dia útil do mês', 'Até o 5º dia útil do mês'];
 
 // Tipo cujo lançamento já nasce pendente e se auto-confirma no 5º dia útil
 const AUTO_CONFIRMA = 'Até o 5º dia útil do mês';
@@ -298,12 +298,11 @@ function ocorrenciaSeguinte(row, novaData) {
         pendente: true
     };
 
-    // "Dia útil fixo": avança a competência 1 mês e recalcula a data, mantendo a antecipação
+    // "Dia útil fixo": avança a competência 1 mês e recalcula a data
     if (RECORRENCIA_DIA_UTIL.includes(row.tipo_recorrencia) && row.competencia) {
-        const antecipar = anteciparDeLinha(row.data, row.competencia);
         const proxComp = addMeses(row.competencia, 1);
         base.competencia = proxComp;
-        base.data = dataDiaUtilPorCompetencia(proxComp, row.tipo_recorrencia, antecipar);
+        base.data = dataDiaUtilPorCompetencia(proxComp, row.tipo_recorrencia);
     }
 
     // Receita Mensal: competência +1 mês, data no dia informado / próximo dia útil

@@ -8,9 +8,10 @@ const RECORRENCIAS_INFO = [
   ['Pontual', 'Acontece uma única vez, sem repetição.'],
   ['Mensal / Contas', 'Repete todo mês no dia informado, ajustado para o dia útil mais próximo.'],
   ['Parcelada', 'Divide o valor em parcelas mensais — uma transação por mês, cada uma na sua competência. Na receita, cada parcela cai no próximo dia útil.'],
-  ['Primeiro dia útil do mês', 'Apenas receitas. Informe a competência (mm/aaaa); a data sai no primeiro dia útil desse mês. Marque "mês anterior" para antecipar.'],
-  ['Até o 5º dia útil do mês', 'Apenas receitas. Data no 5º dia útil da competência; fica pendente de OK e se confirma sozinho nessa data. Pode antecipar para o mês anterior.'],
-  ['Último dia útil do mês', 'Apenas receitas. Informe a competência; a data sai no último dia útil. Marque "mês anterior" para casos como salário de setembro pago no fim de agosto.'],
+  ['Primeiro dia útil do mês', 'Apenas receitas. Informe a competência (mm/aaaa); a data sai no primeiro dia útil desse mês.'],
+  ['Até o 5º dia útil do mês', 'Apenas receitas. Data no 5º dia útil da competência; fica pendente de OK e se confirma sozinho nessa data.'],
+  ['Último dia útil do mês', 'Apenas receitas. Informe a competência; a data sai no último dia útil desse mês.'],
+  ['Último dia útil do mês anterior', 'Apenas receitas. A data cai no último dia útil do mês ANTERIOR à competência (ex.: salário de setembro pago em 31/08). A competência continua sendo o mês de referência.'],
   ['Semanal', 'Repete a cada 7 dias. Pode fixar um dia da semana ou deixar sem dia fixo.']
 ];
 

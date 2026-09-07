@@ -116,35 +116,35 @@ function dataDaOcorrencia(dataISO, tipo) {
 
 /* ---------- Recorrências com data derivada da competência ---------- */
 
-/** Tipos cujo dia é um dia útil fixo do mês (a data sai da competência) */
+/** Tipos cujo dia é um dia útil fixo, calculado a partir da competência */
 const RECORRENCIA_DIA_UTIL = [
   'Primeiro dia útil do mês',
   'Até o 5º dia útil do mês',
-  'Último dia útil do mês'
+  'Último dia útil do mês',
+  'Último dia útil do mês anterior'
 ];
 
 /**
  * Data real de um lançamento "dia útil fixo" para uma dada competência.
+ * "Último dia útil do mês anterior" cai no mês ANTERIOR ao da competência
+ * (ex.: salário de setembro pago em 31/08). A competência continua sendo setembro.
  * @param {string} competenciaISO  'YYYY-MM-01'
  * @param {string} tipo            um de RECORRENCIA_DIA_UTIL
- * @param {boolean} antecipar      true = paga/recebe no mês ANTERIOR à competência
- *                                 (ex.: salário de setembro no último dia útil de agosto)
  */
-function dataDiaUtilPorCompetencia(competenciaISO, tipo, antecipar) {
+function dataDiaUtilPorCompetencia(competenciaISO, tipo) {
   if (!competenciaISO) return '';
   const c = parseDataLocal(competenciaISO);
   let ano = c.getFullYear();
-  let mes = c.getMonth() - (antecipar ? 1 : 0);
-  if (mes < 0) { mes += 12; ano -= 1; }
+  let mes = c.getMonth();
+  if (tipo === 'Último dia útil do mês anterior') {
+    mes -= 1;
+    if (mes < 0) { mes = 11; ano -= 1; }
+    return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
+  }
   if (tipo === 'Último dia útil do mês')  return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
   if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(ano, mes));
   if (tipo === 'Até o 5º dia útil do mês') return formatarDataISO(nthDiaUtilDoMes(ano, mes, 5));
   return '';
-}
-
-/** Uma linha salva está "antecipada" se a data cai em mês anterior ao da competência */
-function anteciparDeLinha(dataISO, competenciaISO) {
-  return !!dataISO && !!competenciaISO && dataISO.slice(0, 7) !== competenciaISO.slice(0, 7);
 }
 
 /**
@@ -177,7 +177,8 @@ function calcularProximaData(dataAtual, tipo, dia, diaSemana) {
   let mes = base.getMonth() + 1; // próximo mês
   if (mes > 11) { mes = 0; ano += 1; }
 
-  if (tipo === 'Último dia útil do mês') return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
+  if (tipo === 'Último dia útil do mês'
+      || tipo === 'Último dia útil do mês anterior') return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
   if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(ano, mes));
   if (tipo === 'Até o 5º dia útil do mês') return formatarDataISO(nthDiaUtilDoMes(ano, mes, 5));
 

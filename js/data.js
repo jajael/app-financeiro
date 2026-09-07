@@ -196,7 +196,8 @@ function preencherDropdownMetodos() {
 
 // Ordem preferida de exibição dos tipos de recorrência
 const ORDEM_RECORRENCIA = ['Pontual', 'Mensal', 'Parcelada',
-    'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês', 'Semanal'];
+    'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês',
+    'Último dia útil do mês anterior', 'Semanal'];
 
 /**
  * Preenche o dropdown de recorrência. Tipos fixos do sistema (todos sempre).
