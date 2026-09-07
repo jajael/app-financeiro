@@ -15,6 +15,7 @@ const RECORRENCIAS_INFO = [
 ];
 
 let menusAtual = null; // cache dos itens carregados (para edição inline)
+let subConfigAtiva = 'cat'; // sub-aba selecionada na Configuração
 
 /** Recarrega a aba de configuração e, em seguida, os dropdowns do formulário */
 async function recarregarMenus() {
@@ -42,51 +43,17 @@ async function carregarAbaMenus() {
       </div>
 
       <div class="menu-section" data-sub="cat">
-        <h3>📂 Categorias</h3>
+        <h3>📂 Categorias
+          <button type="button" class="h3-add" onclick="abrirNovaCategoria()" title="Nova categoria">+</button>
+        </h3>
         <div class="menu-list" id="categoriasList"></div>
-        <div class="add-item-form">
-          <div class="campo">
-            <label for="novaCategoriaInput">Nome</label>
-            <input type="text" id="novaCategoriaInput" placeholder="Ex: Mercado">
-          </div>
-          <div class="campo">
-            <label for="novaCategoriDescInput">Descrição <span class="opt">(opcional)</span></label>
-            <input type="text" id="novaCategoriDescInput" placeholder="">
-          </div>
-          <button onclick="adicionarNovaCategoria()" class="btn-add">+ Adicionar</button>
-        </div>
       </div>
 
       <div class="menu-section" data-sub="met" hidden>
-        <h3>💳 Métodos de pagamento</h3>
+        <h3>💳 Métodos de pagamento
+          <button type="button" class="h3-add" onclick="abrirNovoMetodo()" title="Novo método">+</button>
+        </h3>
         <div class="menu-list" id="metodosList"></div>
-        <div class="add-item-form">
-          <div class="campo">
-            <label for="novoMetodoKind">Tipo</label>
-            <select id="novoMetodoKind">
-              <option value="">Selecione...</option>
-              <option value="PIX/Débito">PIX/Débito</option>
-              <option value="Crédito">Crédito</option>
-            </select>
-          </div>
-          <div class="campo" id="metodoBancoCampo" hidden>
-            <label for="metodoBanco">Banco</label>
-            <input type="text" id="metodoBanco" placeholder="Ex: Nubank">
-          </div>
-          <div class="campo" id="metodoFechCampo" hidden>
-            <label for="metodoFech">Fechamento (dia)</label>
-            <input type="text" id="metodoFech" inputmode="numeric" maxlength="2" placeholder="">
-          </div>
-          <div class="campo" id="metodoVencCampo" hidden>
-            <label for="metodoVenc">Vencimento (dia)</label>
-            <input type="text" id="metodoVenc" inputmode="numeric" maxlength="2" placeholder="">
-          </div>
-          <div class="campo" id="metodoMelhorCampo" hidden>
-            <label for="metodoMelhor">Melhor dia <span class="opt">(auto)</span></label>
-            <input type="text" id="metodoMelhor" inputmode="numeric" maxlength="2" placeholder="">
-          </div>
-          <button onclick="adicionarNovoMetodo()" class="btn-add">+ Adicionar</button>
-        </div>
       </div>
 
       <div class="menu-section" data-sub="rec" hidden>
@@ -107,11 +74,20 @@ async function carregarAbaMenus() {
     </div>
   `;
 
-  configurarFormMetodo();
   configurarSubtabsConfig();
+  mostrarSubConfig(subConfigAtiva);
 
   renderizarItemsMenu('Categoria', 'categoriasList', menus.categorias);
   renderizarItemsMenu('Método', 'metodosList', menus.metodos);
+}
+
+function mostrarSubConfig(sub) {
+  subConfigAtiva = sub;
+  document.querySelectorAll('.menus-gerenciamento .subtab').forEach(b =>
+    b.classList.toggle('active', b.dataset.sub === sub));
+  document.querySelectorAll('.menus-gerenciamento .menu-section').forEach(sec => {
+    sec.hidden = sec.dataset.sub !== sub;
+  });
 }
 
 /** Sub-abas da Configuração: Categorias / Métodos / Recorrências */
@@ -120,40 +96,8 @@ function configurarSubtabsConfig() {
   if (!barra) return;
   barra.addEventListener('click', e => {
     const btn = e.target.closest('.subtab');
-    if (!btn) return;
-    const sub = btn.dataset.sub;
-    barra.querySelectorAll('.subtab').forEach(b => b.classList.toggle('active', b === btn));
-    document.querySelectorAll('.menus-gerenciamento .menu-section').forEach(sec => {
-      sec.hidden = sec.dataset.sub !== sub;
-    });
+    if (btn) mostrarSubConfig(btn.dataset.sub);
   });
-}
-
-/** Liga os campos condicionais do formulário de método */
-function configurarFormMetodo() {
-  const kind = document.getElementById('novoMetodoKind');
-  const bancoCampo = document.getElementById('metodoBancoCampo');
-  const fechCampo = document.getElementById('metodoFechCampo');
-  const vencCampo = document.getElementById('metodoVencCampo');
-  const melhorCampo = document.getElementById('metodoMelhorCampo');
-  const fech = document.getElementById('metodoFech');
-  const melhor = document.getElementById('metodoMelhor');
-
-  kind.addEventListener('change', () => {
-    const v = kind.value;
-    bancoCampo.hidden = !v;                 // PIX/Débito e Crédito pedem banco
-    const cred = v === 'Crédito';
-    fechCampo.hidden = !cred;
-    vencCampo.hidden = !cred;
-    melhorCampo.hidden = !cred;
-  });
-
-  fech.addEventListener('input', () => {
-    soNumeros(fech, 2);
-    if (!melhor.dataset.editado) melhor.value = sugerirMelhorDiaCompra(fech.value) || '';
-  });
-  document.getElementById('metodoVenc').addEventListener('input', e => soNumeros(e.target, 2));
-  melhor.addEventListener('input', () => { melhor.dataset.editado = '1'; soNumeros(melhor, 2); });
 }
 
 /* ---------- Render ---------- */
@@ -319,41 +263,3 @@ function abrirEdicaoInline(row, id, tipo) {
   };
 }
 
-/* ---------- Adicionar ---------- */
-
-async function adicionarNovaCategoria() {
-  const nomeEl = document.getElementById('novaCategoriaInput');
-  const descEl = document.getElementById('novaCategoriDescInput');
-  const nome = nomeEl.value.trim();
-  if (!nome) return mostrarNotificacao('Digite o nome da categoria', 'info');
-
-  if (await adicionarItemMenuAPI('Categoria', nome, { descricao: descEl.value.trim() })) {
-    nomeEl.value = ''; descEl.value = '';
-    recarregarMenus();
-  }
-}
-
-async function adicionarNovoMetodo() {
-  const kind = document.getElementById('novoMetodoKind').value;
-  if (!kind) return mostrarNotificacao('Escolha o tipo de método', 'info');
-
-  const banco = document.getElementById('metodoBanco').value.trim();
-  if (!banco) return mostrarNotificacao('Informe o banco', 'info');
-
-  const extra = { metodo_kind: kind, banco };
-  const nome = `${kind} — ${banco}`;
-
-  if (kind === 'Crédito') {
-    const fech = parseInt(document.getElementById('metodoFech').value, 10);
-    const venc = parseInt(document.getElementById('metodoVenc').value, 10);
-    const melhor = parseInt(document.getElementById('metodoMelhor').value, 10)
-      || sugerirMelhorDiaCompra(fech) || null;
-    if (!(fech >= 1 && fech <= 31)) return mostrarNotificacao('Dia de fechamento inválido', 'erro');
-    if (!(venc >= 1 && venc <= 31)) return mostrarNotificacao('Dia de vencimento inválido', 'erro');
-    extra.dia_fechamento = fech;
-    extra.dia_vencimento = venc;
-    extra.melhor_dia_compra = melhor;
-  }
-
-  if (await adicionarItemMenuAPI('Método', nome, extra)) recarregarMenus();
-}
