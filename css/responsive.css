@@ -40,9 +40,9 @@
         padding: var(--spacing-lg);
     }
 
-    /* Dashboard */
+    /* Dashboard: Balanço e Gasto diário continuam dividindo a linha */
     .dashboard {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 
     /* Tabs: 3 linhas — Lançamento / Receitas·Despesas / Próximas·Configuração */

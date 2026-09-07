@@ -5,9 +5,15 @@
 
 .dashboard {
     display: grid;
-    grid-template-columns: 1fr 1fr;   /* linha 1: Receitas | Despesas ; linha 2: Balanço | Gasto diário */
-    gap: var(--spacing-lg);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
     margin-bottom: var(--spacing-xl);
+}
+
+/* Receitas e Despesas ocupam a linha inteira; Balanço + Gasto diário dividem */
+.summary-card.entradas,
+.summary-card.saidas {
+    grid-column: 1 / -1;
 }
 
 /* Linhas "Atual / A receber|pagar / Total" dentro dos cards */
@@ -199,8 +205,8 @@
 /* ============ Resumo compacto fixo (aparece ao rolar) ============ */
 .mini-resumo {
   display: flex;
-  gap: .25rem;
-  padding: .3rem .5rem .4rem;
+  gap: .35rem;
+  padding: .45rem .55rem;
   background: var(--surface);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -211,15 +217,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: .2rem;
-  padding: .3rem .15rem;
+  gap: .25rem;
+  padding: .35rem .2rem;
   border: 1px solid transparent;
   border-radius: var(--radius-xs);
-  font-size: .7rem;
-  font-weight: 700;
+  font-weight: 400;
 }
-.mini-box i { font-style: normal; font-size: .8rem; line-height: 1; flex: none; }
+.mini-box i { font-style: normal; font-size: .78rem; line-height: 1; flex: none; opacity: .85; }
 .mini-box b {
+  font-size: .64rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   overflow: hidden;
   text-overflow: ellipsis;
