@@ -21,6 +21,7 @@ function mapearTransacao(row) {
         proximaData: row.proxima_data || '',
         status: row.status || 'Ativa',
         cartaoId: row.cartao_id || null,
+        grupoId: row.grupo_id || null,
         competencia: row.competencia || '',
         diaRecorrencia: row.dia_recorrencia || '',
         diaSemana: row.dia_semana ?? null
@@ -201,12 +202,15 @@ async function adicionarTransacaoAPI(dados) {
     return mapearTransacao(data);
 }
 
-async function adicionarRecorrenteAPI(dados) {
-    const base = montarRegistro(dados);
+/**
+ * Gera as linhas de uma série recorrente (Conta / Semanal / dia útil),
+ * a partir de `dados`, com `total` ocorrências, todas no mesmo grupo.
+ */
+function gerarSerieRecorrente(dados, grupoId, total) {
     const tipo = dados.tipoRecorrencia;
-    const total = tipo === 'Semanal' ? HORIZONTE_SEMANAS : HORIZONTE_MESES;
+    const base = montarRegistro(dados);
+    base.grupo_id = grupoId;
 
-    // Sequência de datas das ocorrências
     const datas = [base.data];
     for (let i = 1; i < total; i++) {
         const prox = calcularProximaData(datas[i - 1], tipo, dados.diaRecorrencia, dados.diaSemana);
@@ -214,12 +218,17 @@ async function adicionarRecorrenteAPI(dados) {
         datas.push(prox);
     }
 
-    const registros = datas.map((dt, i) => ({
+    return datas.map((dt, i) => ({
         ...base,
         data: dt,
         competencia: i === 0 ? base.competencia : competenciaDe(dt),
         proxima_data: datas[i + 1] || null
     }));
+}
+
+async function adicionarRecorrenteAPI(dados) {
+    const total = dados.tipoRecorrencia === 'Semanal' ? HORIZONTE_SEMANAS : HORIZONTE_MESES;
+    const registros = gerarSerieRecorrente(dados, crypto.randomUUID(), total);
 
     const { data, error } = await sb.from('transacoes').insert(registros).select();
     if (error) throw error;
@@ -228,25 +237,23 @@ async function adicionarRecorrenteAPI(dados) {
 
 async function adicionarParceladoAPI(dados) {
     const n = Math.max(1, parseInt(dados.parcelas, 10) || 1);
+    const grupoId = crypto.randomUUID();
     const centavos = Math.round(parseFloat(dados.valor) * 100);
     const baseParc = Math.floor(centavos / n);
     const resto = centavos - baseParc * n;
 
-    const base = montarRegistro(dados);          // parcela 1 (define competência e data-base)
+    const base = montarRegistro(dados);
+    base.grupo_id = grupoId;
     const registros = [];
 
     for (let i = 0; i < n; i++) {
         const valor = (baseParc + (i < resto ? 1 : 0)) / 100;
-        const dataParc = i === 0 ? base.data : addMeses(base.data, i);
-        const competencia = i === 0 ? base.competencia : addMeses(base.competencia, i);
-        const proxima = i < n - 1 ? addMeses(base.competencia, i + 1) : null;
-
         registros.push({
             ...base,
             valor,
-            data: dataParc,
-            competencia,
-            proxima_data: proxima,
+            data: i === 0 ? base.data : addMeses(base.data, i),
+            competencia: i === 0 ? base.competencia : addMeses(base.competencia, i),
+            proxima_data: i < n - 1 ? addMeses(base.competencia, i + 1) : null,
             descricao: `${dados.descricao || dados.categoria} (${i + 1}/${n})`
         });
     }
@@ -256,31 +263,88 @@ async function adicionarParceladoAPI(dados) {
     return (data || []).map(mapearTransacao);
 }
 
+/** Nº de meses de `compA` (YYYY-MM-01) até `compB`, inclusivo */
+function mesesInclusive(compA, compB) {
+    const [ya, ma] = compA.slice(0, 7).split('-').map(Number);
+    const [yb, mb] = compB.slice(0, 7).split('-').map(Number);
+    return Math.max(1, (yb - ya) * 12 + (mb - ma) + 1);
+}
+
 /**
- * Edita uma transação existente (por id)
+ * Edita uma transação. Se ela faz parte de uma série (grupo_id), a alteração
+ * cascateia para essa ocorrência e todas as SEGUINTES (meses anteriores ficam
+ * como estavam).
  */
 async function editarTransacaoAPI(dados) {
     if (!dados.id) throw new Error('ID é obrigatório para editar');
 
-    const registro = montarRegistro(dados);
-    delete registro.tipo; // não permite trocar entrada <-> saída na edição
-
-    const { data, error } = await sb
+    const { data: alvo, error: e1 } = await sb
         .from('transacoes')
-        .update(registro)
+        .select('grupo_id, competencia, tipo_recorrencia')
         .eq('id', dados.id)
-        .select()
         .single();
+    if (e1) throw e1;
 
+    // Sem série -> update simples
+    if (!alvo.grupo_id) {
+        const registro = montarRegistro(dados);
+        delete registro.tipo;
+        const { data, error } = await sb.from('transacoes')
+            .update(registro).eq('id', dados.id).select().single();
+        if (error) throw error;
+        return mapearTransacao(data);
+    }
+
+    // Parcelada: propaga campos para as parcelas seguintes, sem regerar
+    if (alvo.tipo_recorrencia === 'Parcelada') {
+        const registro = montarRegistro(dados);
+        ['tipo', 'data', 'competencia', 'proxima_data', 'grupo_id'].forEach(k => delete registro[k]);
+        const { error } = await sb.from('transacoes')
+            .update(registro)
+            .eq('grupo_id', alvo.grupo_id)
+            .gte('competencia', alvo.competencia);
+        if (error) throw error;
+        return { mensagem: 'Parcelas atualizadas' };
+    }
+
+    // Recorrente: apaga do mês editado pra frente e regera com os novos valores
+    const { data: irmaos } = await sb.from('transacoes')
+        .select('competencia').eq('grupo_id', alvo.grupo_id)
+        .order('competencia', { ascending: false }).limit(1);
+    const ultimaComp = irmaos?.[0]?.competencia || alvo.competencia;
+
+    const total = alvo.tipo_recorrencia === 'Semanal'
+        ? HORIZONTE_SEMANAS
+        : mesesInclusive(alvo.competencia, ultimaComp);
+
+    await sb.from('transacoes').delete()
+        .eq('grupo_id', alvo.grupo_id)
+        .gte('competencia', alvo.competencia);
+
+    const registros = gerarSerieRecorrente(dados, alvo.grupo_id, total);
+    const { data, error } = await sb.from('transacoes').insert(registros).select();
     if (error) throw error;
-    return mapearTransacao(data);
+    return (data || []).map(mapearTransacao);
 }
 
 /**
- * Deleta uma transação (por id)
+ * Deleta uma transação. Se faz parte de uma série, apaga essa ocorrência e
+ * todas as SEGUINTES do mesmo grupo.
  */
-async function deletarTransacaoAPI(id, tipo) {
+async function deletarTransacaoAPI(id) {
+    const { data: alvo, error: e1 } = await sb
+        .from('transacoes').select('grupo_id, competencia').eq('id', id).single();
+    if (e1) throw e1;
+
+    if (alvo.grupo_id) {
+        const { error } = await sb.from('transacoes').delete()
+            .eq('grupo_id', alvo.grupo_id)
+            .gte('competencia', alvo.competencia);
+        if (error) throw error;
+        return { mensagem: 'Série apagada a partir deste mês' };
+    }
+
     const { error } = await sb.from('transacoes').delete().eq('id', id);
     if (error) throw error;
-    return { mensagem: 'Transação deletada com sucesso' };
+    return { mensagem: 'Transação deletada' };
 }
