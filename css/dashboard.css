@@ -23,22 +23,26 @@
     flex-direction: column;
     gap: 0.3rem;
 }
-/* Colunas de largura fixa: label à esquerda, valor à direita (sem "indentes") */
+/* Colunas de largura fixa: VALOR à esquerda (alinhado à direita),
+   label à direita (alinhado à esquerda) — "spine" no meio */
 .card-linhas .linha {
     display: flex;
     align-items: baseline;
     font-size: var(--font-size-sm);
 }
-.card-linhas .linha i {
-    flex: 0 0 45%;
-    font-style: normal;
-    opacity: 0.8;
-    text-align: left;
-}
 .card-linhas .linha b {
-    flex: 1 1 55%;
+    order: 1;
+    flex: 0 0 48%;
     text-align: right;
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
+}
+.card-linhas .linha i {
+    order: 2;
+    flex: 1 1 52%;
+    padding-left: 0.6rem;
+    font-style: normal;
+    opacity: 0.75;
+    text-align: left;
 }
 .card-linhas .linha.total {
     margin-top: 0.35rem;
