@@ -219,3 +219,20 @@ input.campo-travado,
     font-weight: 700;
     cursor: pointer;
 }
+
+/* ---------- Densidade geral da UI (mais enxuta) ---------- */
+.resumo-container, .analise-container, .transacoes-container,
+.proximas-container, .chart-container, .form-transacao {
+    margin-bottom: var(--spacing-lg);
+}
+.transacoes-container h2, .proximas-container h2,
+.resumo-container h2, .analise-container h2 {
+    margin-bottom: var(--spacing-md);
+    font-size: var(--font-size-lg);
+}
+.summary-card { padding: var(--spacing-md); }
+.summary-card .amount { font-size: 1.5rem; }
+.card-linhas .linha.total .amount { font-size: 1.25rem; }
+.despesa-item { padding: 0.5rem 0.7rem; }
+.menu-section { padding: var(--spacing-md); }
+.dashboard { gap: var(--spacing-md); }
