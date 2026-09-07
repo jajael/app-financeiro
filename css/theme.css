@@ -165,7 +165,6 @@ input.campo-travado,
 .menu-item:hover { background-color: var(--surface-3); }
 .item-nome { color: var(--text); }
 .item-descricao,
-.item-status,
 .menus-gerenciamento .empty-text,
 .menu-hint { color: var(--text-muted); }
 

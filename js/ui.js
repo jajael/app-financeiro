@@ -544,6 +544,7 @@ function abrirNovaCategoria() {
                 const ok = await adicionarItemMenuAPI('Categoria', nome, { descricao: ov.querySelector('#dlgCatDesc').value.trim() });
                 if (!ok) return true;
                 await carregarMenus();
+                if (typeof carregarAbaMenus === "function") await carregarAbaMenus();
                 const sel = document.querySelector(SELECTORS.categoria);
                 if (sel) sel.value = nome;
             } }
@@ -594,6 +595,7 @@ function abrirNovoMetodo() {
                 const ok = await adicionarItemMenuAPI('Método', nome, extra);
                 if (!ok) return true;
                 await carregarMenus();
+                if (typeof carregarAbaMenus === "function") await carregarAbaMenus();
                 const sel = document.querySelector(SELECTORS.metodo);
                 if (sel) sel.value = nome;
                 if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();
