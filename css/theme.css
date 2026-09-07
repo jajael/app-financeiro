@@ -1,0 +1,152 @@
+/**
+ * THEME — camada final que amarra todas as superfícies aos tokens.
+ * Carregado por último. Vale para claro e escuro (os tokens mudam).
+ */
+
+html, body {
+    background: var(--bg-gradient);
+    color: var(--text);
+}
+
+.container { background: transparent; }
+
+header.header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    border-bottom-color: var(--primary-dark);
+}
+header.header h1,
+header.header .current-month,
+header.header .month-btn { color: var(--header-text); }
+
+main.main { background: transparent; color: var(--text); }
+
+footer.footer {
+    background: transparent;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+}
+
+/* ---------- Superfícies ---------- */
+.summary-card,
+.form-transacao,
+.transacoes-container,
+.proximas-container,
+.analise-container,
+.menus-container,
+.menu-item,
+.despesa-item,
+.dialogo,
+.sugestoes,
+.chart-container,
+.category-item {
+    background-color: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.despesa-item:hover,
+.menu-item:hover,
+.category-item:hover,
+.sugestao-item:hover { background-color: var(--surface-3); }
+
+/* Cards coloridos mantêm suas cores (tokens receita/despesa/balanço) */
+.summary-card.entradas { background-color: var(--receita-bg); color: var(--receita-text); border-color: var(--receita-border); }
+.summary-card.saidas   { background-color: var(--despesa-bg); color: var(--despesa-text); border-color: var(--despesa-border); }
+.summary-card.balanco  { background-color: var(--balanco-bg); color: var(--balanco-text); border-color: var(--balanco-border); }
+
+/* ---------- Texto ---------- */
+h1, h2, h3, h4, label, .item-nome, .despesa-categoria, .amount { color: var(--text); }
+
+.despesa-descricao, .despesa-meta, .meta-item,
+.item-descricao, .grupo-sub, .menu-hint, .hint-inline,
+.summary-card .sub, .empty-message, .empty-text,
+.current-month, .semanas-resumo {
+    color: var(--text-muted);
+}
+
+.grupo-cab { color: var(--text); border-bottom-color: var(--border); }
+
+/* ---------- Campos ---------- */
+.form-group input,
+.form-group select,
+.form-group textarea,
+.dialogo-corpo input,
+.dialogo-corpo select,
+.add-item-form input,
+.add-item-form select,
+.item-edit input,
+.sugestoes {
+    background-color: var(--surface-2);
+    color: var(--text);
+    border-color: var(--border-strong);
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder,
+.dialogo-corpo input::placeholder { color: var(--text-muted); }
+
+input.campo-travado,
+.form-group input.campo-travado {
+    background-color: var(--surface-3);
+    color: var(--text-muted);
+    border-color: var(--border);
+}
+
+.add-item-form { background-color: var(--surface-2); border-color: var(--border); }
+
+/* ---------- Abas ---------- */
+.tabs { border-bottom-color: var(--border); }
+.tab-btn { color: var(--text-muted); }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--primary); }
+.tab-content { color: var(--text); }
+
+/* ---------- Chips / semanas ---------- */
+.semanas-chips .chip {
+    background-color: var(--surface-2);
+    color: var(--text);
+    border-color: var(--border-strong);
+}
+.semanas-chips .chip.on {
+    background-color: var(--primary);
+    color: var(--primary-contrast);
+    border-color: var(--primary);
+}
+
+/* ---------- Botões auxiliares ---------- */
+.btn-mini-add {
+    background-color: var(--surface-2);
+    color: var(--primary);
+    border-color: var(--border-strong);
+}
+.btn-mini-add:hover { background-color: var(--surface-3); }
+
+.btn-cancelar {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border-strong);
+}
+
+.btn-icon { color: var(--text); }
+.btn-icon:hover { background-color: var(--surface-3); }
+
+/* ---------- Diálogo ---------- */
+.dialogo-overlay { background: rgba(0, 0, 0, 0.5); }
+.dialogo h3 { color: var(--text); }
+.dialogo p { color: var(--text-muted); }
+
+/* ---------- Botão de tema no cabeçalho ---------- */
+#btnTema {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--header-text);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.7rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    line-height: 1;
+}
+#btnTema:hover { background: rgba(255, 255, 255, 0.28); }
+
+/* ---------- Notificação (mostrarNotificacao usa cor inline; ok) ---------- */
+.notificacao { color: #fff; }

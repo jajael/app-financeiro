@@ -393,43 +393,6 @@
     }
 }
 
-/* ============ MODO ESCURO ============ */
-@media (prefers-color-scheme: dark) {
-    html, body {
-        background: #1a1a1a;
-        color: #f0f0f0;
-    }
-
-    .container {
-        background: #222;
-    }
-
-    .header {
-        background: linear-gradient(135deg, #3d3d3d 0%, #2a2a2a 100%);
-    }
-
-    main.main {
-        background: #1a1a1a;
-    }
-
-    footer.footer {
-        background: #0a0a0a;
-    }
-}
-
-/* ============ MODO CLARO ============ */
-@media (prefers-color-scheme: light) {
-    html, body {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        color: #1a1a1a;
-    }
-
-    .container {
-        background: white;
-    }
-}
-
-/* ============ REDUZIR MOVIMENTO ============ */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;

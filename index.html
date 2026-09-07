@@ -17,6 +17,16 @@
     <link rel="stylesheet" href="css/forms.css">
     <link rel="stylesheet" href="css/menus.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/theme.css">
+    <script>
+        // Aplica o tema antes de renderizar (evita flash)
+        (function () {
+            try {
+                var t = localStorage.getItem('tema');
+                if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body>
     <div class="container">
@@ -30,6 +40,7 @@
                         <span id="currentMonth" class="current-month">Setembro 2026</span>
                         <button id="nextMonth" class="month-btn">→</button>
                     </span>
+                    <button id="btnTema" type="button" title="Alternar tema claro/escuro">🌙</button>
                     <button id="btnLogout" class="month-btn" hidden title="Sair">⎋ Sair</button>
                 </div>
             </div>

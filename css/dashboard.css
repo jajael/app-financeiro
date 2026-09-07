@@ -14,7 +14,8 @@
     padding: var(--spacing-lg);
     border-radius: var(--radius);
     border: 2px solid;
-    background-color: white;
+    background-color: var(--surface);
+    color: var(--text);
     transition: all var(--transition-normal);
     position: relative;
     overflow: hidden;
@@ -163,4 +164,9 @@
   font-size: .72rem;
   opacity: .7;
 }
-.summary-card.gasto-diario { border-left: 4px solid #7C3AED; }
+.summary-card.gasto-diario {
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+  border-left: 4px solid var(--primary);
+}

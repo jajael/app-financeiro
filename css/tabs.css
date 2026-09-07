@@ -181,16 +181,3 @@
 }
 
 /* Modo dark (futuro) */
-@media (prefers-color-scheme: dark) {
-    .tabs {
-        border-bottom-color: #444;
-    }
-
-    .tab-btn {
-        color: #aaa;
-    }
-
-    .tab-btn.active {
-        color: var(--primary);
-    }
-}

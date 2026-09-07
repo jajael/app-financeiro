@@ -1,54 +1,64 @@
 /**
- * VARIÁVEIS E TEMAS
- * Cores, espaçamentos, tamanhos
+ * VARIÁVEIS E TEMA
+ * Um único conjunto de tokens. Claro no :root; escuro em
+ * [data-theme="dark"] e também via preferência do sistema
+ * (a menos que [data-theme="light"] force o claro).
  */
 
 :root {
-    /* Cores primárias */
+    color-scheme: light;
+
+    /* Marca */
     --primary: #4F46E5;
     --primary-dark: #4338CA;
+    --primary-contrast: #ffffff;
     --secondary: #06B6D4;
     --success: #10B981;
     --danger: #EF4444;
     --warning: #F59E0B;
-    
-    /* Tons neutros */
-    --light: #F3F4F6;
-    --dark: #1F2937;
-    --gray: #6B7280;
-    
-    /* Entrada (receita) */
-    --receita-bg: #DCFCE7;
-    --receita-text: #166534;
-    --receita-border: #86EFAC;
-    
-    /* Saída (despesa) */
-    --despesa-bg: #FEE2E2;
-    --despesa-text: #991B1B;
-    --despesa-border: #FECACA;
-    
-    /* Balanço */
-    --balanco-bg: #FEF3C7;
-    --balanco-text: #B45309;
-    --balanco-border: #FCD34D;
-    
+
+    /* Superfícies e texto */
+    --bg: #EEF2F7;                 /* fundo da página */
+    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #dfe6f2 100%);
+    --surface: #ffffff;           /* cards, formulários, itens */
+    --surface-2: #F3F4F6;         /* campos, faixas sutis */
+    --surface-3: #E9ECF3;         /* hover de itens */
+    --text: #1F2937;
+    --text-muted: #6B7280;
+    --border: #E5E7EB;
+    --border-strong: #D1D5DB;
+
+    /* Cabeçalho */
+    --header-bg: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+    --header-text: #ffffff;
+
+    /* Receita / Despesa / Balanço (fundo, texto, borda) */
+    --receita-bg: #DCFCE7;  --receita-text: #166534;  --receita-border: #86EFAC;
+    --despesa-bg: #FEE2E2;  --despesa-text: #991B1B;  --despesa-border: #FECACA;
+    --balanco-bg: #FEF3C7;  --balanco-text: #B45309;  --balanco-border: #FCD34D;
+
+    /* Neutros legados (mantidos p/ compat) */
+    --light: var(--surface-2);
+    --dark: var(--text);
+    --gray: var(--text-muted);
+
     /* Espaçamento */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
     --spacing-lg: 1.5rem;
     --spacing-xl: 2rem;
-    
+
     /* Bordas */
     --radius: 12px;
     --radius-sm: 8px;
     --radius-xs: 4px;
-    
+
     /* Sombras */
-    --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 0 20px rgba(0, 0, 0, 0.1);
-    
+    --shadow-sm: 0 4px 8px rgba(17, 24, 39, 0.06);
+    --shadow-md: 0 8px 16px rgba(17, 24, 39, 0.10);
+    --shadow-lg: 0 12px 30px rgba(17, 24, 39, 0.14);
+
     /* Tipografia */
     --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     --font-size-sm: 0.875rem;
@@ -56,30 +66,76 @@
     --font-size-lg: 1.25rem;
     --font-size-xl: 1.5rem;
     --font-size-2xl: 2rem;
-    
+
     --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
-    
+
     /* Transições */
     --transition-fast: 0.2s ease;
     --transition-normal: 0.3s ease;
     --transition-slow: 0.5s ease;
 }
 
-/* Modo claro (padrão) */
-@media (prefers-color-scheme: light) {
-    :root {
-        color-scheme: light;
-    }
+/* ---------- TEMA ESCURO ---------- */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --primary: #818CF8;
+    --primary-dark: #6366F1;
+    --primary-contrast: #0B1020;
+
+    --bg: #0F1420;
+    --bg-gradient: linear-gradient(135deg, #0F1420 0%, #131a2b 100%);
+    --surface: #1A2130;
+    --surface-2: #232C3D;
+    --surface-3: #2C3648;
+    --text: #E8EDF5;
+    --text-muted: #9AA6B8;
+    --border: #2E3A4E;
+    --border-strong: #3C4A62;
+
+    --header-bg: linear-gradient(135deg, #312E81 0%, #4C1D95 100%);
+    --header-text: #F5F3FF;
+
+    --receita-bg: #16311F;  --receita-text: #86EFAC;  --receita-border: #2F6B45;
+    --despesa-bg: #3A1D1D;  --despesa-text: #FCA5A5;  --despesa-border: #7F3B3B;
+    --balanco-bg: #3A2E12;  --balanco-text: #FCD34D;  --balanco-border: #7A5E1F;
+
+    --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.55);
 }
 
-/* Modo escuro (opcional) */
+/* Segue o sistema quando não há escolha explícita */
 @media (prefers-color-scheme: dark) {
-    :root {
-        --light: #374151;
-        --dark: #F9FAFB;
-        --gray: #D1D5DB;
+    :root:not([data-theme="light"]) {
+        color-scheme: dark;
+
+        --primary: #818CF8;
+        --primary-dark: #6366F1;
+        --primary-contrast: #0B1020;
+
+        --bg: #0F1420;
+        --bg-gradient: linear-gradient(135deg, #0F1420 0%, #131a2b 100%);
+        --surface: #1A2130;
+        --surface-2: #232C3D;
+        --surface-3: #2C3648;
+        --text: #E8EDF5;
+        --text-muted: #9AA6B8;
+        --border: #2E3A4E;
+        --border-strong: #3C4A62;
+
+        --header-bg: linear-gradient(135deg, #312E81 0%, #4C1D95 100%);
+        --header-text: #F5F3FF;
+
+        --receita-bg: #16311F;  --receita-text: #86EFAC;  --receita-border: #2F6B45;
+        --despesa-bg: #3A1D1D;  --despesa-text: #FCA5A5;  --despesa-border: #7F3B3B;
+        --balanco-bg: #3A2E12;  --balanco-text: #FCD34D;  --balanco-border: #7A5E1F;
+
+        --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.35);
+        --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.45);
+        --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.55);
     }
 }
