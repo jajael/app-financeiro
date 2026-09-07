@@ -167,13 +167,14 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
     const ehParcela = !!trans.parcelasTotal;
     const ehOriginal = ehParcela && trans.parcelaNum === 1;
 
-    // Botão expandir/colapsar
+    // Botão expandir/colapsar — fica no canto esquerdo, ao lado do dia
     const toggle = compacto
-        ? `<button class="btn-icon btn-expandir" data-act="expandir-trans" data-id="${trans.id}" title="Ver detalhes">+</button>`
-        : `<button class="btn-icon btn-expandir" data-act="colapsar-trans" data-id="${trans.id}" title="Recolher">−</button>`;
+        ? `<button class="btn-expandir" data-act="expandir-trans" data-id="${trans.id}" title="Ver detalhes">+</button>`
+        : `<button class="btn-expandir" data-act="colapsar-trans" data-id="${trans.id}" title="Recolher">−</button>`;
+    const lado = `<div class="despesa-lado">${toggle}<span class="despesa-dia">${diaFormatado}</span></div>`;
 
     // Ações
-    let acoes = toggle;
+    let acoes = '';
     if (trans.pendente) {
         acoes += `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>`;
     }
@@ -196,7 +197,7 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
     if (compacto) {
         return `
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
-            <span class="despesa-dia">${diaFormatado}</span>
+            ${lado}
             <span class="despesa-valor">${sinal} ${valorFormatado}</span>
             ${tagPendente}
             <div class="despesa-actions">${acoes}</div>
@@ -217,7 +218,7 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
 
     return `
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
-            <div class="despesa-dia">${diaFormatado}</div>
+            ${lado}
             <div class="despesa-info">
                 <div class="despesa-topo">
                     <span class="despesa-valor">${sinal} ${valorFormatado}</span>
