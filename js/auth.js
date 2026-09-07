@@ -106,6 +106,43 @@ function esconderTelaLogin() {
     if (overlay) overlay.hidden = true;
     const logout = document.getElementById('btnLogout');
     if (logout) logout.hidden = false;
+    atualizarModoTeste();
+}
+
+/** Mostra o selo "modo teste" e o botão de apagar tudo quando a sessão é anônima */
+async function atualizarModoTeste() {
+    const badge = document.getElementById('modoTesteBadge');
+    const btn = document.getElementById('btnApagarTudo');
+    if (!badge && !btn) return;
+    let anon = false;
+    try {
+        const { data } = await sb.auth.getUser();
+        anon = !!data?.user?.is_anonymous;
+    } catch (e) {}
+    if (badge) badge.hidden = !anon;
+    if (btn) btn.hidden = !anon;
+}
+
+/** Apaga todos os dados da sessão de teste (com confirmação) */
+function apagarTudoTeste() {
+    mostrarDialogo({
+        titulo: 'Apagar tudo?',
+        texto: 'Remove <strong>todos os lançamentos e itens de configuração</strong> desta sessão de teste. Não dá para desfazer.',
+        acoes: [
+            { label: 'Cancelar' },
+            { label: 'Apagar tudo', primario: true, perigo: true, onClick: async () => {
+                try {
+                    await sb.from('transacoes').delete().gte('id', 0);
+                    await sb.from('menu_itens').delete().gte('id', 0);
+                    mostrarNotificacao('Tudo apagado', 'sucesso');
+                    setTimeout(() => location.reload(), 400);
+                } catch (e) {
+                    console.error(e);
+                    mostrarNotificacao('Erro ao apagar', 'erro');
+                }
+            } }
+        ]
+    });
 }
 
 /**
@@ -119,6 +156,8 @@ async function initAuth() {
             await sb.auth.signOut();
         });
     }
+    const btnApagar = document.getElementById('btnApagarTudo');
+    if (btnApagar) btnApagar.addEventListener('click', apagarTudoTeste);
 
     sb.auth.onAuthStateChange((event) => {
         if (event === 'SIGNED_IN') {

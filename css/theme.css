@@ -186,3 +186,37 @@ input.campo-travado,
     color: var(--text);
     border-color: var(--border-strong);
 }
+
+/* ---------- Modo teste (sessão anônima) ---------- */
+.modo-teste-badge {
+    background: var(--warning);
+    color: #1F2937;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.btn-apagar-tudo {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--header-text);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.7rem;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-apagar-tudo:hover { background: rgba(239, 68, 68, 0.35); border-color: rgba(239,68,68,.6); }
+
+.btn-perigo {
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
