@@ -14,15 +14,18 @@
     box-shadow: var(--shadow-lg);
 }
 
-/* Header (fixo no topo) */
+/* Topo fixo: header + barra de mês grudam no topo ao rolar */
+.topo {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
 header.header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
     padding: var(--spacing-lg) var(--spacing-xl);
     border-bottom: 4px solid var(--primary-dark);
-    position: sticky;
-    top: 0;
-    z-index: 50;
 }
 
 /* Barra de mês — largura inteira, entre o header e os cards */

@@ -30,24 +30,25 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <h1>💰 Controle Financeiro</h1>
-                <div class="header-info">
-                    <span id="modoTesteBadge" class="modo-teste-badge" hidden>🧪 modo teste</span>
-                    <button id="btnApagarTudo" type="button" class="btn-apagar-tudo" hidden title="Apagar todos os dados de teste">🗑 Apagar tudo</button>
-                    <button id="btnTema" type="button" title="Alternar tema claro/escuro">🌙</button>
-                    <button id="btnLogout" class="month-btn" hidden title="Sair">⎋ Sair</button>
+        <!-- Topo fixo: header + barra de mês -->
+        <div class="topo">
+            <header class="header">
+                <div class="header-content">
+                    <h1>💰 Controle Financeiro</h1>
+                    <div class="header-info">
+                        <span id="modoTesteBadge" class="modo-teste-badge" hidden>🧪 modo teste</span>
+                        <button id="btnApagarTudo" type="button" class="btn-apagar-tudo" hidden title="Apagar todos os dados de teste">🗑 Apagar tudo</button>
+                        <button id="btnTema" type="button" title="Alternar tema claro/escuro">🌙</button>
+                        <button id="btnLogout" class="month-btn" hidden title="Sair">⎋ Sair</button>
+                    </div>
                 </div>
-            </div>
-        </header>
+            </header>
 
-        <!-- Barra de navegação do mês (largura inteira) -->
-        <div class="month-bar">
-            <button id="prevMonth" class="month-btn">←</button>
-            <span id="currentMonth" class="current-month">Setembro 2026</span>
-            <button id="nextMonth" class="month-btn">→</button>
+            <div class="month-bar">
+                <button id="prevMonth" class="month-btn">←</button>
+                <span id="currentMonth" class="current-month">Setembro 2026</span>
+                <button id="nextMonth" class="month-btn">→</button>
+            </div>
         </div>
 
         <!-- Main Content -->
