@@ -116,6 +116,7 @@ async function carregarProximas(tipo) {
  */
 async function carregarMenusAPI() {
     try {
+        if (typeof garantirRecorrenciasNoBanco === 'function') await garantirRecorrenciasNoBanco();
         const { data, error } = await sb
             .from('menu_itens')
             .select('*')
@@ -126,17 +127,24 @@ async function carregarMenusAPI() {
         const itens = (data || []).map(mapearItemMenu);
 
         const cats = itens.filter(i => i.tipo === 'Categoria');
+        const recs = itens.filter(i => i.tipo === 'Recorrência');
+        const mapaCor = arr => Object.fromEntries(arr.map(i => [i.nome, corDoItemMenu(i)]));
         return {
             categorias: cats.map(i => i.nome),
             categoriasDespesa: cats.filter(c => c.categoriaTipo !== 'entradas').map(i => i.nome),
             categoriasReceita: cats.filter(c => c.categoriaTipo === 'entradas').map(i => i.nome),
             // métodos como objetos (o formulário precisa do tipo/fechamento p/ competência)
             metodos: itens.filter(i => i.tipo === 'Método'),
-            recorrencias: itens.filter(i => i.tipo === 'Recorrência').map(i => i.nome)
+            recorrencias: recs.map(i => i.nome),
+            cores: {
+                categoria: mapaCor(cats),
+                metodo: mapaCor(itens.filter(i => i.tipo === 'Método')),
+                recorrencia: mapaCor(recs)
+            }
         };
     } catch (error) {
         console.error('Erro ao carregar menus:', error);
-        return { categorias: [], categoriasDespesa: [], categoriasReceita: [], metodos: [] };
+        return { categorias: [], categoriasDespesa: [], categoriasReceita: [], metodos: [], cores: { categoria: {}, metodo: {}, recorrencia: {} } };
     }
 }
 

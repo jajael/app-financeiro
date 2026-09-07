@@ -21,6 +21,7 @@ let subConfigAtiva = 'cat'; // sub-aba selecionada na Configuração
 async function recarregarMenus() {
   await carregarAbaMenus();
   if (typeof carregarMenus === 'function') await carregarMenus(); // atualiza form na hora
+  if (typeof atualizarUI === 'function') atualizarUI();           // reaplica cores nas listas
 }
 
 async function carregarAbaMenus() {
@@ -68,16 +69,26 @@ async function carregarAbaMenus() {
 
       <div class="menu-section" data-sub="rec" hidden>
         <h3>🔁 Tipos de recorrência</h3>
-        <p class="menu-hint">Tipos fixos do sistema. Você escolhe um deles ao lançar uma transação.</p>
+        <p class="menu-hint">Tipos fixos do sistema. O único campo editável é a cor do chip.</p>
         <div class="menu-list menu-list--livre" id="recorrenciasList">
-          ${RECORRENCIAS_INFO.map(([nome, desc]) => `
+          ${RECORRENCIAS_INFO.map(([rotulo, desc]) => {
+            // rótulo exibido x nome real do tipo ("Mensal / Conta" -> "Mensal")
+            const kind = rotulo === 'Mensal / Conta' ? 'Mensal' : rotulo;
+            const linha = (menus.recorrencias || []).find(r => r.nome === kind);
+            const c = linha ? corDoItemMenu(linha) : corPadraoChip(kind);
+            const id = linha ? linha.linha : '';
+            return `
             <div class="menu-item ativo">
               <div class="item-info">
-                <div class="item-nome">${nome}</div>
+                <div class="item-nome">${rotulo}</div>
                 <div class="item-descricao item-descricao--full">${desc}</div>
               </div>
-            </div>
-          `).join('')}
+              <div class="item-actions">
+                <button class="cor-swatch" style="background:${c}" data-act="cor" data-tipo="Recorrência"
+                        data-id="${id}" data-nome="${kind}" title="Cor do chip"></button>
+              </div>
+            </div>`;
+          }).join('')}
         </div>
       </div>
 
@@ -90,6 +101,9 @@ async function carregarAbaMenus() {
   renderizarItemsMenu('Categoria', 'categoriasDespesaList', menus.categoriasDespesa);
   renderizarItemsMenu('Categoria', 'categoriasReceitaList', menus.categoriasReceita);
   renderizarItemsMenu('Método', 'metodosList', menus.metodos);
+
+  const recList = document.getElementById('recorrenciasList');
+  if (recList) recList.onclick = onMenuListClick;
 }
 
 function mostrarSubConfig(sub) {
@@ -153,16 +167,21 @@ function renderizarItemsMenu(tipo, containerId, itens) {
       }
     }
 
-    // Dinheiro é método fixo: sem ações
+    // Dinheiro é método fixo: sem edição/remoção (mas ainda escolhe cor)
     const fixo = tipo === 'Método' && (item.metodoKind === 'Dinheiro' || item.nome === 'Dinheiro');
 
-    const acoes = fixo ? '' : `
+    const swatch = `<button class="cor-swatch" style="background:${corDoItemMenu(item)}"
+        data-act="cor" data-tipo="${tipo}" data-id="${item.linha}" data-nome="${item.nome}" title="Cor do chip"></button>`;
+
+    const acoes = `
       <div class="item-actions">
+        ${swatch}
+        ${fixo ? '' : `
         <button class="btn-icon" data-act="editar" data-tipo="${tipo}" data-id="${item.linha}" title="Editar">✏️</button>
         <button class="btn-icon ${item.status === 'Ativo' ? 'btn-warning' : 'btn-success'}"
                 data-act="${item.status === 'Ativo' ? 'desativar' : 'ativar'}" data-id="${item.linha}"
                 title="${item.status === 'Ativo' ? 'Desativar' : 'Ativar'}">${item.status === 'Ativo' ? '⊘' : '↻'}</button>
-        <button class="btn-icon btn-danger" data-act="remover" data-id="${item.linha}" title="Remover">🗑️</button>
+        <button class="btn-icon btn-danger" data-act="remover" data-id="${item.linha}" title="Remover">🗑️</button>`}
       </div>`;
 
     return `
@@ -190,10 +209,67 @@ function onMenuListClick(e) {
   const tipo = btn.dataset.tipo;
   const row = btn.closest('.menu-item');
 
+  if (act === 'cor')       return abrirSeletorCor(btn);
   if (act === 'ativar')    return acaoMenu(() => ativarItemMenuAPI(id));
   if (act === 'desativar') return acaoMenu(() => desativarItemMenuAPI(id));
   if (act === 'remover')   return confirmarRemocao(btn, id);
   if (act === 'editar')    return abrirEdicaoInline(row, id, tipo);
+}
+
+/** Seletor de cor do "chip" (paleta + cor livre). Único campo editável em Recorrências. */
+function abrirSeletorCor(btn) {
+  const tipo = btn.dataset.tipo;
+  const nome = btn.dataset.nome || '';
+  let id = Number(btn.dataset.id) || null;
+  const corAtual = (btn.style.background || '').trim() || corPadraoChip(nome);
+
+  const swatches = PALETA_CHIPS.map(c =>
+    `<button type="button" class="cor-opcao" data-cor="${c}" style="background:${c}"></button>`).join('');
+
+  mostrarDialogo({
+    titulo: `Cor · ${nome}`,
+    corpoHTML: `
+      <div class="cor-grade">${swatches}</div>
+      <div class="campo"><label for="dlgCorLivre">Cor personalizada</label>
+        <input type="color" id="dlgCorLivre" value="${paraHex(corAtual)}"></div>`,
+    acoes: [
+      { label: 'Cancelar' },
+      { label: 'Salvar', primario: true, onClick: async (ov) => {
+          const sel = ov.querySelector('.cor-opcao.sel');
+          const cor = sel ? sel.dataset.cor : ov.querySelector('#dlgCorLivre').value;
+          // Recorrência sem linha ainda: cria antes
+          if (!id && tipo === 'Recorrência') {
+            const { data } = await sb.from('menu_itens')
+              .insert({ tipo: 'Recorrência', nome, cor }).select('id').single();
+            id = data && data.id;
+          } else if (id) {
+            await editarItemMenuAPI(id, { cor });
+          }
+          await recarregarMenus();
+      } }
+    ]
+  });
+
+  // seleção visual na grade
+  const ov = document.querySelector('.dialogo-overlay');
+  ov?.querySelectorAll('.cor-opcao').forEach(b => {
+    b.addEventListener('click', () => {
+      ov.querySelectorAll('.cor-opcao').forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel');
+      const livre = ov.querySelector('#dlgCorLivre');
+      if (livre) livre.value = paraHex(b.dataset.cor);
+    });
+  });
+}
+
+/** rgb()/hex -> "#rrggbb" (input type=color exige hex) */
+function paraHex(c) {
+  if (!c) return '#888888';
+  if (c[0] === '#') return c.length === 4
+    ? '#' + [...c.slice(1)].map(x => x + x).join('') : c.slice(0, 7);
+  const m = c.match(/\d+/g);
+  if (!m || m.length < 3) return '#888888';
+  return '#' + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, '0')).join('');
 }
 
 async function acaoMenu(fn) {

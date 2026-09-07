@@ -207,11 +207,14 @@ async function submeterFormulario(e) {
         return;
     }
     
+    const foiEdicao = !!estadoApp.editandoId;
+    const abaOrigem = estadoApp.abaOrigemEdicao;
+
     try {
-        if (estadoApp.editandoId) {
+        if (foiEdicao) {
             await editarTransacaoAPI({ id: estadoApp.editandoId, ...dados });
             mostrarNotificacao('✓ Transação atualizada!', 'sucesso');
-            cancelarEdicaoTransacao();
+            cancelarEdicaoTransacao(false);
         } else {
             await adicionarTransacaoAPI(dados);
             mostrarNotificacao('✓ Lançamento adicionado!', 'sucesso');
@@ -221,8 +224,9 @@ async function submeterFormulario(e) {
         // Recarregar dados
         await recarregarDados();
 
-        // Mudar para aba apropriada
-        setTimeout(() => mudarAba(dados.tipo), 500);
+        // Edição volta para a tela onde o usuário estava; novo lançamento vai p/ a lista do tipo
+        const destino = foiEdicao ? (abaOrigem || dados.tipo) : dados.tipo;
+        setTimeout(() => mudarAba(destino), 500);
 
     } catch (error) {
         console.error('Erro ao salvar transação:', error);

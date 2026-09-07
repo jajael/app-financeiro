@@ -134,24 +134,30 @@ function gerarHTMLTransacao(trans, tipo) {
     const valorFormatado = ehSemanalChips
         ? `${formatarMoeda(trans.valor)} <span class="valor-meta">/ ${formatarMoeda(trans.valorMes)}</span>`
         : formatarMoeda(trans.valor);
-    
+
+    // Cores dos "chips" (método / categoria / recorrência)
+    const cores = (estadoApp.menus && estadoApp.menus.cores) || {};
+    const cor = (mapa, nome) => (mapa && mapa[nome]) || corPadraoChip(nome);
+    const dot = c => `<span class="chip-dot" style="background:${c}"></span>`;
+
     // Badge de recorrência ("Mensal" aparece como "Conta" nas despesas)
     let badgeRecorrencia = '';
     if (trans.tipoRecorrencia && trans.tipoRecorrencia !== 'Pontual') {
         const rot = (trans.tipoRecorrencia === 'Mensal' && tipo === 'saida') ? 'Conta' : trans.tipoRecorrencia;
-        badgeRecorrencia = `<span class="recorrencia-badge">${rot}</span>`;
+        badgeRecorrencia = `<span class="recorrencia-badge" style="background:${cor(cores.recorrencia, trans.tipoRecorrencia)}">${rot}</span>`;
     }
-    
+
     // Linha do método (só quando houver)
     let metodoLinha = '';
     if (trans.metodo) {
-        metodoLinha = `<div class="despesa-metodo">${trans.metodo}</div>`;
+        metodoLinha = `<div class="despesa-metodo">${dot(cor(cores.metodo, trans.metodo))}${trans.metodo}</div>`;
     } else if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
         metodoLinha = `<div class="despesa-metodo">${trans.formaPagamento}</div>`;
     }
 
     // Linha da categoria (+ descrição, se houver): "Categoria: descrição"
-    const catLinha = trans.categoria + (trans.descricao ? `: ${trans.descricao}` : '');
+    const catTexto = trans.categoria + (trans.descricao ? `: ${trans.descricao}` : '');
+    const catLinha = `${dot(cor(cores.categoria, trans.categoria))}${catTexto}`;
 
     // Dia do mês (sem mês/ano)
     const diaFormatado = trans.data
@@ -193,7 +199,7 @@ function gerarHTMLTransacao(trans, tipo) {
                     ${badgeRecorrencia} ${tagPendente}
                 </div>
                 ${metodoLinha}
-                <div class="despesa-descricao" title="${catLinha.replace(/"/g, '&quot;')}">${catLinha}</div>
+                <div class="despesa-descricao" title="${catTexto.replace(/"/g, '&quot;')}">${catLinha}</div>
             </div>
             <div class="despesa-actions">${acoes}</div>
         </div>
@@ -299,6 +305,8 @@ async function confirmarPendente(id) {
 /** Carrega a transação no formulário da aba Adicionar em modo edição */
 function iniciarEdicaoTransacao(trans, tipoTransacao) {
     estadoApp.editandoId = trans.id;
+    // Guarda a tela de origem para voltar depois de salvar/cancelar
+    estadoApp.abaOrigemEdicao = document.querySelector('.tab-btn.active')?.dataset.tab || null;
 
     mudarAba('adicionar');
 
@@ -349,14 +357,18 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
 }
 
 /** Sai do modo edição e limpa o formulário */
-function cancelarEdicaoTransacao() {
+function cancelarEdicaoTransacao(voltarParaOrigem = true) {
+    const origem = estadoApp.abaOrigemEdicao;
     estadoApp.editandoId = null;
+    estadoApp.abaOrigemEdicao = null;
     semanasMarcadas = new Set();
     limparFormulario();
     const btn = document.querySelector('.btn-submit');
     if (btn) btn.textContent = 'Adicionar Lançamento';
     const cancelar = document.getElementById('cancelarEdicao');
     if (cancelar) cancelar.hidden = true;
+    // Cancelar pelo botão: volta para a tela onde o usuário estava
+    if (voltarParaOrigem && origem && typeof mudarAba === 'function') mudarAba(origem);
 }
 
 /**
@@ -612,7 +624,8 @@ function abrirNovaCategoria(catTipo) {
                 if (!nome) { mostrarNotificacao('Informe o nome', 'info'); return true; }
                 const ok = await adicionarItemMenuAPI('Categoria', nome, {
                     descricao: ov.querySelector('#dlgCatDesc').value.trim(),
-                    categoria_tipo: tipo
+                    categoria_tipo: tipo,
+                    cor: corPadraoChip(nome)
                 });
                 if (!ok) return true;
                 await carregarMenus();
@@ -652,8 +665,8 @@ function abrirNovoMetodo() {
                 const banco = o.querySelector('#dlgMetBanco').value.trim();
                 if (!kind) { mostrarNotificacao('Escolha o tipo', 'info'); return true; }
                 if (kind === 'Crédito' && !banco) { mostrarNotificacao('Informe o banco', 'info'); return true; }
-                const extra = { metodo_kind: kind, banco };
                 const nome = banco ? `${kind} — ${banco}` : kind;
+                const extra = { metodo_kind: kind, banco, cor: corPadraoChip(nome) };
                 if (kind === 'Crédito') {
                     const fech = parseInt(o.querySelector('#dlgMetFech').value, 10);
                     const venc = parseInt(o.querySelector('#dlgMetVenc').value, 10);
@@ -795,7 +808,13 @@ function recalcularCompetencia() {
     if (!campo || campo.dataset.editado) return;
 
     const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
-    if (!iso) return;
+    if (!iso) {
+        // Sem data ainda: assume o mês vigente (usuário pode editar)
+        if (typeof estadoApp !== 'undefined' && estadoApp.mesAtual) {
+            campo.value = competenciaParaBR(formatarDataISO(estadoApp.mesAtual));
+        }
+        return;
+    }
 
     const metodo = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
     const fech = metodo && metodo.metodoKind === 'Crédito' ? metodo.diaFechamento : null;

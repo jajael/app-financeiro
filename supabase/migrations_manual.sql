@@ -137,3 +137,11 @@ update public.menu_itens
 update public.menu_itens
    set categoria_tipo = 'saidas'
  where tipo = 'Categoria' and categoria_tipo is null;
+
+-- ============================================================
+-- 12) Cor do "chip" para categorias / métodos / recorrências
+--     Já aplicado via MCP (apply_migration menu_itens_cor).
+--     As linhas tipo='Recorrência' passam a existir só para guardar a cor
+--     (o app cria as que faltarem em garantirRecorrenciasNoBanco()).
+-- ============================================================
+alter table public.menu_itens add column if not exists cor text;
