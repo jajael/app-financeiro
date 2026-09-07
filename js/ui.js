@@ -78,8 +78,8 @@ function atualizarSaidasLista() {
 const _porDataDesc = (a, b) => new Date(b.data) - new Date(a.data);
 
 /**
- * Renderiza a lista de um tipo dividida em "Fixas" (com subgrupos por tipo de
- * recorrência) e "Pontuais".
+ * Renderiza a lista de um tipo em subgrupos recolhíveis por tipo de recorrência.
+ * Cada subgrupo mostra o total; começa recolhido (como as categorias na Config).
  */
 function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
     if (!container) return;
@@ -89,93 +89,95 @@ function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
         return;
     }
 
-    const ehPontual = t => !t.tipoRecorrencia || t.tipoRecorrencia === 'Pontual';
-    const pontuais = transacoes.filter(ehPontual).sort(_porDataDesc);
-    const fixas = transacoes.filter(t => !ehPontual(t));
     const ehDespesa = tipoUI === 'saida';
+    const cores = (estadoApp.menus && estadoApp.menus.cores && estadoApp.menus.cores.recorrencia) || {};
+    const totalGrupo = arr => arr.reduce((s, t) => s + ((t.valorMes != null ? t.valorMes : t.valor) || 0), 0);
+    const chaveDe = t => t.tipoRecorrencia || 'Pontual';
 
-    const soma = arr => arr.reduce((s, t) => s + (t.valor || 0), 0);
-
-    // Subgrupos de fixas por tipo de recorrência
-    const ordem = ORDEM_RECORRENCIA.filter(t => t !== 'Pontual');
+    // Ordem: Pontual primeiro, depois os fixos na ordem padrão
+    const ordem = ['Pontual', ...ORDEM_RECORRENCIA.filter(t => t !== 'Pontual')];
     const conhecidos = new Set(ordem);
-    let htmlFixas = '';
+    const grupos = [];
     ordem.forEach(tipoRec => {
-        const grupo = fixas.filter(t => t.tipoRecorrencia === tipoRec).sort(_porDataDesc);
-        if (!grupo.length) return;
-        const rotulo = (tipoRec === 'Mensal' && ehDespesa) ? 'Conta' : tipoRec;
-        htmlFixas += `<div class="grupo-sub"><span>${rotulo}</span><span>${formatarMoeda(soma(grupo))}</span></div>`;
-        grupo.forEach(t => { htmlFixas += gerarHTMLTransacao(t, tipoUI); });
+        const itens = transacoes.filter(t => chaveDe(t) === tipoRec).sort(_porDataDesc);
+        if (itens.length) grupos.push([tipoRec, itens]);
     });
-    const resto = fixas.filter(t => !conhecidos.has(t.tipoRecorrencia)).sort(_porDataDesc);
-    if (resto.length) {
-        htmlFixas += `<div class="grupo-sub"><span>Outros</span><span>${formatarMoeda(soma(resto))}</span></div>`;
-        resto.forEach(t => { htmlFixas += gerarHTMLTransacao(t, tipoUI); });
-    }
+    const resto = transacoes.filter(t => !conhecidos.has(chaveDe(t))).sort(_porDataDesc);
+    if (resto.length) grupos.push(['Outros', resto]);
 
-    let html = '';
-    if (fixas.length) {
-        html += `<div class="grupo-cab"><span>Fixas</span><span>${formatarMoeda(soma(fixas))}</span></div>${htmlFixas}`;
-    }
-    if (pontuais.length) {
-        html += `<div class="grupo-cab"><span>Pontuais</span><span>${formatarMoeda(soma(pontuais))}</span></div>`;
-        pontuais.forEach(t => { html += gerarHTMLTransacao(t, tipoUI); });
-    }
+    container.innerHTML = grupos.map(([tipoRec, itens]) => {
+        const rotulo = (tipoRec === 'Mensal' && ehDespesa) ? 'Conta' : tipoRec;
+        const c = cores[tipoRec] || corPadraoChip(tipoRec);
+        return `
+        <details class="rec-grupo">
+          <summary style="--cor-rec:${c}">
+            <span class="rec-grupo-nome">${rotulo}</span>
+            <span class="rec-grupo-contagem">${itens.length}</span>
+            <span class="rec-grupo-total">${formatarMoeda(totalGrupo(itens))}</span>
+          </summary>
+          <div class="rec-grupo-itens">
+            ${itens.map(t => gerarHTMLTransacao(t, tipoUI)).join('')}
+          </div>
+        </details>`;
+    }).join('');
 
-    container.innerHTML = html;
     container.onclick = onListaTransacaoClick;
+}
+
+/** Alterna o "box completo" de um lançamento (compacto <-> completo) */
+function alternarExpandirTransacao(id) {
+    if (itensExpandidos.has(id)) itensExpandidos.delete(id);
+    else itensExpandidos.add(id);
+
+    const trans = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
+        .find(t => t.id === id);
+    const el = document.querySelector(`.despesa-item[data-id="${id}"]`);
+    if (!trans || !el) return;
+    const tipoUI = estadoApp.transacoes.entradas.some(t => t.id === id) ? 'entrada' : 'saida';
+    el.outerHTML = gerarHTMLTransacao(trans, tipoUI);
 }
 
 /**
  * Gera HTML para uma transação
  */
-function gerarHTMLTransacao(trans, tipo) {
+// Ids de lançamentos com o "box completo" aberto (default: todos compactos)
+const itensExpandidos = new Set();
+
+function gerarHTMLTransacao(trans, tipo, opts = {}) {
+    const compacto = !itensExpandidos.has(trans.id);
     const ehSemanalChips = trans.tipoRecorrencia === 'Semanal' && Array.isArray(trans.semanas) && trans.semanas.length;
     const valorFormatado = ehSemanalChips
         ? `${formatarMoeda(trans.valor)} <span class="valor-meta">/ ${formatarMoeda(trans.valorMes)}</span>`
         : formatarMoeda(trans.valor);
+    const sinal = tipo === 'entrada' ? '+' : '-';
 
-    // Cores dos "chips" (método / categoria / recorrência)
+    // Cores dos "chips" (tarjinhas) de método / categoria
     const cores = (estadoApp.menus && estadoApp.menus.cores) || {};
     const cor = (mapa, nome) => (mapa && mapa[nome]) || corPadraoChip(nome);
-    const dot = c => `<span class="chip-dot" style="background:${c}"></span>`;
-
-    // Badge de recorrência ("Mensal" aparece como "Conta" nas despesas)
-    let badgeRecorrencia = '';
-    if (trans.tipoRecorrencia && trans.tipoRecorrencia !== 'Pontual') {
-        const rot = (trans.tipoRecorrencia === 'Mensal' && tipo === 'saida') ? 'Conta' : trans.tipoRecorrencia;
-        badgeRecorrencia = `<span class="recorrencia-badge" style="background:${cor(cores.recorrencia, trans.tipoRecorrencia)}">${rot}</span>`;
-    }
-
-    // Linha do método (só quando houver)
-    let metodoLinha = '';
-    if (trans.metodo) {
-        metodoLinha = `<div class="despesa-metodo">${dot(cor(cores.metodo, trans.metodo))}${trans.metodo}</div>`;
-    } else if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
-        metodoLinha = `<div class="despesa-metodo">${trans.formaPagamento}</div>`;
-    }
-
-    // Linha da categoria (+ descrição, se houver): "Categoria: descrição"
-    const catTexto = trans.categoria + (trans.descricao ? `: ${trans.descricao}` : '');
-    const catLinha = `${dot(cor(cores.categoria, trans.categoria))}${catTexto}`;
+    const chip = (c, txt) => `<span class="chip" style="background:${c}" title="${String(txt).replace(/"/g, '&quot;')}">${txt}</span>`;
 
     // Dia do mês (sem mês/ano)
     const diaFormatado = trans.data
         ? String(parseDataLocal(trans.data).getDate()).padStart(2, '0')
         : '--';
-    
+
     const tagPendente = trans.pendente
         ? '<span class="pendente-badge">a confirmar</span>' : '';
 
     const ehParcela = !!trans.parcelasTotal;
     const ehOriginal = ehParcela && trans.parcelaNum === 1;
 
+    // Botão expandir/colapsar
+    const toggle = compacto
+        ? `<button class="btn-icon btn-expandir" data-act="expandir-trans" data-id="${trans.id}" title="Ver detalhes">+</button>`
+        : `<button class="btn-icon btn-expandir" data-act="colapsar-trans" data-id="${trans.id}" title="Recolher">−</button>`;
+
     // Ações
-    let acoes = '';
+    let acoes = toggle;
     if (trans.pendente) {
         acoes += `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>`;
     }
-    if (ehParcela && !trans.quitada) {
+    if (ehParcela && !trans.quitada && !compacto) {
         const chk = trans.quitadoEm ? 'checked' : '';
         acoes += `<label class="quitar-check" title="Quitar a partir deste mês"><input type="checkbox" data-act="quitar-parc" data-id="${trans.id}" ${chk}> quitar</label>`;
     }
@@ -187,19 +189,42 @@ function gerarHTMLTransacao(trans, tipo) {
     }
 
     const classes = `despesa-item ${tipo}`
+        + (compacto ? ' compacta' : '')
         + (trans.pendente ? ' pendente' : '')
         + (trans.quitada ? ' quitada' : '');
+
+    if (compacto) {
+        return `
+        <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
+            <span class="despesa-dia">${diaFormatado}</span>
+            <span class="despesa-valor">${sinal} ${valorFormatado}</span>
+            ${tagPendente}
+            <div class="despesa-actions">${acoes}</div>
+        </div>`;
+    }
+
+    // Box completo
+    let metodoLinha = '';
+    if (trans.metodo) {
+        metodoLinha = `<div class="despesa-metodo">${chip(cor(cores.metodo, trans.metodo), trans.metodo)}</div>`;
+    } else if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
+        metodoLinha = `<div class="despesa-metodo">${trans.formaPagamento}</div>`;
+    }
+    const catChip = chip(cor(cores.categoria, trans.categoria), trans.categoria);
+    const catLinha = trans.descricao
+        ? `${catChip}<span class="desc-extra">${trans.descricao}</span>`
+        : catChip;
 
     return `
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             <div class="despesa-dia">${diaFormatado}</div>
             <div class="despesa-info">
                 <div class="despesa-topo">
-                    <span class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${valorFormatado}</span>
-                    ${badgeRecorrencia} ${tagPendente}
+                    <span class="despesa-valor">${sinal} ${valorFormatado}</span>
+                    ${tagPendente}
                 </div>
                 ${metodoLinha}
-                <div class="despesa-descricao" title="${catTexto.replace(/"/g, '&quot;')}">${catLinha}</div>
+                <div class="despesa-descricao">${catLinha}</div>
             </div>
             <div class="despesa-actions">${acoes}</div>
         </div>
@@ -216,6 +241,10 @@ function onListaTransacaoClick(e) {
     if (!trans) return;
 
     switch (el.dataset.act) {
+        case 'expandir-trans':
+        case 'colapsar-trans':
+            alternarExpandirTransacao(id);
+            break;
         case 'confirmar-trans':
             confirmarPendente(id);
             break;
