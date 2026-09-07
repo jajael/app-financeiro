@@ -195,3 +195,37 @@
   border-color: var(--border);
   border-left: 4px solid var(--primary);
 }
+
+/* ============ Resumo compacto fixo (aparece ao rolar) ============ */
+.mini-resumo {
+  display: flex;
+  gap: .25rem;
+  padding: .3rem .5rem .4rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.mini-box {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .2rem;
+  padding: .3rem .15rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xs);
+  font-size: .7rem;
+  font-weight: 700;
+}
+.mini-box i { font-style: normal; font-size: .8rem; line-height: 1; flex: none; }
+.mini-box b {
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mini-box.entradas { background: var(--receita-bg); color: var(--receita-text); border-color: var(--receita-border); }
+.mini-box.saidas   { background: var(--despesa-bg); color: var(--despesa-text); border-color: var(--despesa-border); }
+.mini-box.balanco  { background: var(--balanco-bg); color: var(--balanco-text); border-color: var(--balanco-border); }
+.mini-box.gasto-diario { background: var(--surface); color: var(--text); border-color: var(--border); border-left: 3px solid var(--primary); }

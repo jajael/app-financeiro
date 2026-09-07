@@ -50,12 +50,19 @@ function atualizarResumo() {
     // Gasto diário = balanço / dias restantes do mês vigente
     const gd = document.getElementById('gastoDiario');
     const gdSub = document.getElementById('gastoDiarioSub');
+    const gastoDiarioValor = (estadoApp.resumo.balanco || 0) / diasRestantesMesVigente();
     if (gd) {
         const dias = diasRestantesMesVigente();
-        const valor = (estadoApp.resumo.balanco || 0) / dias;
-        gd.textContent = formatarMoeda(valor);
+        gd.textContent = formatarMoeda(gastoDiarioValor);
         if (gdSub) gdSub.textContent = `${dias} dia${dias === 1 ? '' : 's'} restante${dias === 1 ? '' : 's'}`;
     }
+
+    // Espelha os totais no resumo compacto (barra fixa) — valor curto
+    const setMini = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = formatarMoedaCompacta(v || 0); };
+    setMini('miniEntradas', estadoApp.resumo.entradas);
+    setMini('miniSaidas', estadoApp.resumo.saidas);
+    setMini('miniBalanco', estadoApp.resumo.balanco);
+    setMini('miniGasto', gastoDiarioValor);
 }
 
 /** Dias restantes do mês corrente, incluindo hoje (mínimo 1) */

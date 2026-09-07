@@ -44,14 +44,38 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Atualizar UI
     atualizarUI();
-    
+
+    // Resumo compacto fixo (aparece ao rolar além do dashboard)
+    configurarMiniResumo();
+
     console.log('✓ Aplicação iniciada com sucesso!');
     console.log('Estado:', estadoApp);
 });
 
 /**
- * Adiciona estilos dinâmicos necessários
+ * Mostra a barra de resumo compacto quando o card "Gasto diário" sai da tela
+ * por cima (usuário rolou para além do dashboard).
  */
+function configurarMiniResumo() {
+    const alvo = document.querySelector('.summary-card.gasto-diario');
+    const ref = document.querySelector('.month-bar');   // fundo da barra fixa (não muda ao abrir o mini)
+    const mini = document.getElementById('miniResumo');
+    if (!alvo || !ref || !mini) return;
+
+    let raf = 0;
+    const avaliar = () => {
+        raf = 0;
+        // Mostra quando o fundo do card "Gasto diário" já passou acima da barra do mês
+        const passou = alvo.getBoundingClientRect().bottom <= ref.getBoundingClientRect().bottom;
+        if (mini.hidden === passou) mini.hidden = !passou;
+    };
+    const agendar = () => { if (!raf) raf = requestAnimationFrame(avaliar); };
+
+    window.addEventListener('scroll', agendar, { passive: true });
+    window.addEventListener('resize', agendar);
+    avaliar();
+}
+
 /**
  * Tema claro/escuro: lê a preferência salva, liga o botão do cabeçalho.
  */
