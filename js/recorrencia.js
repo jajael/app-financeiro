@@ -150,9 +150,9 @@ function anteciparDeLinha(dataISO, competenciaISO) {
 /**
  * Próxima data da recorrência (string 'YYYY-MM-DD') ou null se Pontual.
  * @param {string} dataAtual  'YYYY-MM-DD'
- * @param {string} tipo       Pontual | Conta | Parcelada | Último dia útil do mês |
+ * @param {string} tipo       Pontual | Mensal | Parcelada | Último dia útil do mês |
  *                            Primeiro dia útil do mês | Semanal
- * @param {number|string} dia      dia do mês (Conta/Parcelada)
+ * @param {number|string} dia      dia do mês (Mensal/Parcelada)
  * @param {number|string} diaSemana 0-6 (Semanal); '' = sem dia fixo -> +7 dias
  */
 function calcularProximaData(dataAtual, tipo, dia, diaSemana) {
@@ -181,7 +181,7 @@ function calcularProximaData(dataAtual, tipo, dia, diaSemana) {
   if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(ano, mes));
   if (tipo === 'Até o 5º dia útil do mês') return formatarDataISO(nthDiaUtilDoMes(ano, mes, 5));
 
-  // Conta / Parcelada
+  // Mensal / Parcelada
   const diaNum = parseInt(dia, 10) || base.getDate();
   const ultimoDoMes = new Date(ano, mes + 1, 0).getDate();
   return formatarDataISO(ajustarDiaUtil(new Date(ano, mes, Math.min(diaNum, ultimoDoMes))));

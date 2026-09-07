@@ -206,7 +206,7 @@ function preencherDropdownRecorrencias() {
     if (!sel) return;
     const atual = sel.value;
 
-    // O tipo "Mensal" aparece como "Conta" nas despesas
+    // O tipo "Mensal" aparece como "Contas" nas despesas
     const ehDespesa = document.querySelector(SELECTORS.tipoTransacao)?.value === 'saidas';
     // Despesa não usa os tipos de "dia útil fixo" (só receita)
     const soReceita = typeof RECORRENCIA_DIA_UTIL !== 'undefined' ? RECORRENCIA_DIA_UTIL : [];
@@ -216,7 +216,7 @@ function preencherDropdownRecorrencias() {
     disponiveis.forEach(t => {
         const o = document.createElement('option');
         o.value = t;
-        o.textContent = (t === 'Mensal' && ehDespesa) ? 'Conta' : t;
+        o.textContent = (t === 'Mensal' && ehDespesa) ? 'Contas' : t;
         sel.appendChild(o);
     });
     sel.value = disponiveis.includes(atual) ? atual : 'Pontual';
