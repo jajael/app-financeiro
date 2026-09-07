@@ -113,7 +113,7 @@ function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
     if (resto.length) grupos.push(['Outros', resto]);
 
     container.innerHTML = grupos.map(([tipoRec, itens]) => {
-        const rotulo = (tipoRec === 'Mensal' && ehDespesa) ? 'Conta' : tipoRec;
+        const rotulo = (tipoRec === 'Mensal' && ehDespesa) ? 'Contas' : tipoRec;
         const c = cores[tipoRec] || corPadraoChip(tipoRec);
         return `
         <details class="rec-grupo">
@@ -660,7 +660,7 @@ function atualizarLabelsPorTipo() {
     const lblAnt = document.getElementById('anteciparLabel');
     if (lblAnt) lblAnt.textContent = ehReceita ? 'receber no mês anterior' : 'pagar no mês anterior';
 
-    // Recorrência "Mensal" aparece como "Conta" nas despesas -> refaz o dropdown
+    // Recorrência "Mensal" aparece como "Contas" nas despesas -> refaz o dropdown
     if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
     // Categorias são específicas de receita x despesa
     if (typeof preencherDropdownCategorias === 'function') preencherDropdownCategorias();
