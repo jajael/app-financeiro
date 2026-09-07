@@ -30,10 +30,6 @@
         gap: 0.4rem;
     }
     .header-info > * { flex: 0 0 auto; }
-    .header-info .btn-apagar-tudo,
-    .header-info .modo-teste-badge,
-    .header-info #btnTema,
-    .header-info #btnLogout { font-size: 0.78rem; padding: 0.3rem 0.55rem; }
 
     /* Main */
     main.main {
@@ -49,7 +45,7 @@
     .tabs {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 0.25rem;
+        gap: var(--spacing-sm);
         overflow: visible;
         border-bottom: none;
     }
