@@ -33,6 +33,14 @@ function configurarEventListeners() {
             mudarAba(tab);
         });
     });
+
+    // Engrenagem "Configuração" na barra do mês
+    const btnConfig = document.getElementById('btnConfig');
+    if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus'));
+
+    // Cards de Receitas/Despesas do dashboard abrem a aba correspondente
+    document.querySelector('.summary-card.entradas')?.addEventListener('click', () => mudarAba('entradas'));
+    document.querySelector('.summary-card.saidas')?.addEventListener('click', () => mudarAba('saidas'));
     
     // Formulário
     const form = document.querySelector(SELECTORS.formTransacao);
@@ -177,7 +185,7 @@ function mudarAba(novaAba) {
     console.log(`📑 Mudando para aba: ${novaAba}`);
 
     // Lembra a última aba que não seja o formulário (para o "×" voltar)
-    const ativa = document.querySelector('.tab-btn.active')?.dataset.tab;
+    const ativa = document.querySelector('.tab-btn.active, #btnConfig.active')?.dataset.tab;
     if (ativa && ativa !== 'adicionar' && novaAba === 'adicionar') {
         estadoApp.abaAnterior = ativa;
     }
@@ -186,10 +194,10 @@ function mudarAba(novaAba) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    document.querySelectorAll('.tab-btn, #btnConfig').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     // Adicionar classe active
     document.getElementById(novaAba)?.classList.add('active');
     document.querySelector(`[data-tab="${novaAba}"]`)?.classList.add('active');

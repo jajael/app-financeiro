@@ -14,6 +14,7 @@
 .summary-card.entradas,
 .summary-card.saidas {
     grid-column: 1 / -1;
+    cursor: pointer;   /* abre a aba correspondente */
 }
 
 /* Linhas "Atual / A receber|pagar / Total" dentro dos cards */
