@@ -502,6 +502,9 @@ function atualizarLabelsPorTipo() {
     if (lblDia) lblDia.textContent = ehReceita ? 'Dia do pagamento:' : 'Dia de vencimento:';
     const lblChk = document.getElementById('pagarVencimentoLabel');
     if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vencimento';
+
+    // Recorrência "Mensal" aparece como "Conta" nas despesas -> refaz o dropdown
+    if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
 }
 
 /**
