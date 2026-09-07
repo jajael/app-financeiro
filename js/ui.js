@@ -42,23 +42,9 @@ function atualizarResumo() {
 
     if (balancoEl) {
         balancoEl.textContent = resumo.balanco;
-
-        // Aplicar tema baseado no saldo
+        // Balanço sempre com a cor "balanço" (amarelo) — sem tema por saldo.
         const card = balancoEl.closest('.summary-card');
-        if (card) {
-            let tema;
-            if (resumo.negativo) {
-                tema = TEMAS_BALANCO.negativo;
-            } else if (resumo.positivo) {
-                tema = TEMAS_BALANCO.positivo;
-            } else {
-                tema = TEMAS_BALANCO.neutro;
-            }
-
-            card.style.backgroundColor = tema.bg;
-            card.style.borderColor = tema.border;
-            card.style.color = tema.color;
-        }
+        if (card) card.style.cssText = '';
     }
 
     // Gasto diário = balanço / dias restantes do mês vigente
@@ -546,8 +532,10 @@ function abrirNovaCategoria() {
     mostrarDialogo({
         titulo: 'Nova categoria',
         corpoHTML: `
-            <input type="text" id="dlgCatNome" placeholder="Nome da categoria" autocomplete="off">
-            <input type="text" id="dlgCatDesc" placeholder="Descrição (opcional)" autocomplete="off">`,
+            <div class="campo"><label for="dlgCatNome">Nome</label>
+                <input type="text" id="dlgCatNome" placeholder="Ex: Mercado" autocomplete="off"></div>
+            <div class="campo"><label for="dlgCatDesc">Descrição <span class="opt">(opcional)</span></label>
+                <input type="text" id="dlgCatDesc" autocomplete="off"></div>`,
         acoes: [
             { label: 'Cancelar' },
             { label: 'Adicionar', primario: true, onClick: async (ov) => {
@@ -568,16 +556,21 @@ function abrirNovoMetodo() {
     const ov = mostrarDialogo({
         titulo: 'Novo método',
         corpoHTML: `
-            <select id="dlgMetKind">
-                <option value="">Tipo...</option>
-                <option value="PIX/Débito">PIX/Débito</option>
-                <option value="Crédito">Crédito</option>
-            </select>
-            <input type="text" id="dlgMetBanco" placeholder="Banco" autocomplete="off">
-            <div id="dlgMetCartao" class="dialogo-linha" hidden>
-                <input type="text" id="dlgMetFech" inputmode="numeric" maxlength="2" placeholder="Fechamento">
-                <input type="text" id="dlgMetVenc" inputmode="numeric" maxlength="2" placeholder="Vencimento">
-                <input type="text" id="dlgMetMelhor" inputmode="numeric" maxlength="2" placeholder="Melhor dia">
+            <div class="campo"><label for="dlgMetKind">Tipo</label>
+                <select id="dlgMetKind">
+                    <option value="">Selecione...</option>
+                    <option value="PIX/Débito">PIX/Débito</option>
+                    <option value="Crédito">Crédito</option>
+                </select></div>
+            <div class="campo"><label for="dlgMetBanco">Banco</label>
+                <input type="text" id="dlgMetBanco" placeholder="Ex: Nubank" autocomplete="off"></div>
+            <div id="dlgMetCartao" hidden>
+                <div class="campo"><label for="dlgMetFech">Fechamento (dia)</label>
+                    <input type="text" id="dlgMetFech" inputmode="numeric" maxlength="2"></div>
+                <div class="campo"><label for="dlgMetVenc">Vencimento (dia)</label>
+                    <input type="text" id="dlgMetVenc" inputmode="numeric" maxlength="2"></div>
+                <div class="campo"><label for="dlgMetMelhor">Melhor dia <span class="opt">(auto)</span></label>
+                    <input type="text" id="dlgMetMelhor" inputmode="numeric" maxlength="2"></div>
             </div>`,
         acoes: [
             { label: 'Cancelar' },

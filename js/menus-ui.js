@@ -39,8 +39,14 @@ async function carregarAbaMenus() {
         <h3>📂 Categorias</h3>
         <div class="menu-list" id="categoriasList"></div>
         <div class="add-item-form">
-          <input type="text" id="novaCategoriaInput" placeholder="Nova categoria...">
-          <input type="text" id="novaCategoriDescInput" placeholder="Descrição (opcional)...">
+          <div class="campo">
+            <label for="novaCategoriaInput">Nome</label>
+            <input type="text" id="novaCategoriaInput" placeholder="Ex: Mercado">
+          </div>
+          <div class="campo">
+            <label for="novaCategoriDescInput">Descrição <span class="opt">(opcional)</span></label>
+            <input type="text" id="novaCategoriDescInput" placeholder="">
+          </div>
           <button onclick="adicionarNovaCategoria()" class="btn-add">+ Adicionar</button>
         </div>
       </div>
@@ -48,19 +54,30 @@ async function carregarAbaMenus() {
       <div class="menu-section">
         <h3>💳 Métodos de pagamento</h3>
         <div class="menu-list" id="metodosList"></div>
-        <div class="add-item-form metodo-form">
-          <select id="novoMetodoKind">
-            <option value="">Adicionar método...</option>
-            <option value="PIX/Débito">PIX/Débito</option>
-            <option value="Crédito">Crédito</option>
-          </select>
-          <div id="metodoDetalhes" hidden>
-            <input type="text" id="metodoBanco" placeholder="Banco">
-            <div id="metodoCartaoCampos" hidden>
-              <input type="text" id="metodoFech" inputmode="numeric" maxlength="2" placeholder="Fechamento (dia)">
-              <input type="text" id="metodoVenc" inputmode="numeric" maxlength="2" placeholder="Vencimento (dia)">
-              <input type="text" id="metodoMelhor" inputmode="numeric" maxlength="2" placeholder="Melhor dia (auto)">
-            </div>
+        <div class="add-item-form">
+          <div class="campo">
+            <label for="novoMetodoKind">Tipo</label>
+            <select id="novoMetodoKind">
+              <option value="">Selecione...</option>
+              <option value="PIX/Débito">PIX/Débito</option>
+              <option value="Crédito">Crédito</option>
+            </select>
+          </div>
+          <div class="campo" id="metodoBancoCampo" hidden>
+            <label for="metodoBanco">Banco</label>
+            <input type="text" id="metodoBanco" placeholder="Ex: Nubank">
+          </div>
+          <div class="campo" id="metodoFechCampo" hidden>
+            <label for="metodoFech">Fechamento (dia)</label>
+            <input type="text" id="metodoFech" inputmode="numeric" maxlength="2" placeholder="">
+          </div>
+          <div class="campo" id="metodoVencCampo" hidden>
+            <label for="metodoVenc">Vencimento (dia)</label>
+            <input type="text" id="metodoVenc" inputmode="numeric" maxlength="2" placeholder="">
+          </div>
+          <div class="campo" id="metodoMelhorCampo" hidden>
+            <label for="metodoMelhor">Melhor dia <span class="opt">(auto)</span></label>
+            <input type="text" id="metodoMelhor" inputmode="numeric" maxlength="2" placeholder="">
           </div>
           <button onclick="adicionarNovoMetodo()" class="btn-add">+ Adicionar</button>
         </div>
@@ -69,12 +86,12 @@ async function carregarAbaMenus() {
       <div class="menu-section">
         <h3>🔁 Tipos de recorrência</h3>
         <p class="menu-hint">Tipos fixos do sistema. Você escolhe um deles ao lançar uma transação.</p>
-        <div class="menu-list" id="recorrenciasList">
+        <div class="menu-list menu-list--livre" id="recorrenciasList">
           ${RECORRENCIAS_INFO.map(([nome, desc]) => `
             <div class="menu-item ativo">
               <div class="item-info">
                 <div class="item-nome">${nome}</div>
-                <div class="item-descricao">${desc}</div>
+                <div class="item-descricao item-descricao--full">${desc}</div>
               </div>
             </div>
           `).join('')}
@@ -93,15 +110,20 @@ async function carregarAbaMenus() {
 /** Liga os campos condicionais do formulário de método */
 function configurarFormMetodo() {
   const kind = document.getElementById('novoMetodoKind');
-  const det = document.getElementById('metodoDetalhes');
-  const cartao = document.getElementById('metodoCartaoCampos');
+  const bancoCampo = document.getElementById('metodoBancoCampo');
+  const fechCampo = document.getElementById('metodoFechCampo');
+  const vencCampo = document.getElementById('metodoVencCampo');
+  const melhorCampo = document.getElementById('metodoMelhorCampo');
   const fech = document.getElementById('metodoFech');
   const melhor = document.getElementById('metodoMelhor');
 
   kind.addEventListener('change', () => {
     const v = kind.value;
-    det.hidden = !v;
-    cartao.hidden = v !== 'Crédito';
+    bancoCampo.hidden = !v;                 // PIX/Débito e Crédito pedem banco
+    const cred = v === 'Crédito';
+    fechCampo.hidden = !cred;
+    vencCampo.hidden = !cred;
+    melhorCampo.hidden = !cred;
   });
 
   fech.addEventListener('input', () => {
@@ -216,10 +238,14 @@ function abrirEdicaoInline(row, id, tipo) {
   if (tipo === 'Categoria') {
     row.innerHTML = `
       <div class="item-edit">
-        <input type="text" class="edt-nome" value="${esc(item.nome)}" placeholder="Nome">
-        <input type="text" class="edt-desc" value="${esc(item.descricao)}" placeholder="Descrição">
-        <button class="btn-add edt-salvar">Salvar</button>
-        <button class="btn-icon edt-cancelar" title="Cancelar">✕</button>
+        <div class="campo"><label>Nome</label>
+          <input type="text" class="edt-nome" value="${esc(item.nome)}"></div>
+        <div class="campo"><label>Descrição</label>
+          <input type="text" class="edt-desc" value="${esc(item.descricao)}"></div>
+        <div class="item-edit-acoes">
+          <button class="btn-add edt-salvar">Salvar</button>
+          <button class="btn-icon edt-cancelar" title="Cancelar">✕</button>
+        </div>
       </div>`;
     row.querySelector('.edt-cancelar').onclick = recarregarMenus;
     row.querySelector('.edt-salvar').onclick = async () => {
@@ -235,14 +261,20 @@ function abrirEdicaoInline(row, id, tipo) {
   const ehCredito = item.metodoKind === 'Crédito';
   row.innerHTML = `
     <div class="item-edit">
-      <input type="text" class="edt-banco" value="${esc(item.banco)}" placeholder="Banco">
+      <div class="campo"><label>Banco</label>
+        <input type="text" class="edt-banco" value="${esc(item.banco)}"></div>
       ${ehCredito ? `
-        <input type="text" class="edt-fech" inputmode="numeric" maxlength="2" value="${item.diaFechamento || ''}" placeholder="Fechamento">
-        <input type="text" class="edt-venc" inputmode="numeric" maxlength="2" value="${item.diaVencimento || ''}" placeholder="Vencimento">
-        <input type="text" class="edt-melhor" inputmode="numeric" maxlength="2" value="${item.melhorDiaCompra || ''}" placeholder="Melhor dia">
+        <div class="campo"><label>Fechamento (dia)</label>
+          <input type="text" class="edt-fech" inputmode="numeric" maxlength="2" value="${item.diaFechamento || ''}"></div>
+        <div class="campo"><label>Vencimento (dia)</label>
+          <input type="text" class="edt-venc" inputmode="numeric" maxlength="2" value="${item.diaVencimento || ''}"></div>
+        <div class="campo"><label>Melhor dia</label>
+          <input type="text" class="edt-melhor" inputmode="numeric" maxlength="2" value="${item.melhorDiaCompra || ''}"></div>
       ` : ''}
-      <button class="btn-add edt-salvar">Salvar</button>
-      <button class="btn-icon edt-cancelar" title="Cancelar">✕</button>
+      <div class="item-edit-acoes">
+        <button class="btn-add edt-salvar">Salvar</button>
+        <button class="btn-icon edt-cancelar" title="Cancelar">✕</button>
+      </div>
     </div>`;
   row.querySelector('.edt-cancelar').onclick = recarregarMenus;
   row.querySelectorAll('input[inputmode="numeric"]').forEach(inp =>

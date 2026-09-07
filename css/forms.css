@@ -310,26 +310,31 @@
 }
 .inline-check input { width: auto; }
 
-.add-item-form.metodo-form {
-    flex-wrap: wrap;
-    align-items: flex-start;
-}
-.add-item-form.metodo-form #metodoDetalhes {
+/* add-item-form: campos empilhados com label externo (design de Categorias) */
+.add-item-form {
     display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-    flex: 1 1 100%;
+    flex-direction: column;
+    gap: var(--spacing-sm);
 }
-.add-item-form.metodo-form #metodoCartaoCampos {
+.campo {
     display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-    flex: 1 1 100%;
+    flex-direction: column;
+    gap: .25rem;
 }
-.add-item-form.metodo-form input {
-    flex: 1 1 8rem;
-    min-width: 0;
+.campo label {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--text-muted);
 }
+.campo label .opt { font-weight: 400; opacity: .8; }
+.campo input,
+.campo select,
+.add-item-form > input {
+    width: 100%;
+}
+.add-item-form .btn-add { width: 100%; }
+
+.dialogo-corpo #dlgMetCartao { display: flex; flex-direction: column; gap: .5rem; }
 
 /* Ações do formulário (adicionar / cancelar edição) */
 .form-actions {
