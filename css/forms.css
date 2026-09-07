@@ -49,7 +49,6 @@
 
 .tipo-btn:hover {
     background: var(--light);
-    transform: translateY(-2px);
 }
 
 .tipo-btn.active {
@@ -189,12 +188,10 @@
 }
 
 .btn-submit:hover:not(:disabled) {
-    transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
 }
 
 .btn-submit:active:not(:disabled) {
-    transform: translateY(0);
 }
 
 .btn-submit:disabled {
@@ -236,11 +233,9 @@
 @keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(-10px);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 

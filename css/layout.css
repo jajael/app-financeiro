@@ -67,11 +67,9 @@ header.header {
 
 .month-btn:hover {
     background: rgba(255, 255, 255, 0.5);
-    transform: scale(1.05);
 }
 
 .month-btn:active {
-    transform: scale(0.98);
 }
 
 .current-month {
