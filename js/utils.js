@@ -116,6 +116,31 @@ function soNumeros(input, max) {
     input.value = input.value.replace(/\D/g, '').slice(0, max);
 }
 
+/**
+ * Diálogo modal simples (sem alert/confirm nativos).
+ * @param {{titulo?:string, texto:string, acoes?:Array<{label:string, primario?:boolean, onClick?:Function}>}}
+ */
+function mostrarDialogo({ titulo, texto, acoes }) {
+    const ov = document.createElement('div');
+    ov.className = 'dialogo-overlay';
+    ov.innerHTML = `
+        <div class="dialogo">
+            ${titulo ? `<h3>${titulo}</h3>` : ''}
+            <p>${texto}</p>
+            <div class="dialogo-acoes"></div>
+        </div>`;
+    const box = ov.querySelector('.dialogo-acoes');
+    (acoes && acoes.length ? acoes : [{ label: 'OK' }]).forEach(a => {
+        const b = document.createElement('button');
+        b.textContent = a.label;
+        b.className = a.primario ? 'btn-add' : 'btn-cancelar';
+        b.onclick = () => { ov.remove(); if (a.onClick) a.onClick(); };
+        box.appendChild(b);
+    });
+    ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+    document.body.appendChild(ov);
+}
+
 /** Máscara mm/aaaa */
 function mascaraCompetencia(input) {
     let v = input.value.replace(/\D/g, '').slice(0, 6);

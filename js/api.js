@@ -23,6 +23,11 @@ function mapearTransacao(row) {
         cartaoId: row.cartao_id || null,
         grupoId: row.grupo_id || null,
         pendente: !!row.pendente,
+        parcelaNum: row.parcela_num || null,
+        parcelasTotal: row.parcelas_total || null,
+        valorTotal: row.valor_total != null ? parseFloat(row.valor_total) : null,
+        quitada: !!row.quitada,
+        quitadoEm: row.quitado_em || null,
         competencia: row.competencia || '',
         diaRecorrencia: row.dia_recorrencia || '',
         diaSemana: row.dia_semana ?? null
@@ -260,32 +265,111 @@ async function confirmarPendenteAPI(id) {
     return { mensagem: 'Confirmado' };
 }
 
+/** Número formatado sem símbolo: inteiro sem casas, senão 2 casas com vírgula */
+function numParcela(x) {
+    return Number.isInteger(x) ? String(x) : x.toFixed(2).replace('.', ',');
+}
+
+/** Valor "original" da parcela `num` (1-based) de um total, com n parcelas */
+function valorParcelaOriginal(valorTotal, n, num) {
+    const cent = Math.round(valorTotal * 100);
+    const base = Math.floor(cent / n);
+    const resto = cent - base * n;
+    return (base + ((num - 1) < resto ? 1 : 0)) / 100;
+}
+
+/** Nome base da descrição de uma parcela (remove "k/n · ..." e sufixos) */
+function nomeBaseParcela(descricao) {
+    return String(descricao || '').replace(/\s+\d+\/\d+\s+·.*$/, '').trim();
+}
+
+/** Monta a descrição de uma parcela: "Nome k/n · vParc/vTotal" */
+function descParcela(nome, num, n, valorParc, valorTotal, sufixo) {
+    return `${nome} ${num}/${n} · ${numParcela(valorParc)}/${numParcela(valorTotal)}${sufixo ? ' · ' + sufixo : ''}`;
+}
+
 async function adicionarParceladoAPI(dados) {
     const n = Math.max(1, parseInt(dados.parcelas, 10) || 1);
     const grupoId = crypto.randomUUID();
-    const centavos = Math.round(parseFloat(dados.valor) * 100);
-    const baseParc = Math.floor(centavos / n);
-    const resto = centavos - baseParc * n;
+    const total = parseFloat(dados.valor);
+    const nome = dados.descricao || dados.categoria;
 
     const base = montarRegistro(dados);
     base.grupo_id = grupoId;
-    const registros = [];
+    base.parcelas_total = n;
+    base.valor_total = total;
 
+    const registros = [];
     for (let i = 0; i < n; i++) {
-        const valor = (baseParc + (i < resto ? 1 : 0)) / 100;
+        const num = i + 1;
+        const valor = valorParcelaOriginal(total, n, num);
         registros.push({
             ...base,
             valor,
+            parcela_num: num,
             data: i === 0 ? base.data : addMeses(base.data, i),
             competencia: i === 0 ? base.competencia : addMeses(base.competencia, i),
             proxima_data: i < n - 1 ? addMeses(base.competencia, i + 1) : null,
-            descricao: `${dados.descricao || dados.categoria} (${i + 1}/${n})`
+            descricao: descParcela(nome, num, n, valor, total)
         });
     }
 
     const { data, error } = await sb.from('transacoes').insert(registros).select();
     if (error) throw error;
     return (data || []).map(mapearTransacao);
+}
+
+/**
+ * Quita (ou desfaz a quitação de) um parcelamento a partir da parcela `id`.
+ * quitar=true: a parcela do mês recebe o saldo restante; as seguintes zeram,
+ * ficam marcadas como quitadas e indicam o mês da quitação.
+ * quitar=false: restaura os valores originais de todas as parcelas do grupo.
+ */
+async function quitarParcelamentoAPI(id, quitar) {
+    const { data: alvo, error: e1 } = await sb.from('transacoes')
+        .select('grupo_id, competencia, parcela_num, parcelas_total, valor_total, tipo_recorrencia, descricao')
+        .eq('id', id).single();
+    if (e1) throw e1;
+    if (!alvo.grupo_id || alvo.tipo_recorrencia !== 'Parcelada') throw new Error('Não é um parcelamento');
+
+    const { data: rows, error: e2 } = await sb.from('transacoes')
+        .select('id, parcela_num, descricao')
+        .eq('grupo_id', alvo.grupo_id).order('parcela_num');
+    if (e2) throw e2;
+
+    const n = alvo.parcelas_total || rows.length;
+    const total = alvo.valor_total;
+    const nome = nomeBaseParcela(alvo.descricao) || 'Parcela';
+    const mm = competenciaParaBR(alvo.competencia);
+
+    let updates;
+    if (quitar) {
+        const k = alvo.parcela_num;
+        const saldo = rows.filter(r => r.parcela_num >= k)
+            .reduce((s, r) => s + valorParcelaOriginal(total, n, r.parcela_num), 0);
+        const saldoR = Math.round(saldo * 100) / 100;
+
+        updates = rows.filter(r => r.parcela_num >= k).map(r => r.parcela_num === k
+            ? { id: r.id, patch: { valor: saldoR, quitada: false, quitado_em: alvo.competencia,
+                  descricao: descParcela(nome, r.parcela_num, n, saldoR, total, 'quitado') } }
+            : { id: r.id, patch: { valor: 0, quitada: true, quitado_em: alvo.competencia,
+                  descricao: descParcela(nome, r.parcela_num, n, 0, total, `quitado em ${mm}`) } });
+    } else {
+        updates = rows.map(r => ({
+            id: r.id,
+            patch: {
+                valor: valorParcelaOriginal(total, n, r.parcela_num),
+                quitada: false, quitado_em: null,
+                descricao: descParcela(nome, r.parcela_num, n, valorParcelaOriginal(total, n, r.parcela_num), total)
+            }
+        }));
+    }
+
+    for (const u of updates) {
+        const { error } = await sb.from('transacoes').update(u.patch).eq('id', u.id);
+        if (error) throw error;
+    }
+    return { mensagem: quitar ? 'Parcelamento quitado' : 'Quitação desfeita' };
 }
 
 // Campos "de negócio" que uma edição propaga para a ocorrência pendente da série
@@ -334,8 +418,24 @@ async function editarTransacaoAPI(dados) {
  */
 async function deletarTransacaoAPI(id) {
     const { data: alvo, error: e1 } = await sb
-        .from('transacoes').select('grupo_id, competencia').eq('id', id).single();
+        .from('transacoes')
+        .select('grupo_id, competencia, tipo_recorrencia, parcela_num')
+        .eq('id', id).single();
     if (e1) throw e1;
+
+    // Parcelamento: só a 1ª parcela pode ser apagada (e apaga todas)
+    if (alvo.tipo_recorrencia === 'Parcelada' && alvo.grupo_id) {
+        if ((alvo.parcela_num || 1) !== 1) {
+            const { data: orig } = await sb.from('transacoes').select('competencia')
+                .eq('grupo_id', alvo.grupo_id).eq('parcela_num', 1).single();
+            const err = new Error('Só a primeira parcela pode ser apagada.');
+            err.detalhe = { tipo: 'parcela-nao-original', competenciaOriginal: orig?.competencia || alvo.competencia };
+            throw err;
+        }
+        const { error } = await sb.from('transacoes').delete().eq('grupo_id', alvo.grupo_id);
+        if (error) throw error;
+        return { mensagem: 'Parcelamento removido' };
+    }
 
     const { error } = await sb.from('transacoes').delete().eq('id', id);
     if (error) throw error;

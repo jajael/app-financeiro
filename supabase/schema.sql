@@ -12,7 +12,7 @@ create table if not exists public.transacoes (
   id                bigint generated always as identity primary key,
   tipo              text not null check (tipo in ('entradas', 'saidas')),
   data              date not null,
-  valor             numeric(12,2) not null check (valor > 0),
+  valor             numeric(12,2) not null check (valor >= 0),
   metodo            text,
   categoria         text not null,
   descricao         text default '',
@@ -25,6 +25,11 @@ create table if not exists public.transacoes (
   status            text default 'Ativa',
   grupo_id          uuid,        -- liga as ocorrências de uma recorrência / parcelamento
   pendente          boolean not null default false,  -- ocorrência "mês seguinte" aguardando OK
+  parcela_num       smallint,    -- nº da parcela (1..N); só Parcelada
+  parcelas_total    smallint,    -- N
+  valor_total       numeric(12,2),
+  quitada           boolean not null default false,  -- parcela zerada por quitação
+  quitado_em        date,        -- competência em que o parcelamento foi quitado
   user_id           uuid default auth.uid(),
   criado_em         timestamptz default now()
 );

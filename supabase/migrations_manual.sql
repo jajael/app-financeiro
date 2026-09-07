@@ -89,3 +89,16 @@ update public.menu_itens set nome = 'Conta' where tipo = 'Recorrência' and nome
 alter table public.transacoes add column if not exists grupo_id uuid;
 create index if not exists transacoes_grupo_idx on public.transacoes (grupo_id, competencia);
 alter table public.transacoes add column if not exists pendente boolean not null default false;
+
+-- ============================================================
+-- 7) Parcelamento: detalhes na descrição, quitação, exclusão só da original
+-- ============================================================
+alter table public.transacoes
+  add column if not exists parcela_num     smallint,
+  add column if not exists parcelas_total  smallint,
+  add column if not exists valor_total     numeric(12,2),
+  add column if not exists quitada         boolean not null default false,
+  add column if not exists quitado_em      date;
+
+alter table public.transacoes drop constraint if exists transacoes_valor_check;
+alter table public.transacoes add  constraint transacoes_valor_check check (valor >= 0);

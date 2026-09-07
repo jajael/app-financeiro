@@ -135,11 +135,32 @@ function gerarHTMLTransacao(trans, tipo) {
     
     const tagPendente = trans.pendente
         ? '<span class="pendente-badge">a confirmar</span>' : '';
-    const botaoOk = trans.pendente
-        ? `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>` : '';
+
+    const ehParcela = !!trans.parcelasTotal;
+    const ehOriginal = ehParcela && trans.parcelaNum === 1;
+
+    // Ações
+    let acoes = '';
+    if (trans.pendente) {
+        acoes += `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>`;
+    }
+    if (ehParcela && !trans.quitada) {
+        const chk = trans.quitadoEm ? 'checked' : '';
+        acoes += `<label class="quitar-check" title="Quitar a partir deste mês"><input type="checkbox" data-act="quitar-parc" data-id="${trans.id}" ${chk}> quitar</label>`;
+    }
+    if (!ehParcela || ehOriginal) {
+        acoes += `<button class="btn-icon" data-act="editar-trans" data-id="${trans.id}" title="Editar">✏️</button>`;
+    }
+    if (!trans.quitada) {
+        acoes += `<button class="btn-icon btn-danger" data-act="excluir-trans" data-id="${trans.id}" title="Excluir">🗑️</button>`;
+    }
+
+    const classes = `despesa-item ${tipo}`
+        + (trans.pendente ? ' pendente' : '')
+        + (trans.quitada ? ' quitada' : '');
 
     return `
-        <div class="despesa-item ${tipo}${trans.pendente ? ' pendente' : ''}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
+        <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             <div class="despesa-info">
                 <div class="despesa-categoria">
                     ${trans.categoria} ${badgeRecorrencia} ${tagPendente}
@@ -148,39 +169,46 @@ function gerarHTMLTransacao(trans, tipo) {
                 <div class="despesa-descricao">${trans.descricao || 'Sem descrição'} • ${dataFormatada}</div>
             </div>
             <div class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${valorFormatado}</div>
-            <div class="despesa-actions">
-                ${botaoOk}
-                <button class="btn-icon" data-act="editar-trans" data-id="${trans.id}" title="Editar">✏️</button>
-                <button class="btn-icon btn-danger" data-act="excluir-trans" data-id="${trans.id}" title="Excluir">🗑️</button>
-            </div>
+            <div class="despesa-actions">${acoes}</div>
         </div>
     `;
 }
 
-/** Delegação de clique nas listas de transações (editar / excluir) */
+/** Delegação de clique nas listas de transações */
 function onListaTransacaoClick(e) {
-    const btn = e.target.closest('button[data-act]');
-    if (!btn) return;
-    const id = Number(btn.dataset.id);
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const id = Number(el.dataset.id);
     const trans = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
         .find(t => t.id === id);
     if (!trans) return;
 
-    if (btn.dataset.act === 'confirmar-trans') {
-        confirmarPendente(id);
-    } else if (btn.dataset.act === 'editar-trans') {
-        const tipo = estadoApp.transacoes.entradas.some(t => t.id === id) ? 'entradas' : 'saidas';
-        iniciarEdicaoTransacao(trans, tipo);
-    } else if (btn.dataset.act === 'excluir-trans') {
-        if (btn.dataset.armed) {
-            excluirTransacao(id);
-        } else {
-            const orig = btn.textContent;
-            btn.dataset.armed = '1';
-            btn.textContent = 'excluir?';
-            btn.classList.add('armed');
-            setTimeout(() => { delete btn.dataset.armed; btn.textContent = orig; btn.classList.remove('armed'); }, 3000);
+    switch (el.dataset.act) {
+        case 'confirmar-trans':
+            confirmarPendente(id);
+            break;
+        case 'quitar-parc':
+            quitarParcelamento(id, el.checked);
+            break;
+        case 'editar-trans': {
+            const tipo = estadoApp.transacoes.entradas.some(t => t.id === id) ? 'entradas' : 'saidas';
+            iniciarEdicaoTransacao(trans, tipo);
+            break;
         }
+        case 'excluir-trans':
+            // Parcela que não é a original: aviso, sem arme de 2 cliques
+            if (trans.parcelasTotal && trans.parcelaNum !== 1) {
+                excluirTransacao(id); // deixa a API lançar o detalhe e o catch mostra o diálogo
+            } else if (el.dataset.armed) {
+                excluirTransacao(id);
+            } else {
+                const orig = el.textContent;
+                el.dataset.armed = '1';
+                el.textContent = 'excluir?';
+                el.classList.add('armed');
+                setTimeout(() => { delete el.dataset.armed; el.textContent = orig; el.classList.remove('armed'); }, 3000);
+            }
+            break;
     }
 }
 
@@ -191,9 +219,43 @@ async function excluirTransacao(id) {
         await recarregarDados();
         atualizarUI();
     } catch (e) {
+        if (e && e.detalhe && e.detalhe.tipo === 'parcela-nao-original') {
+            const comp = e.detalhe.competenciaOriginal;
+            const label = competenciaParaBR(comp);
+            mostrarDialogo({
+                titulo: 'Só a 1ª parcela pode ser apagada',
+                texto: `A parcela original está em <strong>${label}</strong>. Apagar a original remove todas as parcelas.`,
+                acoes: [
+                    { label: `Ir para ${label}`, primario: true, onClick: () => irParaMes(comp) },
+                    { label: 'Fechar' }
+                ]
+            });
+            return;
+        }
         console.error(e);
         mostrarNotificacao('Erro ao excluir', 'erro');
     }
+}
+
+async function quitarParcelamento(id, quitar) {
+    try {
+        await quitarParcelamentoAPI(id, quitar);
+        mostrarNotificacao(quitar ? '✓ Parcelamento quitado' : 'Quitação desfeita', 'sucesso');
+        await recarregarDados();
+        atualizarUI();
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacao('Erro ao quitar', 'erro');
+        await recarregarDados();
+        atualizarUI();
+    }
+}
+
+/** Navega a visão mensal para a competência informada (YYYY-MM-01) */
+function irParaMes(competencia) {
+    if (!competencia) return;
+    estadoApp.mesAtual = parseDataLocal(competencia);
+    recarregarDados().then(atualizarUI);
 }
 
 async function confirmarPendente(id) {
