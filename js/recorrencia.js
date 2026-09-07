@@ -133,6 +133,31 @@ function competenciaDe(dataISO, diaFechamento) {
   return `${ano}-${String(mes + 1).padStart(2, '0')}-01`;
 }
 
+/** Todas as datas 'YYYY-MM-DD' do mês (ano, mes 0-11) cujo dia da semana é `dow` (0-6) */
+function ocorrenciasDoDiaNoMes(ano, mes, dow) {
+  const out = [];
+  const d = new Date(ano, mes, 1);
+  while (d.getMonth() === mes) {
+    if (d.getDay() === dow) out.push(formatarDataISO(d));
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+
+/** 1ª ocorrência do dia da semana `dow` no mês SEGUINTE ao de `dataISO` */
+function primeiraOcorrenciaProxMes(dataISO, dow) {
+  const d = parseDataLocal(dataISO);
+  let ano = d.getFullYear();
+  let mes = d.getMonth() + 1;
+  if (mes > 11) { mes = 0; ano += 1; }
+  return ocorrenciasDoDiaNoMes(ano, mes, dow)[0] || null;
+}
+
+/** 'YYYY-MM-DD' de hoje (local) */
+function hojeISO() {
+  return formatarDataISO(new Date());
+}
+
 /** Soma `n` meses a uma data 'YYYY-MM-DD', preservando o dia (limitado ao fim do mês) */
 function addMeses(dataISO, n) {
   const d = parseDataLocal(dataISO);

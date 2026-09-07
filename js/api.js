@@ -9,10 +9,25 @@
  * Converte uma linha do banco (snake_case) para o formato usado na UI (camelCase)
  */
 function mapearTransacao(row) {
+    let valor = parseFloat(row.valor) || 0;
+    let valorMes = row.valor_total != null ? parseFloat(row.valor_total) : valor;
+    const semanas = Array.isArray(row.semanas) ? row.semanas : null;
+    const valorSessao = row.valor_sessao != null ? parseFloat(row.valor_sessao) : null;
+
+    // Semanal: X (realizado até hoje) e Y (total do mês) recalculados na leitura
+    if (row.tipo_recorrencia === 'Semanal' && semanas && valorSessao != null) {
+        const hoje = hojeISO();
+        valor = semanas.filter(d => d <= hoje).length * valorSessao;   // X
+        valorMes = semanas.length * valorSessao;                        // Y
+    }
+
     return {
         id: row.id,
         data: row.data,
-        valor: parseFloat(row.valor) || 0,
+        valor,
+        valorMes,
+        valorSessao,
+        semanas,
         metodo: row.metodo || '',
         categoria: row.categoria || '',
         descricao: row.descricao || '',
@@ -165,10 +180,10 @@ async function carregarResumo(tipo, mes, ano) {
  */
 function montarRegistro(dados) {
     const tipoRecorrencia = dados.tipoRecorrencia || 'Pontual';
-    return {
+    const reg = {
         tipo: dados.tipo,
         data: dados.data,
-        valor: parseFloat(dados.valor),
+        valor: parseFloat(dados.valor) || 0,
         metodo: dados.metodo || null,
         categoria: dados.categoria,
         descricao: dados.descricao || '',
@@ -180,6 +195,18 @@ function montarRegistro(dados) {
         competencia: dados.competencia || competenciaDe(dados.data),
         status: dados.status || 'Ativa'
     };
+
+    // Semanal com dia fixo: valor por sessão + semanas marcadas; valor gravado = X
+    const semanas = Array.isArray(dados.semanas) ? dados.semanas.slice().sort() : [];
+    if (tipoRecorrencia === 'Semanal' && semanas.length) {
+        const vs = parseFloat(dados.valorSessao ?? dados.valor) || 0;
+        const hoje = hojeISO();
+        reg.valor_sessao = vs;
+        reg.semanas = semanas;
+        reg.valor_total = semanas.length * vs;                        // Y
+        reg.valor = semanas.filter(d => d <= hoje).length * vs;       // X
+    }
+    return reg;
 }
 
 // Tipos que se repetem "rolando" um mês por vez (mês atual + 1 pendente)
@@ -205,9 +232,17 @@ async function adicionarTransacaoAPI(dados) {
     return mapearTransacao(data);
 }
 
-/** Clona os campos de negócio de uma linha para gerar a próxima ocorrência */
+/** Próxima "data base" para o mês seguinte de uma série recorrente */
+function proximaDataRecorrente(row) {
+    if (row.tipo_recorrencia === 'Semanal' && row.dia_semana != null) {
+        return primeiraOcorrenciaProxMes(row.data, row.dia_semana);
+    }
+    return calcularProximaData(row.data, row.tipo_recorrencia, row.dia_recorrencia, row.dia_semana);
+}
+
+/** Clona os campos de negócio de uma linha para gerar a próxima ocorrência (mês seguinte, pendente) */
 function ocorrenciaSeguinte(row, novaData) {
-    return {
+    const base = {
         tipo: row.tipo,
         valor: row.valor,
         metodo: row.metodo,
@@ -224,14 +259,25 @@ function ocorrenciaSeguinte(row, novaData) {
         proxima_data: null,
         pendente: true
     };
+
+    // Semanal: o mês seguinte vem com TODAS as suas ocorrências marcadas (nada passou ainda)
+    if (row.tipo_recorrencia === 'Semanal' && row.dia_semana != null && row.valor_sessao != null) {
+        const d = parseDataLocal(novaData);
+        const semanas = ocorrenciasDoDiaNoMes(d.getFullYear(), d.getMonth(), row.dia_semana);
+        const vs = parseFloat(row.valor_sessao);
+        base.valor_sessao = vs;
+        base.semanas = semanas;
+        base.valor_total = semanas.length * vs;
+        base.valor = 0;
+    }
+    return base;
 }
 
 async function adicionarRecorrenteAPI(dados) {
     const grupoId = crypto.randomUUID();
-    const tipo = dados.tipoRecorrencia;
     const atual = { ...montarRegistro(dados), grupo_id: grupoId, pendente: false };
 
-    const proxData = calcularProximaData(atual.data, tipo, dados.diaRecorrencia, dados.diaSemana);
+    const proxData = proximaDataRecorrente(atual);
     atual.proxima_data = proxData || null;
 
     const registros = [atual];
@@ -251,7 +297,7 @@ async function confirmarPendenteAPI(id) {
         .from('transacoes').select('*').eq('id', id).single();
     if (e1) throw e1;
 
-    const proxData = calcularProximaData(row.data, row.tipo_recorrencia, row.dia_recorrencia, row.dia_semana);
+    const proxData = proximaDataRecorrente(row);
 
     const { error: e2 } = await sb.from('transacoes')
         .update({ pendente: false, proxima_data: proxData || null })
@@ -398,8 +444,8 @@ async function editarTransacaoAPI(dados) {
         .update(registro).eq('id', dados.id).select().single();
     if (error) throw error;
 
-    // Propaga para o pendente da série (se houver e for posterior)
-    if (alvo.grupo_id && !alvo.pendente) {
+    // Propaga para o pendente da série (não para Semanal: cada mês tem seus chips)
+    if (alvo.grupo_id && !alvo.pendente && registro.tipo_recorrencia !== 'Semanal') {
         const patch = {};
         CAMPOS_CASCATA.forEach(k => { if (k in registro) patch[k] = registro[k]; });
         await sb.from('transacoes')

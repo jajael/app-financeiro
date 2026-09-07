@@ -102,3 +102,10 @@ alter table public.transacoes
 
 alter table public.transacoes drop constraint if exists transacoes_valor_check;
 alter table public.transacoes add  constraint transacoes_valor_check check (valor >= 0);
+
+-- ============================================================
+-- 8) Semanal com "chips" de semanas (valor por sessão + datas marcadas)
+-- ============================================================
+alter table public.transacoes
+  add column if not exists valor_sessao numeric(12,2),
+  add column if not exists semanas jsonb;

@@ -112,7 +112,10 @@ function atualizarSaidasLista() {
  */
 function gerarHTMLTransacao(trans, tipo) {
     const dataFormatada = formatarData(trans.data);
-    const valorFormatado = formatarMoeda(trans.valor);
+    const ehSemanalChips = trans.tipoRecorrencia === 'Semanal' && Array.isArray(trans.semanas) && trans.semanas.length;
+    const valorFormatado = ehSemanalChips
+        ? `${formatarMoeda(trans.valor)} <span class="valor-meta">/ ${formatarMoeda(trans.valorMes)}</span>`
+        : formatarMoeda(trans.valor);
     
     // Badge de recorrência
     let badgeRecorrencia = '';
@@ -284,7 +287,9 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
         b.classList.toggle('active', b.dataset.tipo === tipoTransacao));
 
     document.querySelector(SELECTORS.data).value = isoParaDataBR(trans.data);
-    document.querySelector(SELECTORS.valor).value = trans.valor;
+    document.querySelector(SELECTORS.valor).value =
+        (trans.tipoRecorrencia === 'Semanal' && trans.valorSessao != null) ? trans.valorSessao : trans.valor;
+    semanasMarcadas = new Set(trans.semanas || []);
     document.querySelector(SELECTORS.categoria).value = trans.categoria;
     document.querySelector(SELECTORS.descricao).value = trans.descricao || '';
     document.querySelector(SELECTORS.metodo).value = trans.metodo || '';
@@ -312,6 +317,7 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
 /** Sai do modo edição e limpa o formulário */
 function cancelarEdicaoTransacao() {
     estadoApp.editandoId = null;
+    semanasMarcadas = new Set();
     limparFormulario();
     const btn = document.querySelector('.btn-submit');
     if (btn) btn.textContent = 'Adicionar Transação';
@@ -455,6 +461,68 @@ function atualizarCamposRecorrencia() {
         const campo = document.getElementById('dataCalculada');
         if (campo) campo.value = iso ? isoParaDataBR(dataDaOcorrencia(iso, tipo)) : '';
     }
+
+    // Semanal: chips das ocorrências do dia da semana no mês
+    const grupoChips = document.getElementById('semanasChipsGroup');
+    const dowVal = document.getElementById('diaSemana')?.value ?? '';
+    const mostrarChips = ehSemanal && dowVal !== '';
+    if (grupoChips) grupoChips.hidden = !mostrarChips;
+    if (mostrarChips) renderSemanasChips();
+}
+
+// Conjunto de datas (YYYY-MM-DD) marcadas nas chips do formulário
+let semanasMarcadas = new Set();
+
+const DOW_ABREV = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+/** (Re)desenha as chips de semanas para o mês/dia-da-semana atuais do formulário */
+function renderSemanasChips() {
+    const box = document.getElementById('semanasChips');
+    if (!box) return;
+    const dow = parseInt(document.getElementById('diaSemana').value, 10);
+    const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+    if (!Number.isInteger(dow) || !iso) { box.innerHTML = ''; return; }
+
+    const d = parseDataLocal(iso);
+    const dias = ocorrenciasDoDiaNoMes(d.getFullYear(), d.getMonth(), dow);
+    const hoje = hojeISO();
+
+    // Reinicia (futuras marcadas) se o conjunto atual não pertence a este mês
+    const pertence = [...semanasMarcadas].some(x => dias.includes(x));
+    if (!pertence) semanasMarcadas = new Set(dias.filter(x => x > hoje));
+    // Mantém só as datas válidas deste mês
+    semanasMarcadas = new Set([...semanasMarcadas].filter(x => dias.includes(x)));
+
+    box.innerHTML = dias.map(dt => {
+        const marc = semanasMarcadas.has(dt);
+        const passada = dt <= hoje;
+        const dd = dt.slice(8, 10);
+        return `<button type="button" class="chip${marc ? ' on' : ''}${passada ? ' passada' : ''}" data-dt="${dt}">${DOW_ABREV[dow]} ${dd}</button>`;
+    }).join('');
+
+    box.onclick = e => {
+        const chip = e.target.closest('.chip');
+        if (!chip) return;
+        const dt = chip.dataset.dt;
+        if (semanasMarcadas.has(dt)) semanasMarcadas.delete(dt);
+        else semanasMarcadas.add(dt);
+        chip.classList.toggle('on');
+        atualizarResumoSemanas();
+    };
+
+    atualizarResumoSemanas();
+}
+
+/** Atualiza o "X / Y" do resumo semanal */
+function atualizarResumoSemanas() {
+    const el = document.getElementById('semanasResumo');
+    if (!el) return;
+    const vs = parseFloat(document.querySelector(SELECTORS.valor).value) || 0;
+    const hoje = hojeISO();
+    const marc = [...semanasMarcadas];
+    const x = marc.filter(dt => dt <= hoje).length * vs;
+    const y = marc.length * vs;
+    el.textContent = `${formatarMoeda(x)} / ${formatarMoeda(y)}  (${marc.length} sessões)`;
 }
 
 /**
