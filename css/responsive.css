@@ -10,20 +10,30 @@
         box-shadow: none;
     }
 
-    /* Header */
+    /* Header compacto no mobile */
+    header.header { padding: var(--spacing-md); }
+
     .header-content {
         flex-direction: column;
         text-align: center;
+        gap: var(--spacing-sm);
     }
 
     .header-content h1 {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-lg);
     }
 
     .header-info {
         width: 100%;
         justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.4rem;
     }
+    .header-info > * { flex: 0 0 auto; }
+    .header-info .btn-apagar-tudo,
+    .header-info .modo-teste-badge,
+    .header-info #btnTema,
+    .header-info #btnLogout { font-size: 0.78rem; padding: 0.3rem 0.55rem; }
 
     /* Main */
     main.main {
@@ -35,17 +45,30 @@
         grid-template-columns: 1fr;
     }
 
-    /* Tabs */
+    /* Tabs: 3 linhas — Lançamento / Receitas·Despesas / Próximas·Configuração */
     .tabs {
-        gap: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.25rem;
+        overflow: visible;
+        border-bottom: none;
     }
-
-    .tab-btn {
-        padding: var(--spacing-md);
+    .tabs .tab-btn {
+        padding: var(--spacing-sm);
         font-size: var(--font-size-sm);
-        flex: 1;
         text-align: center;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
     }
+    .tabs .tab-btn.active {
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 12%, transparent);
+    }
+    .tabs [data-tab="adicionar"] { order: -1; grid-column: 1 / -1; }
+    .tabs [data-tab="entradas"] { order: 1; }
+    .tabs [data-tab="saidas"]   { order: 2; }
+    .tabs [data-tab="proximas"] { order: 3; }
+    .tabs [data-tab="menus"]    { order: 4; }
 
     /* Formulário */
     .form-transacao {
@@ -126,7 +149,9 @@
     }
 
     .header-info {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
         width: 100%;
     }
 

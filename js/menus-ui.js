@@ -35,7 +35,13 @@ async function carregarAbaMenus() {
   document.querySelector(SELECTORS.menusContainer).innerHTML = `
     <div class="menus-gerenciamento">
 
-      <div class="menu-section">
+      <div class="subtabs" role="tablist">
+        <button class="subtab active" data-sub="cat">📂 Categorias</button>
+        <button class="subtab" data-sub="met">💳 Métodos</button>
+        <button class="subtab" data-sub="rec">🔁 Recorrências</button>
+      </div>
+
+      <div class="menu-section" data-sub="cat">
         <h3>📂 Categorias</h3>
         <div class="menu-list" id="categoriasList"></div>
         <div class="add-item-form">
@@ -51,7 +57,7 @@ async function carregarAbaMenus() {
         </div>
       </div>
 
-      <div class="menu-section">
+      <div class="menu-section" data-sub="met" hidden>
         <h3>💳 Métodos de pagamento</h3>
         <div class="menu-list" id="metodosList"></div>
         <div class="add-item-form">
@@ -83,7 +89,7 @@ async function carregarAbaMenus() {
         </div>
       </div>
 
-      <div class="menu-section">
+      <div class="menu-section" data-sub="rec" hidden>
         <h3>🔁 Tipos de recorrência</h3>
         <p class="menu-hint">Tipos fixos do sistema. Você escolhe um deles ao lançar uma transação.</p>
         <div class="menu-list menu-list--livre" id="recorrenciasList">
@@ -102,9 +108,25 @@ async function carregarAbaMenus() {
   `;
 
   configurarFormMetodo();
+  configurarSubtabsConfig();
 
   renderizarItemsMenu('Categoria', 'categoriasList', menus.categorias);
   renderizarItemsMenu('Método', 'metodosList', menus.metodos);
+}
+
+/** Sub-abas da Configuração: Categorias / Métodos / Recorrências */
+function configurarSubtabsConfig() {
+  const barra = document.querySelector('.menus-gerenciamento .subtabs');
+  if (!barra) return;
+  barra.addEventListener('click', e => {
+    const btn = e.target.closest('.subtab');
+    if (!btn) return;
+    const sub = btn.dataset.sub;
+    barra.querySelectorAll('.subtab').forEach(b => b.classList.toggle('active', b === btn));
+    document.querySelectorAll('.menus-gerenciamento .menu-section').forEach(sec => {
+      sec.hidden = sec.dataset.sub !== sub;
+    });
+  });
 }
 
 /** Liga os campos condicionais do formulário de método */
