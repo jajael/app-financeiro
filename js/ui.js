@@ -10,7 +10,14 @@ function atualizarUI() {
     // Atualizar cabeçalho com mês
     const mesEl = document.querySelector(SELECTORS.currentMonth);
     if (mesEl) {
-        mesEl.textContent = obterMesAnoFormatado(estadoApp.mesAtual);
+        const full = mesEl.querySelector('.mes-full');
+        const curto = mesEl.querySelector('.mes-curto');
+        if (full && curto) {
+            full.textContent = obterMesAnoFormatado(estadoApp.mesAtual);
+            curto.textContent = obterMesAnoCurto(estadoApp.mesAtual);
+        } else {
+            mesEl.textContent = obterMesAnoFormatado(estadoApp.mesAtual);
+        }
     }
     
     // Atualizar resumo
