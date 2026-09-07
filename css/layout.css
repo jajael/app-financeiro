@@ -14,13 +14,40 @@
     box-shadow: var(--shadow-lg);
 }
 
-/* Header */
+/* Header (fixo no topo) */
 header.header {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: white;
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg) var(--spacing-xl);
     border-bottom: 4px solid var(--primary-dark);
+    position: sticky;
+    top: 0;
+    z-index: 50;
 }
+
+/* Barra de mês — largura inteira, entre o header e os cards */
+.month-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+.month-bar .current-month {
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+    color: var(--text);
+    min-width: 12rem;
+    text-align: center;
+}
+.month-bar .month-btn {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+}
+.month-bar .month-btn:hover { background: var(--surface-3); }
 
 .header-content {
     display: flex;
