@@ -145,10 +145,13 @@ function gerarHTMLTransacao(trans, tipo) {
     // Linha do método (só quando houver)
     let metodoLinha = '';
     if (trans.metodo) {
-        metodoLinha = `<div class="despesa-metodo">💳 ${trans.metodo}</div>`;
+        metodoLinha = `<div class="despesa-metodo">${trans.metodo}</div>`;
     } else if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
-        metodoLinha = `<div class="despesa-metodo">📦 ${trans.formaPagamento}</div>`;
+        metodoLinha = `<div class="despesa-metodo">${trans.formaPagamento}</div>`;
     }
+
+    // Linha da categoria (+ descrição, se houver): "Categoria: descrição"
+    const catLinha = trans.categoria + (trans.descricao ? `: ${trans.descricao}` : '');
 
     // Dia do mês (sem mês/ano)
     const diaFormatado = trans.data
@@ -183,15 +186,14 @@ function gerarHTMLTransacao(trans, tipo) {
 
     return `
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
+            <div class="despesa-dia">${diaFormatado}</div>
             <div class="despesa-info">
                 <div class="despesa-topo">
-                    <span class="despesa-dia">${diaFormatado}</span>
-                    <span class="despesa-categoria">${trans.categoria}</span>
                     <span class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${valorFormatado}</span>
+                    ${badgeRecorrencia} ${tagPendente}
                 </div>
-                ${(badgeRecorrencia || tagPendente) ? `<div class="despesa-badges">${badgeRecorrencia} ${tagPendente}</div>` : ''}
                 ${metodoLinha}
-                <div class="despesa-descricao">${trans.descricao || 'Sem descrição'}</div>
+                <div class="despesa-descricao" title="${catLinha.replace(/"/g, '&quot;')}">${catLinha}</div>
             </div>
             <div class="despesa-actions">${acoes}</div>
         </div>
