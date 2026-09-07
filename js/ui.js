@@ -130,7 +130,6 @@ function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
  * Gera HTML para uma transação
  */
 function gerarHTMLTransacao(trans, tipo) {
-    const dataFormatada = formatarData(trans.data);
     const ehSemanalChips = trans.tipoRecorrencia === 'Semanal' && Array.isArray(trans.semanas) && trans.semanas.length;
     const valorFormatado = ehSemanalChips
         ? `${formatarMoeda(trans.valor)} <span class="valor-meta">/ ${formatarMoeda(trans.valorMes)}</span>`
@@ -143,18 +142,18 @@ function gerarHTMLTransacao(trans, tipo) {
         badgeRecorrencia = `<span class="recorrencia-badge">${rot}</span>`;
     }
     
-    // Informações adicionais
-    let meta = '';
-    if (trans.metodo || trans.formaPagamento) {
-        meta = '<div class="despesa-meta">';
-        if (trans.metodo) {
-            meta += `<span class="meta-item">💳 ${trans.metodo}</span>`;
-        }
-        if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
-            meta += `<span class="meta-item">📦 ${trans.formaPagamento}</span>`;
-        }
-        meta += '</div>';
+    // Linha do método (só quando houver)
+    let metodoLinha = '';
+    if (trans.metodo) {
+        metodoLinha = `<div class="despesa-metodo">💳 ${trans.metodo}</div>`;
+    } else if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
+        metodoLinha = `<div class="despesa-metodo">📦 ${trans.formaPagamento}</div>`;
     }
+
+    // Dia do mês (sem mês/ano)
+    const diaFormatado = trans.data
+        ? String(parseDataLocal(trans.data).getDate()).padStart(2, '0')
+        : '--';
     
     const tagPendente = trans.pendente
         ? '<span class="pendente-badge">a confirmar</span>' : '';
@@ -185,13 +184,15 @@ function gerarHTMLTransacao(trans, tipo) {
     return `
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             <div class="despesa-info">
-                <div class="despesa-categoria">
-                    ${trans.categoria} ${badgeRecorrencia} ${tagPendente}
+                <div class="despesa-topo">
+                    <span class="despesa-dia">${diaFormatado}</span>
+                    <span class="despesa-categoria">${trans.categoria}</span>
+                    <span class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${valorFormatado}</span>
                 </div>
-                ${meta}
-                <div class="despesa-descricao">${trans.descricao || 'Sem descrição'} • ${dataFormatada}</div>
+                ${(badgeRecorrencia || tagPendente) ? `<div class="despesa-badges">${badgeRecorrencia} ${tagPendente}</div>` : ''}
+                ${metodoLinha}
+                <div class="despesa-descricao">${trans.descricao || 'Sem descrição'}</div>
             </div>
-            <div class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${valorFormatado}</div>
             <div class="despesa-actions">${acoes}</div>
         </div>
     `;

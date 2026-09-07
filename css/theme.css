@@ -59,7 +59,7 @@ footer.footer {
 /* ---------- Texto ---------- */
 h1, h2, h3, h4, label, .item-nome, .despesa-categoria, .amount { color: var(--text); }
 
-.despesa-descricao, .despesa-meta, .meta-item,
+.despesa-descricao, .despesa-meta, .meta-item, .despesa-metodo,
 .item-descricao, .grupo-sub, .menu-hint, .hint-inline,
 .summary-card .sub, .empty-message, .empty-text,
 .current-month, .semanas-resumo {
