@@ -320,7 +320,7 @@ function cancelarEdicaoTransacao() {
     semanasMarcadas = new Set();
     limparFormulario();
     const btn = document.querySelector('.btn-submit');
-    if (btn) btn.textContent = 'Adicionar Transação';
+    if (btn) btn.textContent = 'Adicionar Lançamento';
     const cancelar = document.getElementById('cancelarEdicao');
     if (cancelar) cancelar.hidden = true;
 }
@@ -440,7 +440,8 @@ function atualizarCamposRecorrencia() {
     const tipo = document.querySelector(SELECTORS.tipoRecorrencia).value;
     const comDia = tipo === 'Conta' || tipo === 'Parcelada';
     const ehSemanal = tipo === 'Semanal';
-    const ehCalculada = tipo === 'Último dia útil do mês' || tipo === 'Primeiro dia útil do mês';
+    const ehCalculada = tipo === 'Último dia útil do mês' || tipo === 'Primeiro dia útil do mês'
+        || tipo === 'Até o 5º dia útil do mês';
 
     const set = (id, mostrar) => { const el = document.getElementById(id); if (el) el.hidden = !mostrar; };
     set('diaRecorrenciaGroup', comDia);

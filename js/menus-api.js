@@ -12,7 +12,7 @@ const CATEGORIAS_PADRAO_SEED = ['Salário', 'Freelance', 'Investimento', 'Bônus
     'Transporte app', 'Transporte público', 'Outro'];
 // Vocabulário fixo de tipos de recorrência (não vão para o banco)
 const RECORRENCIAS_KINDS = ['Pontual', 'Conta', 'Parcelada',
-  'Último dia útil do mês', 'Primeiro dia útil do mês', 'Semanal'];
+  'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês', 'Semanal'];
 
 /**
  * Se o usuário atual ainda não tem nenhum item de menu, cria o conjunto padrão.

@@ -66,15 +66,30 @@ function primeiroDiaUtilDoMes(ano, mes) {
   return d;
 }
 
+/** N-ésimo dia útil do mês (ano, mes 0-11; n>=1) */
+function nthDiaUtilDoMes(ano, mes, n) {
+  const d = new Date(ano, mes, 1);
+  let cont = 0;
+  while (d.getMonth() === mes) {
+    if (!ehFimDeSemanaOuFeriado(d)) {
+      cont += 1;
+      if (cont === n) return new Date(d);
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return ultimoDiaUtilDoMes(ano, mes); // menos dias úteis que n -> último
+}
+
 /**
  * Data em que ESTA ocorrência cai (para mostrar no formulário).
- * Para "Último/Primeiro dia útil do mês" usa o mês da própria data.
+ * Usa o mês da própria data.
  */
 function dataDaOcorrencia(dataISO, tipo) {
   if (!dataISO) return '';
   const d = parseDataLocal(dataISO);
   if (tipo === 'Último dia útil do mês') return formatarDataISO(ultimoDiaUtilDoMes(d.getFullYear(), d.getMonth()));
   if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(d.getFullYear(), d.getMonth()));
+  if (tipo === 'Até o 5º dia útil do mês') return formatarDataISO(nthDiaUtilDoMes(d.getFullYear(), d.getMonth(), 5));
   return '';
 }
 
@@ -110,6 +125,7 @@ function calcularProximaData(dataAtual, tipo, dia, diaSemana) {
 
   if (tipo === 'Último dia útil do mês') return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
   if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(ano, mes));
+  if (tipo === 'Até o 5º dia útil do mês') return formatarDataISO(nthDiaUtilDoMes(ano, mes, 5));
 
   // Conta / Parcelada
   const diaNum = parseInt(dia, 10) || base.getDate();

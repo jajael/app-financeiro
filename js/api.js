@@ -206,11 +206,22 @@ function montarRegistro(dados) {
         reg.valor_total = semanas.length * vs;                        // Y
         reg.valor = semanas.filter(d => d <= hoje).length * vs;       // X
     }
+
+    // "Até o 5º dia útil do mês": a data é sempre o 5º dia útil da competência
+    if (tipoRecorrencia === 'Até o 5º dia útil do mês') {
+        const c = parseDataLocal(reg.competencia);
+        reg.data = formatarDataISO(nthDiaUtilDoMes(c.getFullYear(), c.getMonth(), 5));
+        reg.proxima_data = calcularProximaData(reg.data, tipoRecorrencia);
+    }
     return reg;
 }
 
 // Tipos que se repetem "rolando" um mês por vez (mês atual + 1 pendente)
-const RECORRENTES = ['Conta', 'Semanal', 'Último dia útil do mês', 'Primeiro dia útil do mês'];
+const RECORRENTES = ['Conta', 'Semanal', 'Último dia útil do mês',
+    'Primeiro dia útil do mês', 'Até o 5º dia útil do mês'];
+
+// Tipo cujo lançamento já nasce pendente e se auto-confirma no 5º dia útil
+const AUTO_CONFIRMA = 'Até o 5º dia útil do mês';
 
 /**
  * Adiciona nova transação.
@@ -275,17 +286,42 @@ function ocorrenciaSeguinte(row, novaData) {
 
 async function adicionarRecorrenteAPI(dados) {
     const grupoId = crypto.randomUUID();
-    const atual = { ...montarRegistro(dados), grupo_id: grupoId, pendente: false };
+    const ehAuto = dados.tipoRecorrencia === AUTO_CONFIRMA;
+    const atual = { ...montarRegistro(dados), grupo_id: grupoId, pendente: ehAuto };
 
     const proxData = proximaDataRecorrente(atual);
     atual.proxima_data = proxData || null;
 
     const registros = [atual];
-    if (proxData) registros.push(ocorrenciaSeguinte(atual, proxData));
+    // Auto-confirma: nasce pendente e sem "próximo mês"; o seguinte é criado ao confirmar.
+    if (!ehAuto && proxData) registros.push(ocorrenciaSeguinte(atual, proxData));
 
     const { data, error } = await sb.from('transacoes').insert(registros).select();
     if (error) throw error;
     return (data || []).map(mapearTransacao);
+}
+
+/**
+ * Auto-confirma os lançamentos "Até o 5º dia útil do mês" pendentes cujo
+ * 5º dia útil da competência já passou. Roda no carregamento.
+ */
+async function autoConfirmarVencidos() {
+    for (let i = 0; i < 24; i++) {
+        const { data: pend, error } = await sb.from('transacoes')
+            .select('id, competencia')
+            .eq('tipo_recorrencia', AUTO_CONFIRMA)
+            .eq('pendente', true);
+        if (error || !pend || !pend.length) return;
+
+        const hoje = hojeISO();
+        const vencidas = pend.filter(p => {
+            const [y, m] = p.competencia.slice(0, 7).split('-').map(Number);
+            return formatarDataISO(nthDiaUtilDoMes(y, m - 1, 5)) <= hoje;
+        });
+        if (!vencidas.length) return;
+
+        for (const p of vencidas) await confirmarPendenteAPI(p.id);
+    }
 }
 
 /**
