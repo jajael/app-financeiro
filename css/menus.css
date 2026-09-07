@@ -74,7 +74,7 @@
 .cat-subgrupo {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--surface-2);
+  background: var(--surface);
   margin-bottom: var(--spacing-sm);
 }
 .cat-subgrupo > summary {
@@ -112,9 +112,8 @@
 }
 
 .menu-item {
-  background: white;
-  border: 1px solid #dee2e6;
-  border-left: 4px solid var(--primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 0.4rem 0.6rem;
   display: flex;
@@ -129,8 +128,6 @@
 
 .menu-item.inativo {
   opacity: 0.6;
-  border-left-color: #adb5bd;
-  background: #f8f9fa;
 }
 
 .item-info {

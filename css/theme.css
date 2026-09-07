@@ -221,11 +221,10 @@ input.campo-travado,
 
 /* ---------- Configuração (menus.css) ---------- */
 .menu-item {
-    background-color: var(--surface-2);
+    background-color: var(--surface);
     border-color: var(--border);
 }
-.menu-item.inativo { border-left-color: var(--border-strong); }
-.menu-item:hover { background-color: var(--surface-3); }
+.menu-item:hover { background-color: var(--surface-2); }
 .item-nome { color: var(--text); }
 .item-descricao,
 .menus-gerenciamento .empty-text,

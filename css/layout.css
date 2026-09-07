@@ -52,9 +52,10 @@ header.header {
     margin-left: auto;
     display: inline-flex;
     align-items: center;
-    gap: .3rem;
+    gap: .25rem;
     white-space: nowrap;
-    font-size: 0.68rem;
+    font-size: 0.6rem;
+    padding: 0.3rem 0.55rem;
 }
 .month-bar .current-month {
     font-weight: var(--font-weight-bold);
