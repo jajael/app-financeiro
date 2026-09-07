@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (dataInput && !dataInput.value) dataInput.value = dataHojeBR();
     atualizarCamposRecorrencia();
     atualizarCampoCredito();
+    atualizarLabelsPorTipo();
 
     // Carregar dados iniciais
     console.log('📊 Carregando dados...');

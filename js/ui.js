@@ -65,7 +65,7 @@ function atualizarEntradasLista() {
     const transacoes = estadoApp.transacoes.entradas;
     
     if (transacoes.length === 0) {
-        container.innerHTML = '<p class="empty-message">Nenhuma entrada neste mês</p>';
+        container.innerHTML = '<p class="empty-message">Nenhuma receita neste mês</p>';
         return;
     }
     
@@ -91,7 +91,7 @@ function atualizarSaidasLista() {
     const transacoes = estadoApp.transacoes.saidas;
     
     if (transacoes.length === 0) {
-        container.innerHTML = '<p class="empty-message">Nenhuma saída neste mês</p>';
+        container.innerHTML = '<p class="empty-message">Nenhuma despesa neste mês</p>';
         return;
     }
     
@@ -285,6 +285,7 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
     if (tipoField) tipoField.value = tipoTransacao;
     document.querySelectorAll('.tipo-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.tipo === tipoTransacao));
+    atualizarLabelsPorTipo();
 
     document.querySelector(SELECTORS.data).value = isoParaDataBR(trans.data);
     document.querySelector(SELECTORS.valor).value =
@@ -350,7 +351,7 @@ async function atualizarGrafico() {
         .sort((a, b) => b[1] - a[1]);
     
     if (categoriasOrdenadas.length === 0) {
-        container.innerHTML = '<p class="empty-message">Nenhuma saída neste mês</p>';
+        container.innerHTML = '<p class="empty-message">Nenhuma despesa neste mês</p>';
         return;
     }
     
@@ -440,7 +441,7 @@ async function atualizarProximasTransacoes() {
  */
 function atualizarCamposRecorrencia() {
     const tipo = document.querySelector(SELECTORS.tipoRecorrencia).value;
-    const comDia = tipo === 'Conta' || tipo === 'Parcelada';
+    const comDia = tipo === 'Mensal' || tipo === 'Parcelada';
     const ehSemanal = tipo === 'Semanal';
     const ehCalculada = tipo === 'Último dia útil do mês' || tipo === 'Primeiro dia útil do mês'
         || tipo === 'Até o 5º dia útil do mês';
@@ -473,6 +474,34 @@ function atualizarCamposRecorrencia() {
 
     // "Pagar no vencimento": trava a data do lançamento no dia do vencimento
     aplicarPagarVencimento();
+}
+
+/**
+ * Ajusta rótulos e campos conforme o tipo (receita = entradas | despesa = saidas):
+ * - receita não tem método (campo escondido, não obrigatório)
+ * - "Dia de vencimento" vira "Dia do pagamento"; checkbox muda de texto
+ */
+function atualizarLabelsPorTipo() {
+    const ehReceita = document.querySelector(SELECTORS.tipoTransacao)?.value === 'entradas';
+
+    const metodoSel = document.querySelector(SELECTORS.metodo);
+    const grpMetodo = metodoSel?.closest('.form-group');
+    if (grpMetodo) grpMetodo.hidden = ehReceita;
+    if (metodoSel) {
+        metodoSel.required = !ehReceita;
+        if (ehReceita) metodoSel.value = '';
+    }
+    if (ehReceita) {
+        const compGrp = document.getElementById('competenciaGroup');
+        if (compGrp) compGrp.hidden = true;
+    } else if (typeof atualizarCampoCredito === 'function') {
+        atualizarCampoCredito();
+    }
+
+    const lblDia = document.querySelector('label[for="diaRecorrencia"]');
+    if (lblDia) lblDia.textContent = ehReceita ? 'Dia do pagamento:' : 'Dia de vencimento:';
+    const lblChk = document.getElementById('pagarVencimentoLabel');
+    if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vencimento';
 }
 
 /**
