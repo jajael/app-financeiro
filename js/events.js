@@ -15,6 +15,14 @@ function configurarEventListeners() {
     
     if (prevBtn) prevBtn.addEventListener('click', mesAnterior);
     if (nextBtn) nextBtn.addEventListener('click', proximoMes);
+
+    // Clicar no nome do mês volta para o mês vigente
+    const mesLabel = document.getElementById('currentMonth');
+    if (mesLabel) {
+        mesLabel.style.cursor = 'pointer';
+        mesLabel.title = 'Voltar ao mês atual';
+        mesLabel.addEventListener('click', irParaMesVigente);
+    }
     
     // Seletor de tipo
     const tipoButtons = document.querySelectorAll('.tipo-btn');
@@ -158,6 +166,17 @@ function mesAnterior() {
  */
 function proximoMes() {
     estadoApp.mesAtual.setMonth(estadoApp.mesAtual.getMonth() + 1);
+    recarregarDados();
+}
+
+/**
+ * Volta para o mês vigente (hoje)
+ */
+function irParaMesVigente() {
+    const hoje = new Date();
+    if (estadoApp.mesAtual.getFullYear() === hoje.getFullYear()
+        && estadoApp.mesAtual.getMonth() === hoje.getMonth()) return;
+    estadoApp.mesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     recarregarDados();
 }
 

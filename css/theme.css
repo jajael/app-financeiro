@@ -196,18 +196,25 @@ input.campo-travado,
 .dialogo h3 { color: var(--text); }
 .dialogo p { color: var(--text-muted); }
 
-/* ---------- Botão de tema no cabeçalho ---------- */
-#btnTema {
+/* ---------- Chips do cabeçalho: mesmo tamanho e formato ---------- */
+.header-info { gap: 0.4rem; }
+.header-info > * {
+    font-size: 0.68rem;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.26rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+#btnTema,
+#btnLogout {
     background: rgba(255, 255, 255, 0.15);
     color: var(--header-text);
     border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: var(--radius-sm);
-    padding: 0.35rem 0.7rem;
-    font-size: 0.95rem;
     cursor: pointer;
-    line-height: 1;
 }
-#btnTema:hover { background: rgba(255, 255, 255, 0.28); }
+#btnTema:hover,
+#btnLogout:hover { background: rgba(255, 255, 255, 0.28); }
 
 /* ---------- Notificação (mostrarNotificacao usa cor inline; ok) ---------- */
 .notificacao { color: #fff; }
@@ -250,23 +257,14 @@ input.campo-travado,
 .modo-teste-badge {
     background: var(--warning);
     color: #1F2937;
-    font-size: 0.72rem;
-    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
-    padding: 0.25rem 0.55rem;
-    border-radius: 999px;
-    white-space: nowrap;
+    letter-spacing: 0.3px;
 }
 .btn-apagar-tudo {
     background: rgba(255, 255, 255, 0.12);
     color: var(--header-text);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: var(--radius-sm);
-    padding: 0.35rem 0.7rem;
-    font-size: 0.85rem;
     cursor: pointer;
-    white-space: nowrap;
 }
 .btn-apagar-tudo:hover { background: rgba(239, 68, 68, 0.35); border-color: rgba(239,68,68,.6); }
 
@@ -305,4 +303,8 @@ input.campo-travado,
 .summary-card.gasto-diario .sub { font-size: 0.6rem; margin: 0; opacity: .7; }
 .despesa-item { padding: 0.5rem 0.7rem; }
 .menu-section { padding: var(--spacing-md); }
-.dashboard { gap: var(--spacing-md); }
+
+/* Ritmo vertical padronizado entre os blocos: 1rem em todos */
+.dashboard { gap: var(--spacing-md); margin-bottom: var(--spacing-md); }
+.tabs { gap: var(--spacing-sm); margin-bottom: var(--spacing-md); }
+.tab-content { min-height: 0; }
