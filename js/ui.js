@@ -76,8 +76,9 @@ function atualizarEntradasLista() {
     ordenadas.forEach(trans => {
         html += gerarHTMLTransacao(trans, 'entrada');
     });
-    
+
     container.innerHTML = html;
+    container.onclick = onListaTransacaoClick;
 }
 
 /**
@@ -101,8 +102,9 @@ function atualizarSaidasLista() {
     ordenadas.forEach(trans => {
         html += gerarHTMLTransacao(trans, 'saida');
     });
-    
+
     container.innerHTML = html;
+    container.onclick = onListaTransacaoClick;
 }
 
 /**
@@ -132,7 +134,7 @@ function gerarHTMLTransacao(trans, tipo) {
     }
     
     return `
-        <div class="despesa-item ${tipo}">
+        <div class="despesa-item ${tipo}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             <div class="despesa-info">
                 <div class="despesa-categoria">
                     ${trans.categoria} ${badgeRecorrencia}
@@ -141,8 +143,98 @@ function gerarHTMLTransacao(trans, tipo) {
                 <div class="despesa-descricao">${trans.descricao || 'Sem descrição'} • ${dataFormatada}</div>
             </div>
             <div class="despesa-valor">${tipo === 'entrada' ? '+' : '-'} ${valorFormatado}</div>
+            <div class="despesa-actions">
+                <button class="btn-icon" data-act="editar-trans" data-id="${trans.id}" title="Editar">✏️</button>
+                <button class="btn-icon btn-danger" data-act="excluir-trans" data-id="${trans.id}" title="Excluir">🗑️</button>
+            </div>
         </div>
     `;
+}
+
+/** Delegação de clique nas listas de transações (editar / excluir) */
+function onListaTransacaoClick(e) {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const id = Number(btn.dataset.id);
+    const trans = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
+        .find(t => t.id === id);
+    if (!trans) return;
+
+    if (btn.dataset.act === 'editar-trans') {
+        const tipo = estadoApp.transacoes.entradas.some(t => t.id === id) ? 'entradas' : 'saidas';
+        iniciarEdicaoTransacao(trans, tipo);
+    } else if (btn.dataset.act === 'excluir-trans') {
+        if (btn.dataset.armed) {
+            excluirTransacao(id);
+        } else {
+            const orig = btn.textContent;
+            btn.dataset.armed = '1';
+            btn.textContent = 'excluir?';
+            btn.classList.add('armed');
+            setTimeout(() => { delete btn.dataset.armed; btn.textContent = orig; btn.classList.remove('armed'); }, 3000);
+        }
+    }
+}
+
+async function excluirTransacao(id) {
+    try {
+        await deletarTransacaoAPI(id);
+        mostrarNotificacao('Transação excluída', 'sucesso');
+        await recarregarDados();
+        atualizarUI();
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacao('Erro ao excluir', 'erro');
+    }
+}
+
+/** Carrega a transação no formulário da aba Adicionar em modo edição */
+function iniciarEdicaoTransacao(trans, tipoTransacao) {
+    estadoApp.editandoId = trans.id;
+
+    mudarAba('adicionar');
+
+    // Tipo (entrada/saída) sem recarregar menus
+    estadoApp.tipoAtual = tipoTransacao;
+    const tipoField = document.querySelector(SELECTORS.tipoTransacao);
+    if (tipoField) tipoField.value = tipoTransacao;
+    document.querySelectorAll('.tipo-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.tipo === tipoTransacao));
+
+    document.querySelector(SELECTORS.data).value = isoParaDataBR(trans.data);
+    document.querySelector(SELECTORS.valor).value = trans.valor;
+    document.querySelector(SELECTORS.categoria).value = trans.categoria;
+    document.querySelector(SELECTORS.descricao).value = trans.descricao || '';
+    document.querySelector(SELECTORS.metodo).value = trans.metodo || '';
+    document.querySelector(SELECTORS.tipoRecorrencia).value = trans.tipoRecorrencia || 'Pontual';
+
+    const diaRec = document.getElementById('diaRecorrencia');
+    if (diaRec) diaRec.value = trans.diaRecorrencia || '';
+    const diaSem = document.getElementById('diaSemana');
+    if (diaSem) diaSem.value = trans.diaSemana ?? '';
+    const parc = document.getElementById('parcelas');
+    if (parc) parc.value = 1;
+    const comp = document.getElementById('competencia');
+    if (comp) { comp.value = competenciaParaBR(trans.competencia); comp.dataset.editado = comp.value ? '1' : ''; }
+
+    atualizarCamposRecorrencia();
+    atualizarCampoCredito();
+
+    const btn = document.querySelector('.btn-submit');
+    if (btn) btn.textContent = 'Salvar alterações';
+
+    const cancelar = document.getElementById('cancelarEdicao');
+    if (cancelar) cancelar.hidden = false;
+}
+
+/** Sai do modo edição e limpa o formulário */
+function cancelarEdicaoTransacao() {
+    estadoApp.editandoId = null;
+    limparFormulario();
+    const btn = document.querySelector('.btn-submit');
+    if (btn) btn.textContent = 'Adicionar Transação';
+    const cancelar = document.getElementById('cancelarEdicao');
+    if (cancelar) cancelar.hidden = true;
 }
 
 /**
@@ -253,13 +345,60 @@ async function atualizarProximasTransacoes() {
 }
 
 /**
- * Mostra/esconde campo de parcelas
+ * Mostra/esconde os campos que dependem do tipo de recorrência
+ * (dia + checkbox "vencimento" para Mensal/Parcelada; nº de parcelas para Parcelada)
  */
-function alternarCampoParcelas() {
-    const tipoRecorrencia = document.querySelector(SELECTORS.tipoRecorrencia).value;
-    const parceleGroup = document.querySelector(SELECTORS.parceleGroup);
-    
-    if (parceleGroup) {
-        parceleGroup.style.display = tipoRecorrencia === 'Parcelada' ? 'block' : 'none';
+function atualizarCamposRecorrencia() {
+    const tipo = document.querySelector(SELECTORS.tipoRecorrencia).value;
+    const comDia = tipo === 'Conta' || tipo === 'Parcelada';
+    const ehSemanal = tipo === 'Semanal';
+    const ehCalculada = tipo === 'Último dia útil do mês' || tipo === 'Primeiro dia útil do mês';
+
+    const set = (id, mostrar) => { const el = document.getElementById(id); if (el) el.hidden = !mostrar; };
+    set('diaRecorrenciaGroup', comDia);
+    set('parceleGroup', tipo === 'Parcelada');
+    set('diaSemanaGroup', ehSemanal);
+    set('dataCalculadaGroup', ehCalculada);
+
+    // Prefill do dia de vencimento com o dia da data digitada, se vazio
+    const diaInput = document.getElementById('diaRecorrencia');
+    if (comDia && diaInput && !diaInput.value) {
+        const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+        if (iso) diaInput.value = String(parseInt(iso.slice(8, 10), 10));
     }
+
+    // Campo cinza com a data calculada (último/primeiro dia útil)
+    if (ehCalculada) {
+        const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+        const campo = document.getElementById('dataCalculada');
+        if (campo) campo.value = iso ? isoParaDataBR(dataDaOcorrencia(iso, tipo)) : '';
+    }
+}
+
+/**
+ * Mostra/esconde o campo Competência (só para método do tipo Crédito)
+ * e recalcula seu valor.
+ */
+function atualizarCampoCredito() {
+    const metodo = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
+    const ehCredito = !!metodo && metodo.metodoKind === 'Crédito';
+    const grupo = document.getElementById('competenciaGroup');
+    if (grupo) grupo.hidden = !ehCredito;
+    if (ehCredito) recalcularCompetencia();
+}
+
+/**
+ * Recalcula a competência a partir do fechamento do método + data da compra.
+ * Não sobrescreve se o usuário já editou o campo manualmente.
+ */
+function recalcularCompetencia() {
+    const campo = document.getElementById('competencia');
+    if (!campo || campo.dataset.editado) return;
+
+    const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+    if (!iso) return;
+
+    const metodo = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
+    const fech = metodo && metodo.metodoKind === 'Crédito' ? metodo.diaFechamento : null;
+    campo.value = competenciaParaBR(competenciaDe(iso, fech));
 }

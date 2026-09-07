@@ -223,3 +223,33 @@
     align-self: flex-start;
   }
 }
+
+/* Configuração — dicas e edição inline */
+.menu-hint {
+  font-size: .8rem;
+  color: #6B7280;
+  margin: -.25rem 0 .6rem;
+}
+.btn-icon.armed {
+  width: auto;
+  padding: 0 .5rem;
+  font-size: .75rem;
+  color: #DC2626;
+  font-weight: 700;
+}
+.item-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  width: 100%;
+  align-items: center;
+}
+.item-edit input {
+  flex: 1 1 7rem;
+  min-width: 0;
+  padding: .4rem .6rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: .9rem;
+}
+.item-edit .btn-add { flex: 0 0 auto; padding: .4rem .8rem; }

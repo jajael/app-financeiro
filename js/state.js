@@ -24,9 +24,13 @@ let estadoApp = {
     // Menus dinâmicos
     menus: {
         categorias: [],
-        metodos: {}
+        metodos: [],
+        recorrencias: []
     },
-    
+
+    // Id da transação sendo editada (null = criando)
+    editandoId: null,
+
     // Status de loading
     carregando: false,
     erro: null
@@ -47,7 +51,7 @@ function resetarEstado() {
     estadoApp.transacoes.entradas = [];
     estadoApp.transacoes.saidas = [];
     estadoApp.resumo = { entradas: 0, saidas: 0, balanco: 0 };
-    estadoApp.menus = { categorias: [], metodos: {} };
+    estadoApp.menus = { categorias: [], metodos: [], recorrencias: [] };
     estadoApp.erro = null;
 }
 

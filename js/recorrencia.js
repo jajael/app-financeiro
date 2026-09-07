@@ -1,7 +1,5 @@
 /**
- * CÁLCULOS DE RECORRÊNCIA E DATAS (front-end)
- * Portado de google-apps-script/recorrencia.gs + helpers.gs
- * Usado ao adicionar/editar transações para preencher "proxima_data".
+ * CÁLCULOS DE RECORRÊNCIA, DIAS ÚTEIS E COMPETÊNCIA (front-end)
  */
 
 // Feriados fixos nacionais (mês 1-12)
@@ -16,9 +14,7 @@ const FERIADOS_FIXOS = [
   { mes: 12, dia: 25 }  // Natal
 ];
 
-/**
- * Formata Date -> 'YYYY-MM-DD' (horário local)
- */
+/** Date -> 'YYYY-MM-DD' (local) */
 function formatarDataISO(data) {
   if (typeof data === 'string') return data.slice(0, 10);
   const d = new Date(data);
@@ -27,17 +23,13 @@ function formatarDataISO(data) {
   return `${d.getFullYear()}-${mes}-${dia}`;
 }
 
-/**
- * Cria um Date local a partir de 'YYYY-MM-DD' (evita shift de fuso do parser)
- */
+/** 'YYYY-MM-DD' -> Date local (sem shift de fuso) */
 function parseDataLocal(dataStr) {
   const [ano, mes, dia] = String(dataStr).slice(0, 10).split('-').map(Number);
   return new Date(ano, mes - 1, dia);
 }
 
-/**
- * É fim de semana ou feriado fixo?
- */
+/** Fim de semana ou feriado fixo? */
 function ehFimDeSemanaOuFeriado(data) {
   const dow = data.getDay();
   if (dow === 0 || dow === 6) return true;
@@ -45,33 +37,121 @@ function ehFimDeSemanaOuFeriado(data) {
 }
 
 /**
- * Último dia útil de um mês (recebe qualquer Date dentro do mês desejado)
+ * Dia útil mais próximo. Se já é dia útil, devolve a própria data.
+ * Em empate (mesma distância antes/depois), escolhe o dia seguinte.
  */
-function calcularUltimoUtilMes(data) {
-  const ultimoDia = new Date(data.getFullYear(), data.getMonth() + 1, 0);
-  while (ehFimDeSemanaOuFeriado(ultimoDia)) {
-    ultimoDia.setDate(ultimoDia.getDate() - 1);
+function ajustarDiaUtil(data) {
+  const d = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+  if (!ehFimDeSemanaOuFeriado(d)) return d;
+  for (let i = 1; i <= 15; i++) {
+    const depois = new Date(d); depois.setDate(d.getDate() + i);
+    if (!ehFimDeSemanaOuFeriado(depois)) return depois;
+    const antes = new Date(d); antes.setDate(d.getDate() - i);
+    if (!ehFimDeSemanaOuFeriado(antes)) return antes;
   }
-  return formatarDataISO(ultimoDia);
+  return d;
+}
+
+/** Último dia útil do mês (ano, mes 0-11) */
+function ultimoDiaUtilDoMes(ano, mes) {
+  const d = new Date(ano, mes + 1, 0);
+  while (ehFimDeSemanaOuFeriado(d)) d.setDate(d.getDate() - 1);
+  return d;
+}
+
+/** Primeiro dia útil do mês (ano, mes 0-11) */
+function primeiroDiaUtilDoMes(ano, mes) {
+  const d = new Date(ano, mes, 1);
+  while (ehFimDeSemanaOuFeriado(d)) d.setDate(d.getDate() + 1);
+  return d;
 }
 
 /**
- * Calcula a próxima data com base no tipo de recorrência.
- * Retorna string 'YYYY-MM-DD' ou null (Pontual).
+ * Data em que ESTA ocorrência cai (para mostrar no formulário).
+ * Para "Último/Primeiro dia útil do mês" usa o mês da própria data.
  */
-function calcularProximaData(dataAtual, tipoRecorrencia) {
-  if (!dataAtual || !tipoRecorrencia || tipoRecorrencia === 'Pontual') return null;
+function dataDaOcorrencia(dataISO, tipo) {
+  if (!dataISO) return '';
+  const d = parseDataLocal(dataISO);
+  if (tipo === 'Último dia útil do mês') return formatarDataISO(ultimoDiaUtilDoMes(d.getFullYear(), d.getMonth()));
+  if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(d.getFullYear(), d.getMonth()));
+  return '';
+}
 
-  const data = parseDataLocal(dataAtual);
+/**
+ * Próxima data da recorrência (string 'YYYY-MM-DD') ou null se Pontual.
+ * @param {string} dataAtual  'YYYY-MM-DD'
+ * @param {string} tipo       Pontual | Conta | Parcelada | Último dia útil do mês |
+ *                            Primeiro dia útil do mês | Semanal
+ * @param {number|string} dia      dia do mês (Conta/Parcelada)
+ * @param {number|string} diaSemana 0-6 (Semanal); '' = sem dia fixo -> +7 dias
+ */
+function calcularProximaData(dataAtual, tipo, dia, diaSemana) {
+  if (!dataAtual || !tipo || tipo === 'Pontual') return null;
 
-  switch (tipoRecorrencia) {
-    case 'Último útil do mês':
-      return calcularUltimoUtilMes(new Date(data.getFullYear(), data.getMonth() + 1, 1));
-    case 'Mensal':
-    case 'Vencimento':
-    case 'Parcelada':
-    default:
-      data.setMonth(data.getMonth() + 1);
-      return formatarDataISO(data);
+  const base = parseDataLocal(dataAtual);
+
+  if (tipo === 'Semanal') {
+    const alvo = new Date(base);
+    const dow = parseInt(diaSemana, 10);
+    if (Number.isInteger(dow) && dow >= 0 && dow <= 6) {
+      let delta = (dow - base.getDay() + 7) % 7;
+      if (delta === 0) delta = 7;
+      alvo.setDate(base.getDate() + delta);
+    } else {
+      alvo.setDate(base.getDate() + 7); // sem dia fixo
+    }
+    return formatarDataISO(alvo);
   }
+
+  let ano = base.getFullYear();
+  let mes = base.getMonth() + 1; // próximo mês
+  if (mes > 11) { mes = 0; ano += 1; }
+
+  if (tipo === 'Último dia útil do mês') return formatarDataISO(ultimoDiaUtilDoMes(ano, mes));
+  if (tipo === 'Primeiro dia útil do mês') return formatarDataISO(primeiroDiaUtilDoMes(ano, mes));
+
+  // Conta / Parcelada
+  const diaNum = parseInt(dia, 10) || base.getDate();
+  const ultimoDoMes = new Date(ano, mes + 1, 0).getDate();
+  return formatarDataISO(ajustarDiaUtil(new Date(ano, mes, Math.min(diaNum, ultimoDoMes))));
+}
+
+/**
+ * Mês de competência de uma compra no cartão.
+ * Compra antes do fechamento -> mês da compra; no dia ou depois -> mês seguinte.
+ * Retorna 'YYYY-MM-01'.
+ */
+function competenciaDe(dataISO, diaFechamento) {
+  const d = parseDataLocal(dataISO);
+  let ano = d.getFullYear();
+  let mes = d.getMonth(); // 0-11
+  if (diaFechamento && d.getDate() >= diaFechamento) {
+    mes += 1;
+    if (mes > 11) { mes = 0; ano += 1; }
+  }
+  return `${ano}-${String(mes + 1).padStart(2, '0')}-01`;
+}
+
+/** Soma `n` meses a uma data 'YYYY-MM-DD', preservando o dia (limitado ao fim do mês) */
+function addMeses(dataISO, n) {
+  const d = parseDataLocal(dataISO);
+  let y = d.getFullYear();
+  let m = d.getMonth() + n;
+  y += Math.floor(m / 12);
+  m = ((m % 12) + 12) % 12;
+  const ultimo = new Date(y, m + 1, 0).getDate();
+  return formatarDataISO(new Date(y, m, Math.min(d.getDate(), ultimo)));
+}
+
+/**
+ * Sugestão de "melhor dia de compra" a partir do dia de fechamento:
+ * dia seguinte ao fechamento, ajustado para dia útil. Retorna número (1-31).
+ */
+function sugerirMelhorDiaCompra(diaFechamento) {
+  const f = parseInt(diaFechamento, 10);
+  if (!f) return '';
+  const hoje = new Date();
+  const alvo = new Date(hoje.getFullYear(), hoje.getMonth(), f + 1);
+  return ajustarDiaUtil(alvo).getDate();
 }

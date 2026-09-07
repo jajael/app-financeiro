@@ -7,7 +7,7 @@
 --   (ou: supabase db push / MCP apply_migration)
 -- ============================================================
 
--- ---------- Tabela de transações (entradas + saídas) ----------
+-- ---------- Transações (entradas + saídas) ----------
 create table if not exists public.transacoes (
   id                bigint generated always as identity primary key,
   tipo              text not null check (tipo in ('entradas', 'saidas')),
@@ -18,76 +18,57 @@ create table if not exists public.transacoes (
   descricao         text default '',
   forma_pagamento   text default 'À vista',
   tipo_recorrencia  text default 'Pontual',
+  dia_recorrencia   smallint,   -- dia de vencimento (Conta / Parcelada)
+  dia_semana        smallint,   -- 0=Dom .. 6=Sáb (Semanal); null = sem dia fixo
   proxima_data      date,
+  competencia       date not null default date_trunc('month', now())::date,
   status            text default 'Ativa',
+  user_id           uuid default auth.uid(),
   criado_em         timestamptz default now()
 );
 
-create index if not exists transacoes_tipo_data_idx  on public.transacoes (tipo, data);
+create index if not exists transacoes_tipo_data_idx   on public.transacoes (tipo, data);
+create index if not exists transacoes_competencia_idx  on public.transacoes (tipo, competencia);
 create index if not exists transacoes_proxima_data_idx on public.transacoes (proxima_data);
 
--- ---------- Tabela de menus (categorias / métodos / recorrências) ----------
+-- ---------- Menus: categorias / métodos / recorrências ----------
+-- Métodos guardam os detalhes do meio de pagamento:
+--   metodo_kind = 'Dinheiro' | 'PIX/Débito' | 'Crédito'
+--   banco                     (PIX/Débito e Crédito)
+--   dia_fechamento / dia_vencimento / melhor_dia_compra  (Crédito)
 create table if not exists public.menu_itens (
-  id         bigint generated always as identity primary key,
-  tipo       text not null check (tipo in ('Categoria', 'Método', 'Recorrência')),
-  nome       text not null,
-  descricao  text default '',
-  status     text not null default 'Ativo' check (status in ('Ativo', 'Inativo')),
-  criado_em  timestamptz default now()
+  id                bigint generated always as identity primary key,
+  tipo              text not null check (tipo in ('Categoria', 'Método', 'Recorrência')),
+  nome              text not null,
+  descricao         text default '',
+  status            text not null default 'Ativo' check (status in ('Ativo', 'Inativo')),
+  metodo_kind       text,
+  banco             text,
+  dia_fechamento    smallint,
+  dia_vencimento    smallint,
+  melhor_dia_compra smallint,
+  user_id           uuid default auth.uid(),
+  criado_em         timestamptz default now()
 );
 
-create unique index if not exists menu_itens_tipo_nome_idx on public.menu_itens (tipo, nome);
+create unique index if not exists menu_itens_user_tipo_nome_idx on public.menu_itens (user_id, tipo, nome);
 
 -- ============================================================
--- Row Level Security
--- Acesso somente para usuários autenticados (Supabase Auth / magic link).
--- App de usuário único: qualquer usuário logado tem acesso total.
--- Para multiusuário, adicionar coluna user_id e trocar por auth.uid().
+-- Row Level Security — multiusuário
+-- Cada usuário (incluindo visitantes anônimos) só enxerga as próprias linhas.
+-- Login: Google OAuth ou "Testar sem cadastro" (signInAnonymously).
+-- Requer "Anonymous sign-ins" habilitado em Authentication.
 -- ============================================================
-alter table public.transacoes  enable row level security;
-alter table public.menu_itens  enable row level security;
+alter table public.transacoes enable row level security;
+alter table public.menu_itens enable row level security;
 
-drop policy if exists "anon full access transacoes" on public.transacoes;
-drop policy if exists "auth full access transacoes" on public.transacoes;
-create policy "auth full access transacoes" on public.transacoes
-  for all to authenticated using (true) with check (true);
+drop policy if exists "own transacoes" on public.transacoes;
+create policy "own transacoes" on public.transacoes for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
-drop policy if exists "anon full access menu_itens" on public.menu_itens;
-drop policy if exists "auth full access menu_itens" on public.menu_itens;
-create policy "auth full access menu_itens" on public.menu_itens
-  for all to authenticated using (true) with check (true);
+drop policy if exists "own menu_itens" on public.menu_itens;
+create policy "own menu_itens" on public.menu_itens for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
--- ============================================================
--- Seed inicial dos menus (banco começa do zero)
--- ============================================================
-insert into public.menu_itens (tipo, nome) values
-  ('Categoria', 'Salário'),
-  ('Categoria', 'Freelance'),
-  ('Categoria', 'Investimento'),
-  ('Categoria', 'Bônus'),
-  ('Categoria', 'Devolução'),
-  ('Categoria', 'Alimentação'),
-  ('Categoria', 'Alimentação app'),
-  ('Categoria', 'Assinatura'),
-  ('Categoria', 'Bebida alcoólica'),
-  ('Categoria', 'Casa'),
-  ('Categoria', 'Compras'),
-  ('Categoria', 'Compras online'),
-  ('Categoria', 'Lazer'),
-  ('Categoria', 'Mercado'),
-  ('Categoria', 'Saúde'),
-  ('Categoria', 'Serviços'),
-  ('Categoria', 'Transporte app'),
-  ('Categoria', 'Transporte público'),
-  ('Categoria', 'Outro'),
-  ('Método', 'Débito'),
-  ('Método', 'Crédito'),
-  ('Método', 'PIX'),
-  ('Método', 'Dinheiro'),
-  ('Método', 'Transferência'),
-  ('Recorrência', 'Pontual'),
-  ('Recorrência', 'Mensal'),
-  ('Recorrência', 'Último útil do mês'),
-  ('Recorrência', 'Vencimento'),
-  ('Recorrência', 'Parcelada')
-on conflict (tipo, nome) do nothing;
+-- Os menus padrão são criados pelo app no primeiro acesso de cada usuário
+-- (js/menus-api.js -> semearMenusPadraoSeVazio), então não há seed global aqui.

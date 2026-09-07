@@ -43,8 +43,39 @@ function configurarEventListeners() {
     // Campo de tipo de recorrência
     const tipoRecorrencia = document.querySelector(SELECTORS.tipoRecorrencia);
     if (tipoRecorrencia) {
-        tipoRecorrencia.addEventListener('change', alternarCampoParcelas);
+        tipoRecorrencia.addEventListener('change', atualizarCamposRecorrencia);
     }
+
+    // Método -> mostra campo de competência se for Crédito
+    const metodo = document.querySelector(SELECTORS.metodo);
+    if (metodo) metodo.addEventListener('change', atualizarCampoCredito);
+
+    // Cancelar edição de transação
+    const cancelar = document.getElementById('cancelarEdicao');
+    if (cancelar) cancelar.addEventListener('click', cancelarEdicaoTransacao);
+
+    // Campo Data: máscara dd/mm/aaaa + recalcular competência
+    const dataInput = document.querySelector(SELECTORS.data);
+    if (dataInput) {
+        dataInput.addEventListener('input', () => {
+            mascaraDataBR(dataInput);
+            recalcularCompetencia();
+            atualizarCamposRecorrencia();
+        });
+    }
+
+    // Campo Competência: máscara mm/aaaa + marca como editado manualmente
+    const compInput = document.getElementById('competencia');
+    if (compInput) {
+        compInput.addEventListener('input', () => {
+            mascaraCompetencia(compInput);
+            compInput.dataset.editado = compInput.value ? '1' : '';
+        });
+    }
+
+    // Dia da recorrência: só números, 2 dígitos
+    const diaRec = document.getElementById('diaRecorrencia');
+    if (diaRec) diaRec.addEventListener('input', () => soNumeros(diaRec, 2));
     
     // Campo de categoria para sugestões (opcional)
     const categoriaInput = document.querySelector(SELECTORS.categoria);
@@ -145,22 +176,24 @@ async function submeterFormulario(e) {
     }
     
     try {
-        // Chamar API
-        await adicionarTransacaoAPI(dados);
-        
-        mostrarNotificacao('✓ Transação adicionada com sucesso!', 'sucesso');
-        
-        // Limpar formulário
-        limparFormulario();
-        
+        if (estadoApp.editandoId) {
+            await editarTransacaoAPI({ id: estadoApp.editandoId, ...dados });
+            mostrarNotificacao('✓ Transação atualizada!', 'sucesso');
+            cancelarEdicaoTransacao();
+        } else {
+            await adicionarTransacaoAPI(dados);
+            mostrarNotificacao('✓ Transação adicionada com sucesso!', 'sucesso');
+            limparFormulario();
+        }
+
         // Recarregar dados
         await recarregarDados();
-        
+
         // Mudar para aba apropriada
         setTimeout(() => mudarAba(dados.tipo), 500);
-        
+
     } catch (error) {
-        console.error('Erro ao adicionar transação:', error);
+        console.error('Erro ao salvar transação:', error);
         mostrarNotificacao('❌ Erro ao salvar transação', 'erro');
     }
 }

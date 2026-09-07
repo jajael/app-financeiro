@@ -233,3 +233,18 @@
         color: #aaa;
     }
 }
+
+/* Ações por transação (editar / excluir) */
+.despesa-item { position: relative; }
+.despesa-actions {
+  display: flex;
+  gap: .25rem;
+  margin-left: .5rem;
+}
+.despesa-actions .btn-icon.armed {
+  width: auto;
+  padding: 0 .5rem;
+  font-size: .7rem;
+  color: #DC2626;
+  font-weight: 700;
+}

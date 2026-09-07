@@ -59,7 +59,7 @@
                 <button class="tab-btn" data-tab="saidas">📤 Saídas</button>
                 <button class="tab-btn" data-tab="proximas">⏰ Próximas</button>
                 <button class="tab-btn" data-tab="adicionar">➕ Adicionar</button>
-                <button class="tab-btn" data-tab="menus">⚙️ Menus</button>
+                <button class="tab-btn" data-tab="menus">⚙️ Configuração</button>
             </section>
 
             <!-- Tab: Entradas -->
@@ -119,7 +119,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="data">Data:</label>
-                            <input type="date" id="data" required>
+                            <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
                         </div>
                         <div class="form-group">
                             <label for="valor">Valor:</label>
@@ -132,11 +132,6 @@
                             <label for="metodo">Método:</label>
                             <select id="metodo" required>
                                 <option value="">Selecione...</option>
-                                <option value="Débito">Débito</option>
-                                <option value="Crédito">Crédito</option>
-                                <option value="PIX">PIX</option>
-                                <option value="Dinheiro">Dinheiro</option>
-                                <option value="Transferência">Transferência</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -147,30 +142,42 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-row" id="competenciaGroup" hidden>
                         <div class="form-group">
-                            <label for="formaPagamento">Forma de Pagamento:</label>
-                            <select id="formaPagamento" required>
-                                <option value="À vista">À vista</option>
-                                <option value="Parcelada">Parcelada</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="parceleGroup" style="display: none;">
-                            <label for="parcelas">Parcelas:</label>
-                            <input type="number" id="parcelas" min="1" max="12" value="1">
+                            <label for="competencia">Competência:</label>
+                            <input type="text" id="competencia" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="tipoRecorrencia">Tipo de Recorrência:</label>
-                            <select id="tipoRecorrencia" required>
-                                <option value="Pontual">Pontual (uma única vez)</option>
-                                <option value="Mensal">Mensal</option>
-                                <option value="Último útil do mês">Último útil do mês</option>
-                                <option value="Vencimento">Vencimento fixo</option>
-                                <option value="Parcelada">Parcelada</option>
+                            <label for="tipoRecorrencia">Recorrência:</label>
+                            <select id="tipoRecorrencia" required></select>
+                        </div>
+                        <div class="form-group" id="diaRecorrenciaGroup" hidden>
+                            <label for="diaRecorrencia">Dia de vencimento:</label>
+                            <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
+                        </div>
+                        <div class="form-group" id="parceleGroup" hidden>
+                            <label for="parcelas">Parcelas:</label>
+                            <input type="number" id="parcelas" min="1" max="48" value="1">
+                        </div>
+                        <div class="form-group" id="diaSemanaGroup" hidden>
+                            <label for="diaSemana">Dia da semana:</label>
+                            <select id="diaSemana">
+                                <option value="">Sem dia fixo</option>
+                                <option value="0">Domingo</option>
+                                <option value="1">Segunda</option>
+                                <option value="2">Terça</option>
+                                <option value="3">Quarta</option>
+                                <option value="4">Quinta</option>
+                                <option value="5">Sexta</option>
+                                <option value="6">Sábado</option>
                             </select>
+                        </div>
+                        <div class="form-group" id="dataCalculadaGroup" hidden>
+                            <label for="dataCalculada">Data (automática):</label>
+                            <input type="text" id="dataCalculada" readonly tabindex="-1">
                         </div>
                     </div>
 
@@ -179,7 +186,10 @@
                         <input type="text" id="descricao" placeholder="Ex: Compra no mercado, Aluguel, etc">
                     </div>
 
-                    <button type="submit" class="btn-submit">Adicionar Transação</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Adicionar Transação</button>
+                        <button type="button" id="cancelarEdicao" class="btn-cancelar" hidden>Cancelar</button>
+                    </div>
                 </form>
             </section>
 

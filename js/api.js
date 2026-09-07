@@ -19,7 +19,11 @@ function mapearTransacao(row) {
         formaPagamento: row.forma_pagamento || 'À vista',
         tipoRecorrencia: row.tipo_recorrencia || 'Pontual',
         proximaData: row.proxima_data || '',
-        status: row.status || 'Ativa'
+        status: row.status || 'Ativa',
+        cartaoId: row.cartao_id || null,
+        competencia: row.competencia || '',
+        diaRecorrencia: row.dia_recorrencia || '',
+        diaSemana: row.dia_semana ?? null
     };
 }
 
@@ -45,8 +49,8 @@ async function carregarTransacoes(tipo, mes, ano) {
             .from('transacoes')
             .select('*')
             .eq('tipo', tipo)
-            .gte('data', ini)
-            .lt('data', fim)
+            .gte('competencia', ini)
+            .lt('competencia', fim)
             .order('data', { ascending: false });
 
         if (error) throw error;
@@ -91,16 +95,19 @@ async function carregarMenusAPI() {
     try {
         const { data, error } = await sb
             .from('menu_itens')
-            .select('tipo, nome')
+            .select('*')
             .eq('status', 'Ativo')
             .order('nome', { ascending: true });
 
         if (error) throw error;
+        const itens = (data || []).map(mapearItemMenu);
 
-        const categorias = (data || []).filter(i => i.tipo === 'Categoria').map(i => i.nome);
-        const metodos = (data || []).filter(i => i.tipo === 'Método').map(i => i.nome);
-
-        return { categorias, metodos };
+        return {
+            categorias: itens.filter(i => i.tipo === 'Categoria').map(i => i.nome),
+            // métodos como objetos (o formulário precisa do tipo/fechamento p/ competência)
+            metodos: itens.filter(i => i.tipo === 'Método'),
+            recorrencias: itens.filter(i => i.tipo === 'Recorrência').map(i => i.nome)
+        };
     } catch (error) {
         console.error('Erro ao carregar menus:', error);
         return { categorias: [], metodos: [] };
@@ -118,8 +125,8 @@ async function carregarResumo(tipo, mes, ano) {
             .from('transacoes')
             .select('valor, categoria')
             .eq('tipo', tipo)
-            .gte('data', ini)
-            .lt('data', fim);
+            .gte('competencia', ini)
+            .lt('competencia', fim);
 
         if (error) throw error;
 
@@ -160,15 +167,30 @@ function montarRegistro(dados) {
         descricao: dados.descricao || '',
         forma_pagamento: dados.formaPagamento || 'À vista',
         tipo_recorrencia: tipoRecorrencia,
-        proxima_data: calcularProximaData(dados.data, tipoRecorrencia),
+        dia_recorrencia: parseInt(dados.diaRecorrencia, 10) || null,
+        dia_semana: dados.diaSemana === '' || dados.diaSemana == null ? null : parseInt(dados.diaSemana, 10),
+        proxima_data: calcularProximaData(dados.data, tipoRecorrencia, dados.diaRecorrencia, dados.diaSemana),
+        competencia: dados.competencia || competenciaDe(dados.data),
         status: dados.status || 'Ativa'
     };
 }
 
+// Tipos que se repetem indefinidamente (materializados por um horizonte)
+const RECORRENTES = ['Conta', 'Semanal', 'Último dia útil do mês', 'Primeiro dia útil do mês'];
+const HORIZONTE_MESES = 12;   // Conta / dia útil
+const HORIZONTE_SEMANAS = 26; // Semanal
+
 /**
- * Adiciona nova transação
+ * Adiciona nova transação.
+ * - Parcelada: uma linha por parcela.
+ * - Conta / Semanal / Último/Primeiro dia útil: gera as ocorrências dos
+ *   próximos meses (cada uma na sua competência).
+ * - Pontual: uma linha.
  */
 async function adicionarTransacaoAPI(dados) {
+    if (dados.tipoRecorrencia === 'Parcelada') return adicionarParceladoAPI(dados);
+    if (RECORRENTES.includes(dados.tipoRecorrencia)) return adicionarRecorrenteAPI(dados);
+
     const { data, error } = await sb
         .from('transacoes')
         .insert(montarRegistro(dados))
@@ -177,6 +199,61 @@ async function adicionarTransacaoAPI(dados) {
 
     if (error) throw error;
     return mapearTransacao(data);
+}
+
+async function adicionarRecorrenteAPI(dados) {
+    const base = montarRegistro(dados);
+    const tipo = dados.tipoRecorrencia;
+    const total = tipo === 'Semanal' ? HORIZONTE_SEMANAS : HORIZONTE_MESES;
+
+    // Sequência de datas das ocorrências
+    const datas = [base.data];
+    for (let i = 1; i < total; i++) {
+        const prox = calcularProximaData(datas[i - 1], tipo, dados.diaRecorrencia, dados.diaSemana);
+        if (!prox) break;
+        datas.push(prox);
+    }
+
+    const registros = datas.map((dt, i) => ({
+        ...base,
+        data: dt,
+        competencia: i === 0 ? base.competencia : competenciaDe(dt),
+        proxima_data: datas[i + 1] || null
+    }));
+
+    const { data, error } = await sb.from('transacoes').insert(registros).select();
+    if (error) throw error;
+    return (data || []).map(mapearTransacao);
+}
+
+async function adicionarParceladoAPI(dados) {
+    const n = Math.max(1, parseInt(dados.parcelas, 10) || 1);
+    const centavos = Math.round(parseFloat(dados.valor) * 100);
+    const baseParc = Math.floor(centavos / n);
+    const resto = centavos - baseParc * n;
+
+    const base = montarRegistro(dados);          // parcela 1 (define competência e data-base)
+    const registros = [];
+
+    for (let i = 0; i < n; i++) {
+        const valor = (baseParc + (i < resto ? 1 : 0)) / 100;
+        const dataParc = i === 0 ? base.data : addMeses(base.data, i);
+        const competencia = i === 0 ? base.competencia : addMeses(base.competencia, i);
+        const proxima = i < n - 1 ? addMeses(base.competencia, i + 1) : null;
+
+        registros.push({
+            ...base,
+            valor,
+            data: dataParc,
+            competencia,
+            proxima_data: proxima,
+            descricao: `${dados.descricao || dados.categoria} (${i + 1}/${n})`
+        });
+    }
+
+    const { data, error } = await sb.from('transacoes').insert(registros).select();
+    if (error) throw error;
+    return (data || []).map(mapearTransacao);
 }
 
 /**

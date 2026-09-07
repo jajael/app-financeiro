@@ -169,23 +169,7 @@
     border-bottom: none;
 }
 
-/* Grupos de campos condicionais */
-.form-group-conditional {
-    display: none;
-    grid-column: 1 / -1;
-}
-
-.form-group-conditional.show {
-    display: block;
-}
-
-#parceleGroup {
-    display: none;
-}
-
-#parceleGroup.show {
-    display: block;
-}
+/* Grupos de campos condicionais — visibilidade controlada pelo atributo [hidden] */
 
 /* Botão de submit */
 .btn-submit {
@@ -330,4 +314,61 @@
     .sugestao-item:hover {
         background: #3d3d3d;
     }
+}
+
+/* ===== Cartões / recorrência (migração Supabase) ===== */
+[hidden] { display: none !important; }
+
+.dia-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+.dia-row #diaRecorrencia { width: 5rem; }
+
+.inline-check {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .9rem;
+    white-space: nowrap;
+    margin: 0;
+}
+.inline-check input { width: auto; }
+
+.add-item-form.metodo-form {
+    flex-wrap: wrap;
+    align-items: flex-start;
+}
+.add-item-form.metodo-form #metodoDetalhes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    flex: 1 1 100%;
+}
+.add-item-form.metodo-form #metodoCartaoCampos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    flex: 1 1 100%;
+}
+.add-item-form.metodo-form input {
+    flex: 1 1 8rem;
+    min-width: 0;
+}
+
+/* Ações do formulário (adicionar / cancelar edição) */
+.form-actions {
+  display: flex;
+  gap: .6rem;
+  align-items: center;
+}
+.btn-cancelar {
+  padding: .6rem 1rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  background: transparent;
+  color: #6B7280;
+  cursor: pointer;
+  font-size: .95rem;
 }

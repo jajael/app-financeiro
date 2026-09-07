@@ -1,222 +1,304 @@
 /**
- * UI DE MENUS
- * Renderização e gerenciamento visual da aba de menus
+ * UI DE CONFIGURAÇÃO
+ * Categorias, Métodos de pagamento (inclui cartões) e Tipos de recorrência.
  */
 
-/**
- * Carrega e renderiza a aba de menus
- */
+// Tipos de recorrência: fixos, não editáveis. Só descrição.
+const RECORRENCIAS_INFO = [
+  ['Pontual', 'Acontece uma única vez, sem repetição.'],
+  ['Conta', 'Repete todo mês no dia de vencimento informado, ajustado para o dia útil mais próximo.'],
+  ['Parcelada', 'Divide o valor em parcelas mensais — uma transação por mês, cada uma na sua competência.'],
+  ['Último dia útil do mês', 'Vence sempre no último dia útil de cada mês (data calculada automaticamente).'],
+  ['Primeiro dia útil do mês', 'Vence sempre no primeiro dia útil de cada mês (data calculada automaticamente).'],
+  ['Semanal', 'Repete a cada 7 dias. Pode fixar um dia da semana ou deixar sem dia fixo.']
+];
+
+let menusAtual = null; // cache dos itens carregados (para edição inline)
+
+/** Recarrega a aba de configuração e, em seguida, os dropdowns do formulário */
+async function recarregarMenus() {
+  await carregarAbaMenus();
+  if (typeof carregarMenus === 'function') await carregarMenus(); // atualiza form na hora
+}
+
 async function carregarAbaMenus() {
   const menus = await carregarMenusCompleto();
-  
+  menusAtual = menus;
+
   if (!menus) {
-    document.querySelector(SELECTORS.menusContainer).innerHTML = 
-      '<p class="empty-state">Erro ao carregar menus</p>';
+    document.querySelector(SELECTORS.menusContainer).innerHTML =
+      '<p class="empty-state">Erro ao carregar configuração</p>';
     return;
   }
-  
-  let html = `
+
+  document.querySelector(SELECTORS.menusContainer).innerHTML = `
     <div class="menus-gerenciamento">
-      <!-- Categorias -->
+
       <div class="menu-section">
         <h3>📂 Categorias</h3>
         <div class="menu-list" id="categoriasList"></div>
         <div class="add-item-form">
           <input type="text" id="novaCategoriaInput" placeholder="Nova categoria...">
-          <input type="text" id="novaCategoriDescInput" placeholder="Descrição...">
+          <input type="text" id="novaCategoriDescInput" placeholder="Descrição (opcional)...">
           <button onclick="adicionarNovaCategoria()" class="btn-add">+ Adicionar</button>
         </div>
       </div>
-      
-      <!-- Métodos -->
+
       <div class="menu-section">
-        <h3>💳 Métodos de Pagamento</h3>
+        <h3>💳 Métodos de pagamento</h3>
         <div class="menu-list" id="metodosList"></div>
-        <div class="add-item-form">
-          <input type="text" id="novoMetodoInput" placeholder="Novo método...">
-          <input type="text" id="novoMetodoDescInput" placeholder="Descrição...">
+        <div class="add-item-form metodo-form">
+          <select id="novoMetodoKind">
+            <option value="">Adicionar método...</option>
+            <option value="PIX/Débito">PIX/Débito</option>
+            <option value="Crédito">Crédito</option>
+          </select>
+          <div id="metodoDetalhes" hidden>
+            <input type="text" id="metodoBanco" placeholder="Banco">
+            <div id="metodoCartaoCampos" hidden>
+              <input type="text" id="metodoFech" inputmode="numeric" maxlength="2" placeholder="Fechamento (dia)">
+              <input type="text" id="metodoVenc" inputmode="numeric" maxlength="2" placeholder="Vencimento (dia)">
+              <input type="text" id="metodoMelhor" inputmode="numeric" maxlength="2" placeholder="Melhor dia (auto)">
+            </div>
+          </div>
           <button onclick="adicionarNovoMetodo()" class="btn-add">+ Adicionar</button>
         </div>
       </div>
-      
-      <!-- Recorrências -->
+
       <div class="menu-section">
-        <h3>🔁 Tipos de Recorrência</h3>
-        <div class="menu-list" id="recorrenciasList"></div>
-        <div class="add-item-form">
-          <input type="text" id="novaRecorrenciaInput" placeholder="Nova recorrência...">
-          <input type="text" id="novaRecorrenciaDescInput" placeholder="Descrição...">
-          <button onclick="adicionarNovaRecorrencia()" class="btn-add">+ Adicionar</button>
+        <h3>🔁 Tipos de recorrência</h3>
+        <p class="menu-hint">Tipos fixos do sistema. Você escolhe um deles ao lançar uma transação.</p>
+        <div class="menu-list" id="recorrenciasList">
+          ${RECORRENCIAS_INFO.map(([nome, desc]) => `
+            <div class="menu-item ativo">
+              <div class="item-info">
+                <div class="item-nome">${nome}</div>
+                <div class="item-descricao">${desc}</div>
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>
+
     </div>
   `;
-  
-  document.querySelector(SELECTORS.menusContainer).innerHTML = html;
-  
-  // Renderizar itens de cada seção
+
+  configurarFormMetodo();
+
   renderizarItemsMenu('Categoria', 'categoriasList', menus.categorias);
   renderizarItemsMenu('Método', 'metodosList', menus.metodos);
-  renderizarItemsMenu('Recorrência', 'recorrenciasList', menus.recorrencias);
 }
 
-/**
- * Renderiza os itens de um tipo de menu
- */
+/** Liga os campos condicionais do formulário de método */
+function configurarFormMetodo() {
+  const kind = document.getElementById('novoMetodoKind');
+  const det = document.getElementById('metodoDetalhes');
+  const cartao = document.getElementById('metodoCartaoCampos');
+  const fech = document.getElementById('metodoFech');
+  const melhor = document.getElementById('metodoMelhor');
+
+  kind.addEventListener('change', () => {
+    const v = kind.value;
+    det.hidden = !v;
+    cartao.hidden = v !== 'Crédito';
+  });
+
+  fech.addEventListener('input', () => {
+    soNumeros(fech, 2);
+    if (!melhor.dataset.editado) melhor.value = sugerirMelhorDiaCompra(fech.value) || '';
+  });
+  document.getElementById('metodoVenc').addEventListener('input', e => soNumeros(e.target, 2));
+  melhor.addEventListener('input', () => { melhor.dataset.editado = '1'; soNumeros(melhor, 2); });
+}
+
+/* ---------- Render ---------- */
+
 function renderizarItemsMenu(tipo, containerId, itens) {
   const container = document.getElementById(containerId);
-  
-  if (!itens || itens.length === 0) {
-    container.innerHTML = `<p class="empty-text">Nenhum ${tipo.toLowerCase()} cadastrado</p>`;
+  if (!itens || !itens.length) {
+    container.innerHTML = `<p class="empty-text">Nada cadastrado</p>`;
+    container.onclick = null;
     return;
   }
-  
-  let html = '';
-  
-  itens.forEach(item => {
+
+  container.innerHTML = itens.map(item => {
     const statusClass = item.status === 'Ativo' ? 'ativo' : 'inativo';
     const statusLabel = item.status === 'Ativo' ? '✓ Ativo' : '✗ Inativo';
-    
-    html += `
-      <div class="menu-item ${statusClass}">
+
+    let titulo = item.nome;
+    let sub = '';
+    if (tipo === 'Categoria') {
+      sub = item.descricao || '';
+    } else if (tipo === 'Método') {
+      titulo = rotuloMetodo(item);
+      if (item.metodoKind === 'Crédito') {
+        sub = `fecha dia ${item.diaFechamento || '?'} · vence dia ${item.diaVencimento || '?'}`
+            + (item.melhorDiaCompra ? ` · melhor compra dia ${item.melhorDiaCompra}` : '');
+      } else if (item.metodoKind === 'PIX/Débito') {
+        sub = item.banco ? `banco: ${item.banco}` : 'PIX/Débito';
+      } else {
+        sub = 'dinheiro';
+      }
+    }
+
+    // Dinheiro é método fixo: sem ações
+    const fixo = tipo === 'Método' && (item.metodoKind === 'Dinheiro' || item.nome === 'Dinheiro');
+
+    const acoes = fixo ? '' : `
+      <div class="item-actions">
+        <button class="btn-icon" data-act="editar" data-tipo="${tipo}" data-id="${item.linha}" title="Editar">✏️</button>
+        <button class="btn-icon ${item.status === 'Ativo' ? 'btn-warning' : 'btn-success'}"
+                data-act="${item.status === 'Ativo' ? 'desativar' : 'ativar'}" data-id="${item.linha}"
+                title="${item.status === 'Ativo' ? 'Desativar' : 'Ativar'}">${item.status === 'Ativo' ? '⊘' : '↻'}</button>
+        <button class="btn-icon btn-danger" data-act="remover" data-id="${item.linha}" title="Remover">🗑️</button>
+      </div>`;
+
+    return `
+      <div class="menu-item ${statusClass}" data-id="${item.linha}" data-tipo="${tipo}">
         <div class="item-info">
-          <div class="item-nome">${item.nome}</div>
-          <div class="item-descricao">${item.descricao || '-'}</div>
+          <div class="item-nome">${titulo}</div>
+          ${sub ? `<div class="item-descricao">${sub}</div>` : ''}
         </div>
-        <div class="item-status">${statusLabel}</div>
-        <div class="item-actions">
-          <button class="btn-icon" onclick="editarItemMenuUI(${item.linha}, '${tipo}')" title="Editar">✏️</button>
-          ${item.status === 'Ativo' 
-            ? `<button class="btn-icon btn-warning" onclick="desativarItemMenuUI(${item.linha})" title="Desativar">⊘</button>` 
-            : `<button class="btn-icon btn-success" onclick="ativarItemMenuUI(${item.linha})" title="Ativar">↻</button>`}
-          <button class="btn-icon btn-danger" onclick="removerItemMenuUI(${item.linha})" title="Remover">🗑️</button>
-        </div>
+        <div class="item-status">${fixo ? 'fixo' : statusLabel}</div>
+        ${acoes}
       </div>
     `;
-  });
-  
-  container.innerHTML = html;
+  }).join('');
+
+  container.onclick = onMenuListClick;
 }
 
-/**
- * Adiciona nova categoria
- */
+/* ---------- Ações (sem prompt/confirm nativos) ---------- */
+
+function onMenuListClick(e) {
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id = Number(btn.dataset.id);
+  const tipo = btn.dataset.tipo;
+  const row = btn.closest('.menu-item');
+
+  if (act === 'ativar')    return acaoMenu(() => ativarItemMenuAPI(id));
+  if (act === 'desativar') return acaoMenu(() => desativarItemMenuAPI(id));
+  if (act === 'remover')   return confirmarRemocao(btn, id);
+  if (act === 'editar')    return abrirEdicaoInline(row, id, tipo);
+}
+
+async function acaoMenu(fn) {
+  if (await fn()) recarregarMenus();
+}
+
+/** Remoção em 2 cliques (sem confirm nativo) */
+function confirmarRemocao(btn, id) {
+  if (btn.dataset.armed) {
+    acaoMenu(() => removerItemMenuAPI(id));
+    return;
+  }
+  const original = btn.textContent;
+  btn.dataset.armed = '1';
+  btn.textContent = 'remover?';
+  btn.classList.add('armed');
+  setTimeout(() => {
+    delete btn.dataset.armed;
+    btn.textContent = original;
+    btn.classList.remove('armed');
+  }, 3000);
+}
+
+/** Edição inline: troca a linha por campos + Salvar/Cancelar */
+function abrirEdicaoInline(row, id, tipo) {
+  const lista = tipo === 'Categoria' ? menusAtual?.categorias : menusAtual?.metodos;
+  const item = (lista || []).find(i => i.linha === id);
+  if (!item) return;
+  const esc = s => String(s || '').replace(/"/g, '&quot;');
+
+  if (tipo === 'Categoria') {
+    row.innerHTML = `
+      <div class="item-edit">
+        <input type="text" class="edt-nome" value="${esc(item.nome)}" placeholder="Nome">
+        <input type="text" class="edt-desc" value="${esc(item.descricao)}" placeholder="Descrição">
+        <button class="btn-add edt-salvar">Salvar</button>
+        <button class="btn-icon edt-cancelar" title="Cancelar">✕</button>
+      </div>`;
+    row.querySelector('.edt-cancelar').onclick = recarregarMenus;
+    row.querySelector('.edt-salvar').onclick = async () => {
+      const nome = row.querySelector('.edt-nome').value.trim();
+      if (!nome) return mostrarNotificacao('Informe o nome', 'info');
+      if (await editarItemMenuAPI(id, { nome, descricao: row.querySelector('.edt-desc').value.trim() }))
+        recarregarMenus();
+    };
+    return;
+  }
+
+  // Método (PIX/Débito ou Crédito)
+  const ehCredito = item.metodoKind === 'Crédito';
+  row.innerHTML = `
+    <div class="item-edit">
+      <input type="text" class="edt-banco" value="${esc(item.banco)}" placeholder="Banco">
+      ${ehCredito ? `
+        <input type="text" class="edt-fech" inputmode="numeric" maxlength="2" value="${item.diaFechamento || ''}" placeholder="Fechamento">
+        <input type="text" class="edt-venc" inputmode="numeric" maxlength="2" value="${item.diaVencimento || ''}" placeholder="Vencimento">
+        <input type="text" class="edt-melhor" inputmode="numeric" maxlength="2" value="${item.melhorDiaCompra || ''}" placeholder="Melhor dia">
+      ` : ''}
+      <button class="btn-add edt-salvar">Salvar</button>
+      <button class="btn-icon edt-cancelar" title="Cancelar">✕</button>
+    </div>`;
+  row.querySelector('.edt-cancelar').onclick = recarregarMenus;
+  row.querySelectorAll('input[inputmode="numeric"]').forEach(inp =>
+    inp.addEventListener('input', () => soNumeros(inp, 2)));
+  row.querySelector('.edt-salvar').onclick = async () => {
+    const banco = row.querySelector('.edt-banco').value.trim();
+    if (!banco) return mostrarNotificacao('Informe o banco', 'info');
+    const campos = { banco, nome: `${item.metodoKind} — ${banco}` };
+    if (ehCredito) {
+      const fech = parseInt(row.querySelector('.edt-fech').value, 10);
+      const venc = parseInt(row.querySelector('.edt-venc').value, 10);
+      const melhorIn = parseInt(row.querySelector('.edt-melhor').value, 10);
+      if (!(fech >= 1 && fech <= 31)) return mostrarNotificacao('Fechamento inválido', 'erro');
+      if (!(venc >= 1 && venc <= 31)) return mostrarNotificacao('Vencimento inválido', 'erro');
+      campos.dia_fechamento = fech;
+      campos.dia_vencimento = venc;
+      campos.melhor_dia_compra = melhorIn || sugerirMelhorDiaCompra(fech) || null;
+    }
+    if (await editarItemMenuAPI(id, campos)) recarregarMenus();
+  };
+}
+
+/* ---------- Adicionar ---------- */
+
 async function adicionarNovaCategoria() {
-  const nome = document.getElementById('novaCategoriaInput').value.trim();
-  const descricao = document.getElementById('novaCategoriDescInput').value.trim();
-  
-  if (!nome) {
-    mostrarNotificacao('Digite o nome da categoria', 'aviso');
-    return;
-  }
-  
-  const sucesso = await adicionarItemMenuAPI('Categoria', nome, descricao);
-  
-  if (sucesso) {
-    document.getElementById('novaCategoriaInput').value = '';
-    document.getElementById('novaCategoriDescInput').value = '';
-    await carregarAbaMenus();
+  const nomeEl = document.getElementById('novaCategoriaInput');
+  const descEl = document.getElementById('novaCategoriDescInput');
+  const nome = nomeEl.value.trim();
+  if (!nome) return mostrarNotificacao('Digite o nome da categoria', 'info');
+
+  if (await adicionarItemMenuAPI('Categoria', nome, { descricao: descEl.value.trim() })) {
+    nomeEl.value = ''; descEl.value = '';
+    recarregarMenus();
   }
 }
 
-/**
- * Adiciona novo método
- */
 async function adicionarNovoMetodo() {
-  const nome = document.getElementById('novoMetodoInput').value.trim();
-  const descricao = document.getElementById('novoMetodoDescInput').value.trim();
-  
-  if (!nome) {
-    mostrarNotificacao('Digite o nome do método', 'aviso');
-    return;
-  }
-  
-  const sucesso = await adicionarItemMenuAPI('Método', nome, descricao);
-  
-  if (sucesso) {
-    document.getElementById('novoMetodoInput').value = '';
-    document.getElementById('novoMetodoDescInput').value = '';
-    await carregarAbaMenus();
-  }
-}
+  const kind = document.getElementById('novoMetodoKind').value;
+  if (!kind) return mostrarNotificacao('Escolha o tipo de método', 'info');
 
-/**
- * Adiciona nova recorrência
- */
-async function adicionarNovaRecorrencia() {
-  const nome = document.getElementById('novaRecorrenciaInput').value.trim();
-  const descricao = document.getElementById('novaRecorrenciaDescInput').value.trim();
-  
-  if (!nome) {
-    mostrarNotificacao('Digite o nome da recorrência', 'aviso');
-    return;
-  }
-  
-  const sucesso = await adicionarItemMenuAPI('Recorrência', nome, descricao);
-  
-  if (sucesso) {
-    document.getElementById('novaRecorrenciaInput').value = '';
-    document.getElementById('novaRecorrenciaDescInput').value = '';
-    await carregarAbaMenus();
-  }
-}
+  const banco = document.getElementById('metodoBanco').value.trim();
+  if (!banco) return mostrarNotificacao('Informe o banco', 'info');
 
-/**
- * Interface para editar item (modal simples)
- */
-async function editarItemMenuUI(linha, tipo) {
-  const novoNome = prompt(`Editar ${tipo}:`, '');
-  
-  if (novoNome === null || novoNome.trim() === '') {
-    return; // Usuário cancelou
-  }
-  
-  const novaDescricao = prompt('Descrição (opcional):', '');
-  
-  const sucesso = await editarItemMenuAPI(linha, novoNome, novaDescricao || '', 'Ativo');
-  
-  if (sucesso) {
-    await carregarAbaMenus();
-  }
-}
+  const extra = { metodo_kind: kind, banco };
+  const nome = `${kind} — ${banco}`;
 
-/**
- * Desativa um item
- */
-async function desativarItemMenuUI(linha) {
-  if (!confirm('Tem certeza que deseja desativar este item?')) {
-    return;
+  if (kind === 'Crédito') {
+    const fech = parseInt(document.getElementById('metodoFech').value, 10);
+    const venc = parseInt(document.getElementById('metodoVenc').value, 10);
+    const melhor = parseInt(document.getElementById('metodoMelhor').value, 10)
+      || sugerirMelhorDiaCompra(fech) || null;
+    if (!(fech >= 1 && fech <= 31)) return mostrarNotificacao('Dia de fechamento inválido', 'erro');
+    if (!(venc >= 1 && venc <= 31)) return mostrarNotificacao('Dia de vencimento inválido', 'erro');
+    extra.dia_fechamento = fech;
+    extra.dia_vencimento = venc;
+    extra.melhor_dia_compra = melhor;
   }
-  
-  const sucesso = await desativarItemMenuAPI(linha);
-  
-  if (sucesso) {
-    await carregarAbaMenus();
-  }
-}
 
-/**
- * Ativa um item
- */
-async function ativarItemMenuUI(linha) {
-  const sucesso = await ativarItemMenuAPI(linha);
-  
-  if (sucesso) {
-    await carregarAbaMenus();
-  }
-}
-
-/**
- * Remove um item
- */
-async function removerItemMenuUI(linha) {
-  if (!confirm('Tem certeza que deseja REMOVER este item? Esta ação não pode ser desfeita.')) {
-    return;
-  }
-  
-  const sucesso = await removerItemMenuAPI(linha);
-  
-  if (sucesso) {
-    await carregarAbaMenus();
-  }
+  if (await adicionarItemMenuAPI('Método', nome, extra)) recarregarMenus();
 }

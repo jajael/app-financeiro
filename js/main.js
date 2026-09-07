@@ -24,14 +24,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    // Carregar menus
-    console.log('📑 Carregando categorias e métodos...');
+    // Carregar menus (categorias, métodos, recorrências)
+    console.log('📑 Carregando menus...');
     await carregarMenus();
-    
+
+    // Estado inicial do formulário
+    const dataInput = document.querySelector(SELECTORS.data);
+    if (dataInput && !dataInput.value) dataInput.value = dataHojeBR();
+    atualizarCamposRecorrencia();
+    atualizarCampoCredito();
+
     // Carregar dados iniciais
     console.log('📊 Carregando dados...');
     await carregarDados();
-    
+
     // Atualizar UI
     atualizarUI();
     
