@@ -575,14 +575,14 @@ function abrirNovoMetodo() {
                     <option value="PIX/Débito">PIX/Débito</option>
                     <option value="Crédito">Crédito</option>
                 </select></div>
-            <div class="campo"><label for="dlgMetBanco">Banco</label>
+            <div class="campo"><label for="dlgMetBanco">Banco <span class="opt" id="dlgMetBancoOpt">(opcional)</span></label>
                 <input type="text" id="dlgMetBanco" placeholder="Ex: Nubank" autocomplete="off"></div>
+            <div class="campo" id="dlgMetVencWrap" hidden><label for="dlgMetVenc">Vencimento (dia)</label>
+                <input type="text" id="dlgMetVenc" inputmode="numeric" maxlength="2"></div>
             <div id="dlgMetCartao" hidden>
-                <div class="campo"><label for="dlgMetFech">Fechamento (dia)</label>
+                <div class="campo"><label for="dlgMetFech">Fechamento (dia) <span class="opt">(opcional)</span></label>
                     <input type="text" id="dlgMetFech" inputmode="numeric" maxlength="2"></div>
-                <div class="campo"><label for="dlgMetVenc">Vencimento (dia)</label>
-                    <input type="text" id="dlgMetVenc" inputmode="numeric" maxlength="2"></div>
-                <div class="campo"><label for="dlgMetMelhor">Melhor dia <span class="opt">(auto)</span></label>
+                <div class="campo"><label for="dlgMetMelhor">Melhor dia <span class="opt">(opcional)</span></label>
                     <input type="text" id="dlgMetMelhor" inputmode="numeric" maxlength="2"></div>
             </div>`,
         acoes: [
@@ -591,18 +591,22 @@ function abrirNovoMetodo() {
                 const kind = o.querySelector('#dlgMetKind').value;
                 const banco = o.querySelector('#dlgMetBanco').value.trim();
                 if (!kind) { mostrarNotificacao('Escolha o tipo', 'info'); return true; }
-                if (!banco) { mostrarNotificacao('Informe o banco', 'info'); return true; }
+                if (kind === 'Crédito' && !banco) { mostrarNotificacao('Informe o banco', 'info'); return true; }
                 const extra = { metodo_kind: kind, banco };
-                const nome = `${kind} — ${banco}`;
+                const nome = banco ? `${kind} — ${banco}` : kind;
                 if (kind === 'Crédito') {
                     const fech = parseInt(o.querySelector('#dlgMetFech').value, 10);
                     const venc = parseInt(o.querySelector('#dlgMetVenc').value, 10);
-                    const melhor = parseInt(o.querySelector('#dlgMetMelhor').value, 10) || sugerirMelhorDiaCompra(fech) || null;
-                    if (!(fech >= 1 && fech <= 31)) { mostrarNotificacao('Fechamento inválido', 'erro'); return true; }
                     if (!(venc >= 1 && venc <= 31)) { mostrarNotificacao('Vencimento inválido', 'erro'); return true; }
-                    extra.dia_fechamento = fech;
+                    const temFech = fech >= 1 && fech <= 31;
+                    if (o.querySelector('#dlgMetFech').value.trim() && !temFech) {
+                        mostrarNotificacao('Fechamento inválido', 'erro'); return true;
+                    }
+                    const melhor = parseInt(o.querySelector('#dlgMetMelhor').value, 10)
+                        || (temFech ? sugerirMelhorDiaCompra(fech) : null) || null;
                     extra.dia_vencimento = venc;
-                    extra.melhor_dia_compra = melhor;
+                    if (temFech) extra.dia_fechamento = fech;
+                    if (melhor) extra.melhor_dia_compra = melhor;
                 }
                 const ok = await adicionarItemMenuAPI('Método', nome, extra);
                 if (!ok) return true;
@@ -616,7 +620,10 @@ function abrirNovoMetodo() {
     });
     const kindSel = ov.querySelector('#dlgMetKind');
     kindSel.addEventListener('change', () => {
-        ov.querySelector('#dlgMetCartao').hidden = kindSel.value !== 'Crédito';
+        const ehCredito = kindSel.value === 'Crédito';
+        ov.querySelector('#dlgMetVencWrap').hidden = !ehCredito;
+        ov.querySelector('#dlgMetCartao').hidden = !ehCredito;
+        ov.querySelector('#dlgMetBancoOpt').hidden = ehCredito;
     });
     ov.querySelectorAll('input[inputmode="numeric"]').forEach(inp =>
         inp.addEventListener('input', () => soNumeros(inp, 2)));

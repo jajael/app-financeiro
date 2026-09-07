@@ -159,7 +159,7 @@ function preencherDropdownCategorias() {
         return;
     }
     
-    selectCategoria.innerHTML = '<option value="">-- Selecione uma categoria --</option>';
+    selectCategoria.innerHTML = '<option value="">Selecione...</option>';
 
     // Lista específica conforme o tipo do lançamento (receita x despesa)
     const lista = estadoApp.tipoAtual === 'entradas'
