@@ -57,6 +57,9 @@ header.header {
     font-size: 0.6rem;
     padding: 0.3rem 0.55rem;
 }
+/* Impede que o "* { font-size }" do mobile aumente estes textos filhos */
+.month-bar .month-btn--config .cfg-label,
+.month-bar .current-month > span { font-size: inherit; }
 .month-bar .current-month {
     font-weight: var(--font-weight-bold);
     font-size: var(--font-size-base);
