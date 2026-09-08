@@ -565,7 +565,6 @@ function atualizarCamposRecorrencia() {
     const receitaAuto = ehReceita && comDia;
 
     const set = (id, mostrar) => { const el = document.getElementById(id); if (el) el.hidden = !mostrar; };
-    set('vencimentoRow', comDia);
     set('diaRecorrenciaGroup', comDia);
     set('parceleGroup', tipo === 'Parcelada');
     set('diaSemanaGroup', ehSemanal);
@@ -626,11 +625,9 @@ function atualizarCamposRecorrencia() {
         }
     }
 
-    // Semanal: chips das ocorrências do dia da semana no mês
-    const dowVal = document.getElementById('diaSemana')?.value ?? '';
-    const mostrarChips = ehSemanal && dowVal !== '';
-    set('semanasChipsRow', mostrarChips);
-    if (mostrarChips) renderSemanasChips();
+    // Semanal: chips por semana (dia fixo -> "seg 07"; sem dia fixo -> "semana 1")
+    set('semanasChipsRow', ehSemanal);
+    if (ehSemanal) renderSemanasChips();
 
     // "Pagar no vencimento": trava a data do lançamento no dia do vencimento (despesa)
     aplicarPagarVencimento();
@@ -808,13 +805,26 @@ function renderSemanasChips() {
     const box = document.getElementById('semanasChips');
     if (!box) return;
     const dow = parseInt(document.getElementById('diaSemana').value, 10);
+    const temDiaFixo = Number.isInteger(dow) && dow >= 0 && dow <= 6;
     // Semanal não tem campo de data -> usa o mês em exibição
     const iso = parseDataBR(document.querySelector(SELECTORS.data).value)
         || (typeof estadoApp !== 'undefined' && estadoApp.mesAtual ? formatarDataISO(estadoApp.mesAtual) : hojeISO());
-    if (!Number.isInteger(dow) || !iso) { box.innerHTML = ''; return; }
+    if (!iso) { box.innerHTML = ''; return; }
 
     const d = parseDataLocal(iso);
-    const dias = ocorrenciasDoDiaNoMes(d.getFullYear(), d.getMonth(), dow);
+    let dias;
+    if (temDiaFixo) {
+        dias = ocorrenciasDoDiaNoMes(d.getFullYear(), d.getMonth(), dow);
+    } else {
+        // Sem dia fixo: uma "semana N" por semana do mês
+        const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+        const nSemanas = Math.ceil(ultimoDia / 7);
+        dias = [];
+        for (let i = 0; i < nSemanas; i++) {
+            const diaMes = Math.min(1 + i * 7, ultimoDia);
+            dias.push(formatarDataISO(new Date(d.getFullYear(), d.getMonth(), diaMes)));
+        }
+    }
     const hoje = hojeISO();
 
     // Reinicia (futuras marcadas) se o conjunto atual não pertence a este mês
@@ -823,11 +833,11 @@ function renderSemanasChips() {
     // Mantém só as datas válidas deste mês
     semanasMarcadas = new Set([...semanasMarcadas].filter(x => dias.includes(x)));
 
-    box.innerHTML = dias.map(dt => {
+    box.innerHTML = dias.map((dt, i) => {
         const marc = semanasMarcadas.has(dt);
         const passada = dt <= hoje;
-        const dd = dt.slice(8, 10);
-        return `<button type="button" class="chip${marc ? ' on' : ''}${passada ? ' passada' : ''}" data-dt="${dt}">${DOW_ABREV[dow]} ${dd}</button>`;
+        const rot = temDiaFixo ? `${DOW_ABREV[dow]} ${dt.slice(8, 10)}` : `semana ${i + 1}`;
+        return `<button type="button" class="chip${marc ? ' on' : ''}${passada ? ' passada' : ''}" data-dt="${dt}">${rot}</button>`;
     }).join('');
 
     box.onclick = e => {
@@ -852,7 +862,7 @@ function atualizarResumoSemanas() {
     const marc = [...semanasMarcadas];
     const x = marc.filter(dt => dt <= hoje).length * vs;
     const y = marc.length * vs;
-    el.textContent = `${formatarMoeda(x)} / ${formatarMoeda(y)}  (${marc.length} sessões)`;
+    el.textContent = `atual ${formatarMoeda(x)} / total ${formatarMoeda(y)}`;
 }
 
 /**

@@ -95,12 +95,16 @@
     margin-bottom: 0.85rem;
 }
 
-/* Linhas principais: empilhadas até ~900px; no layout largo (1024)
-   linha 1 = Recorrência + Data (+ Método) ; linha 2 = Valor + Categoria + Descrição */
-#linha1, #linha2 { grid-template-columns: 1fr; }
+/* Campos do lançamento:
+   - até ~560px: empilhado (1 coluna)
+   - ~560–900px: 2 colunas -> pares (Recorrência|Data, Método|Valor, Categoria|Descrição)
+   - >=900px: 3 colunas (Recorrência|Data|Método, Valor|Categoria|Descrição) */
+#linhaCampos { grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 560px) {
+    #linhaCampos { grid-template-columns: 1fr 1fr; }
+}
 @media (min-width: 900px) {
-    #linha1 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
-    #linha2 { grid-template-columns: repeat(3, 1fr); }
+    #linhaCampos { grid-template-columns: 1fr 1fr 1fr; }
 }
 
 .form-group {
