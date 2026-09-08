@@ -598,9 +598,8 @@ function atualizarCamposRecorrencia() {
     set('diaRecorrenciaGroup', comDia);
     set('parceleGroup', tipo === 'Parcelada');
     set('diaSemanaGroup', ehSemanal);
+    set('mesRefGroup', ehCalculada);
     set('dataCalculadaGroup', ehCalculada);
-    // Semanal não usa a área de Data -> esconde a célula inteira (evita buraco no grid)
-    set('dataCell', !ehSemanal);
 
     // Checkbox "pagar no vencimento": só despesa com dia de vencimento (Contas/Parcelada)
     const chkWrap = document.getElementById('pagarVencimentoWrap');
@@ -621,8 +620,9 @@ function atualizarCamposRecorrencia() {
         definirLabelResp('label[for="data"]', 'Data', null);
     }
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'Pagamento' : 'Vencimento',
-        ehReceita ? 'Pgto.' : 'Vcto.');
+        ehReceita ? 'Dia de pagamento' : 'Vencimento',
+        ehReceita ? 'Dia pg.' : 'Vcto.');
+    definirLabelResp('label[for="parcelas"]', 'Parcelas', 'Parc.');
 
     // Prefill do dia de vencimento/pagamento com o dia da data digitada, se vazio
     const diaInput = document.getElementById('diaRecorrencia');
@@ -708,8 +708,8 @@ function atualizarLabelsPorTipo() {
     }
 
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'Pagamento' : 'Vencimento',
-        ehReceita ? 'Pgto.' : 'Vcto.');
+        ehReceita ? 'Dia de pagamento' : 'Vencimento',
+        ehReceita ? 'Dia pg.' : 'Vcto.');
     const lblChk = document.getElementById('pagarVencimentoLabel');
     if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vencimento';
 

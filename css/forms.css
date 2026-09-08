@@ -111,35 +111,24 @@
     position: relative;
 }
 
-/* Célula do grid que agrupa campos relacionados lado a lado
-   (Recorrência+Parcelas, Dia de vencimento+Data) */
-.form-cell {
+/* Linha da recorrência: Recorrência + campo auxiliar + Data numa só linha,
+   quebrando só quando não couber (telas muito estreitas) */
+#linhaRecorrencia {
     display: flex;
-    flex-direction: column;
-    gap: .4rem;
-    min-width: 0;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem;
+    margin-bottom: 0.85rem;
 }
-.form-cell .form-group { margin: 0; }
-
-#recorrenciaCell { flex-direction: row; gap: .5rem; align-items: flex-start; }
-#recorrenciaCell > .form-group { flex: 1 1 auto; min-width: 0; }
-
-.cell-linha { display: flex; gap: .5rem; align-items: flex-start; }
-.cell-linha > .form-group { flex: 1 1 auto; min-width: 0; }
-
-/* Campo estreito: dia do vencimento / mês de competência / nº de parcelas */
-.form-group.campo-dia { flex: 0 0 5rem; }
-
-/* Subcampos internos de #dataCalculadaGroup (mês + data automática) */
-#dataCalculadaGroup { display: flex; gap: .5rem; align-items: flex-start; }
-#dataCalculadaGroup .sub-campo {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-    min-width: 0;
-}
-#dataCalculadaGroup .sub-campo.campo-dia { flex: 0 0 5rem; }
-#dataCalculadaGroup .rotulo-secundario { margin-top: 0; }
+#linhaRecorrencia > .form-group { margin: 0; min-width: 0; }
+#linhaRecorrencia > #recorrenciaGroup { flex: 2 1 8.5rem; min-width: 0; }
+#linhaRecorrencia > #dataGroup,
+#linhaRecorrencia > #dataCalculadaGroup { flex: 2 1 8rem; min-width: 0; }
+/* Campos auxiliares estreitos ao lado da Recorrência */
+#linhaRecorrencia > .campo-mini { flex: 0 1 5rem; }
+#linhaRecorrencia > .campo-mini--xs { flex: 0 1 4.5rem; }
+#linhaRecorrencia > #diaSemanaGroup { flex: 0 1 6rem; }   /* "s/ dia fixo" */
+#linhaRecorrencia > #pagarVencimentoWrap { flex: 1 0 100%; }
 
 .form-group.full-width {
     grid-column: 1 / -1;
@@ -165,8 +154,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.form-group.campo-dia label,
-#dataCalculadaGroup .sub-campo label {
+.form-group.campo-mini label {
     font-size: 0.72rem;
 }
 
@@ -440,15 +428,15 @@
 .semanas-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: .4rem;
+  gap: .35rem;
 }
 .semanas-chips .chip {
   border: 1px solid #D1D5DB;
   background: #fff;
   color: #374151;
   border-radius: 999px;
-  padding: .3rem .8rem;
-  font-size: .85rem;
+  padding: .2rem .6rem;
+  font-size: .72rem;
   cursor: pointer;
   user-select: none;
 }
@@ -461,8 +449,9 @@
   opacity: .6;
 }
 .semanas-resumo {
-  margin-top: .5rem;
+  margin-top: .4rem;
   font-weight: 600;
+  font-size: .78rem;
   color: #1F2937;
 }
 
