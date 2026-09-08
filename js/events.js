@@ -44,7 +44,7 @@ function configurarEventListeners() {
 
     // Engrenagem "Configuração" na barra do mês: abre/fecha (toggle)
     const btnConfig = document.getElementById('btnConfig');
-    if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus', true));
+    if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus'));
 
     // Cards de Receitas/Despesas do dashboard abrem a aba correspondente (sem toggle)
     const abrirAba = alvo => {
@@ -203,15 +203,25 @@ function mudarTipoTransacao(tipo) {
 /**
  * Muda aba ativa
  */
-function mudarAba(novaAba, permitirToggle = false) {
+/** Desativa todas as abas (nenhum conteúdo aberto) */
+function fecharAbas() {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn, #btnConfig').forEach(b => b.classList.remove('active'));
+    document.getElementById('btnConfig')?.setAttribute('aria-pressed', 'false');
+}
+
+function mudarAba(novaAba) {
     const ativa = document.querySelector('.tab-content.active')?.id;
 
     if (novaAba === ativa) {
-        // Só "Configurações" se comporta como toggle (abre/fecha o painel).
-        if (permitirToggle && estadoApp.abaAnterior && estadoApp.abaAnterior !== ativa) {
+        // "Configurações": fechar volta para a aba de conteúdo anterior.
+        if (novaAba === 'menus' && estadoApp.abaAnterior && estadoApp.abaAnterior !== 'menus') {
             novaAba = estadoApp.abaAnterior;
         } else {
-            return; // já está nessa aba
+            // Demais abas: toggle simplesmente fecha (nada selecionado).
+            estadoApp.abaAnterior = ativa;
+            fecharAbas();
+            return;
         }
     }
     if (ativa && ativa !== novaAba) estadoApp.abaAnterior = ativa;
