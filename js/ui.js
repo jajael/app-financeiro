@@ -122,7 +122,7 @@ function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
     if (resto.length) grupos.push(['Outros', resto]);
 
     container.innerHTML = grupos.map(([tipoRec, itens]) => {
-        const rotulo = (tipoRec === 'Mensal' && ehDespesa) ? 'Contas' : tipoRec;
+        const rotulo = (typeof rotuloRecorrencia === 'function') ? rotuloRecorrencia(tipoRec, ehDespesa) : tipoRec;
         const c = cores[tipoRec] || corPadraoChip(tipoRec);
         return `
         <details class="rec-grupo">
@@ -600,6 +600,9 @@ function atualizarCamposRecorrencia() {
     set('diaSemanaGroup', ehSemanal);
     set('mesRefGroup', ehCalculada);
     set('dataCalculadaGroup', ehCalculada);
+    set('semanasChipsGroup', ehSemanal);
+    // Valor se divide em 2 (informado + total) em Semanal e Parcelada
+    set('valorTotalGroup', ehSemanal || tipo === 'Parcelada');
 
     // Checkbox "pagar no vencimento": só despesa com dia de vencimento (Contas/Parcelada)
     const chkWrap = document.getElementById('pagarVencimentoWrap');
@@ -620,9 +623,10 @@ function atualizarCamposRecorrencia() {
         definirLabelResp('label[for="data"]', 'Data', null);
     }
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'Dia de pagamento' : 'Vencimento',
+        ehReceita ? 'Dia pg.' : 'Vcto.',
         ehReceita ? 'Dia pg.' : 'Vcto.');
     definirLabelResp('label[for="parcelas"]', 'Qtd.', 'Qtd.');
+    atualizarValorTotal();
 
     // Prefill do dia de vencimento/pagamento com o dia da data digitada, se vazio
     const diaInput = document.getElementById('diaRecorrencia');
@@ -675,8 +679,7 @@ function atualizarCamposRecorrencia() {
         }
     }
 
-    // Semanal: chips por semana (dia fixo -> "seg 07"; sem dia fixo -> "semana 1")
-    set('semanasChipsRow', ehSemanal);
+    // Semanal: chips por semana (numeradas), dentro da metade da "Data"
     if (ehSemanal) renderSemanasChips();
 
     // "Pagar no vencimento": trava a data do lançamento no dia do vencimento (despesa)
@@ -708,10 +711,10 @@ function atualizarLabelsPorTipo() {
     }
 
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'Dia de pagamento' : 'Vencimento',
+        ehReceita ? 'Dia pg.' : 'Vcto.',
         ehReceita ? 'Dia pg.' : 'Vcto.');
     const lblChk = document.getElementById('pagarVencimentoLabel');
-    if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vencimento';
+    if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vcto.';
 
     // Recorrência "Mensal" aparece como "Contas" nas despesas -> refaz o dropdown
     if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
@@ -900,8 +903,8 @@ function renderSemanasChips() {
     box.innerHTML = dias.map((dt, i) => {
         const marc = semanasMarcadas.has(dt);
         const passada = dt <= hoje;
-        const rot = temDiaFixo ? `${DOW_ABREV[dow]} ${dt.slice(8, 10)}` : `semana ${i + 1}`;
-        return `<button type="button" class="chip${marc ? ' on' : ''}${passada ? ' passada' : ''}" data-dt="${dt}">${rot}</button>`;
+        const rot = temDiaFixo ? dt.slice(8, 10) : String(i + 1);
+        return `<button type="button" class="chip${marc ? ' on' : ''}${passada ? ' passada' : ''}" data-dt="${dt}" title="${dt.split('-').reverse().join('/')}">${rot}</button>`;
     }).join('');
 
     box.onclick = e => {
@@ -912,12 +915,13 @@ function renderSemanasChips() {
         else semanasMarcadas.add(dt);
         chip.classList.toggle('on');
         atualizarResumoSemanas();
+        atualizarValorTotal();
     };
 
     atualizarResumoSemanas();
 }
 
-/** Atualiza o "X / Y" do resumo semanal */
+/** Resumo semanal: "<já lançado> / <total>" (sem rótulos) */
 function atualizarResumoSemanas() {
     const el = document.getElementById('semanasResumo');
     if (!el) return;
@@ -926,7 +930,22 @@ function atualizarResumoSemanas() {
     const marc = [...semanasMarcadas];
     const x = marc.filter(dt => dt <= hoje).length * vs;
     const y = marc.length * vs;
-    el.textContent = `atual ${formatarMoeda(x)} / total ${formatarMoeda(y)}`;
+    el.textContent = `${formatarMoeda(x)} / ${formatarMoeda(y)}`;
+}
+
+/** Preenche o campo "Total" (readonly) ao lado do Valor em Semanal/Parcelada */
+function atualizarValorTotal() {
+    const tot = document.getElementById('valorTotal');
+    if (!tot) return;
+    const tipo = document.querySelector(SELECTORS.tipoRecorrencia)?.value;
+    const v = parseFloat(document.querySelector(SELECTORS.valor)?.value) || 0;
+    let mult = 0;
+    if (tipo === 'Parcelada') {
+        mult = parseInt(document.getElementById('parcelas')?.value, 10) || 0;
+    } else if (tipo === 'Semanal') {
+        mult = (typeof semanasMarcadas !== 'undefined') ? semanasMarcadas.size : 0;
+    }
+    tot.value = formatarMoeda(v * mult);
 }
 
 /**

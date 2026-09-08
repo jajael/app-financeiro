@@ -151,9 +151,17 @@
 #recorrenciaBloco > .form-group { margin: 0; min-width: 0; }
 #recorrenciaBloco > #recorrenciaGroup { flex: 1 1 5rem; }
 #recorrenciaBloco > .campo-mini { flex: 0 1 5rem; }
-#recorrenciaBloco > .campo-mini--xs { flex: 0 1 4.25rem; }
-#recorrenciaBloco > #parceleGroup { flex: 0 1 3.25rem; }   /* só "Qtd." */
+/* Boxes de 2 dígitos: menor largura possível (Vcto., Qtd., Dia pg., Mês de ref.) */
+#recorrenciaBloco > .campo-mini--xs { flex: 0 0 3.25rem; }
 #recorrenciaBloco > #diaSemanaGroup { flex: 0 1 5.5rem; }  /* "s/ dia fixo" */
+
+/* Campo "Valor" que se divide em 2 (valor informado + total calculado) */
+#valorBloco { display: flex; gap: .5rem; }
+#valorBloco > .form-group { flex: 1 1 0; min-width: 0; margin: 0; }
+
+/* Semanas do mês ocupam a metade da "Data" quando a recorrência é Semanal */
+#dataBloco > #semanasChipsGroup { margin: 0; }
+#dataBloco > #semanasChipsGroup .semanas-chips { gap: .25rem; }
 
 #linhaRecorrencia > #pagarVencimentoWrap { flex: 1 0 100%; }
 
@@ -455,15 +463,16 @@
 .semanas-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: .35rem;
+  gap: .25rem;
 }
 .semanas-chips .chip {
   border: 1px solid #D1D5DB;
   background: #fff;
   color: #374151;
   border-radius: 999px;
-  padding: .2rem .6rem;
-  font-size: .72rem;
+  padding: .12rem .45rem;
+  font-size: .66rem;
+  line-height: 1.3;
   cursor: pointer;
   user-select: none;
 }
@@ -476,9 +485,9 @@
   opacity: .6;
 }
 .semanas-resumo {
-  margin-top: .4rem;
+  margin-top: .3rem;
   font-weight: 600;
-  font-size: .78rem;
+  font-size: .7rem;
   color: #1F2937;
 }
 
