@@ -129,8 +129,24 @@
     flex: 1 1 0;
     min-width: 8rem;
 }
-#dataBloco { position: relative; }
+#dataBloco {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .4rem;
+}
 #dataBloco > .form-group { margin: 0; }
+#dataBloco > #dataGroup { flex: 1 1 6rem; min-width: 0; }
+#dataBloco > #competenciaGroup { flex: 0 0 auto; }   /* só "SET" */
+#dataBloco > #dataCalculadaGroup,
+#dataBloco > #semanasChipsGroup { flex: 1 1 100%; }
+/* Select "Comp." — largura do conteúdo (3 letras) */
+#competenciaGroup select {
+    width: auto;
+    padding-right: 1.5rem;
+    background-position: right .45rem center;
+}
 
 /* Label "Pagamento" + chip "pagar no vcto." na mesma linha.
    Altura travada = altura de um label normal, para o input de baixo ficar

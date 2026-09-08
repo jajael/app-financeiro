@@ -395,9 +395,16 @@ function limparFormulario() {
     if (form) {
         form.reset();
         aplicarDataPadrao(true);
+        // Tipo volta para "Receita" — e os BOTÕES acompanham (evita botão dizer
+        // "Despesa" enquanto os campos mostram "Receita")
         document.querySelector(SELECTORS.tipoTransacao).value = 'entradas';
+        if (typeof estadoApp !== 'undefined') estadoApp.tipoAtual = 'entradas';
+        document.querySelectorAll('.tipo-btn').forEach(b =>
+            b.classList.toggle('active', b.dataset.tipo === 'entradas'));
         const pv = document.getElementById('pagarVencimento');
         if (pv) pv.checked = false;
+        const dataEl = document.querySelector(SELECTORS.data);
+        if (dataEl) delete dataEl.dataset.userVal;
         if (typeof semanasMarcadas !== 'undefined') semanasMarcadas = new Set();
         const btnSub = document.querySelector('.btn-submit');
         if (btnSub && !estadoApp.editandoId) btnSub.textContent = 'Adicionar';
