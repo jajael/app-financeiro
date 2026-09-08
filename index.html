@@ -193,7 +193,14 @@
                             </div>
                             <div class="form-group campo-mini campo-mini--xs" id="mesRefGroup" hidden>
                                 <label for="compRecorrente">Mês de ref.</label>
-                                <input type="text" id="compRecorrente" inputmode="numeric" placeholder="mm" maxlength="2" autocomplete="off">
+                                <select id="compRecorrente">
+                                    <option value="01">JAN</option><option value="02">FEV</option>
+                                    <option value="03">MAR</option><option value="04">ABR</option>
+                                    <option value="05">MAI</option><option value="06">JUN</option>
+                                    <option value="07">JUL</option><option value="08">AGO</option>
+                                    <option value="09">SET</option><option value="10">OUT</option>
+                                    <option value="11">NOV</option><option value="12">DEZ</option>
+                                </select>
                             </div>
                         </div>
                         <div id="dataBloco">
@@ -202,7 +209,7 @@
                                     <label for="data">Data</label>
                                     <label class="chip-toggle" id="pagarVencimentoWrap" hidden><input type="checkbox" id="pagarVencimento" hidden><span id="pagarVencimentoLabel">pagar no vcto.</span></label>
                                 </div>
-                                <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
+                                <input type="text" id="data" inputmode="numeric" placeholder="dd/mm" maxlength="5" autocomplete="off" required>
                             </div>
                             <div class="form-group" id="dataCalculadaGroup" hidden>
                                 <label for="dataCalculada">Data</label>
@@ -229,7 +236,14 @@
                         </div>
                         <div class="form-group" id="competenciaGroup" hidden>
                             <label for="competencia">Competência</label>
-                            <input type="text" id="competencia" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
+                            <select id="competencia">
+                                <option value="01">JAN</option><option value="02">FEV</option>
+                                <option value="03">MAR</option><option value="04">ABR</option>
+                                <option value="05">MAI</option><option value="06">JUN</option>
+                                <option value="07">JUL</option><option value="08">AGO</option>
+                                <option value="09">SET</option><option value="10">OUT</option>
+                                <option value="11">NOV</option><option value="12">DEZ</option>
+                            </select>
                         </div>
                         <div id="valorBloco">
                             <div class="form-group" id="valorGroup">

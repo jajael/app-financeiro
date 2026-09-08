@@ -253,16 +253,15 @@ function abrirNovoFeriado() {
     corpoHTML: `
       <div class="campo"><label for="dlgFerCat">Categoria</label>
         <select id="dlgFerCat">${opts}</select></div>
-      <div class="campo"><label for="dlgFerData">Data</label>
-        <input type="text" id="dlgFerData" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" value="01/01/${feriadosAnoView}"></div>
+      <div class="campo"><label for="dlgFerData">Data (dia/mês de ${feriadosAnoView})</label>
+        <input type="text" id="dlgFerData" inputmode="numeric" placeholder="dd/mm" maxlength="5" autocomplete="off"></div>
       <div class="campo"><label for="dlgFerNome">Nome</label>
         <input type="text" id="dlgFerNome" placeholder="Ex: Aniversário da cidade" maxlength="60"></div>`,
     acoes: [
       { label: 'Cancelar' },
       { label: 'Adicionar', primario: true, onClick: async (ov) => {
-          const iso = (typeof parseDataBR === 'function')
-            ? parseDataBR(ov.querySelector('#dlgFerData').value)
-            : ov.querySelector('#dlgFerData').value;
+          const m = String(ov.querySelector('#dlgFerData').value).trim().match(/^(\d{1,2})\/(\d{1,2})$/);
+          const iso = m ? parseDataBR(`${m[1]}/${m[2]}/${feriadosAnoView}`) : '';
           const nome = ov.querySelector('#dlgFerNome').value.trim();
           const cat = ov.querySelector('#dlgFerCat').value;
           if (!iso || !nome) { mostrarNotificacao('❌ Informe uma data válida e o nome', 'erro'); return true; }

@@ -105,13 +105,10 @@ function configurarEventListeners() {
         });
     }
 
-    // Campo Competência: máscara mm/aaaa + marca como editado manualmente
+    // Competência (mês): select de tricode; marca como editado manualmente
     const compInput = document.getElementById('competencia');
     if (compInput) {
-        compInput.addEventListener('input', () => {
-            mascaraCompetencia(compInput);
-            compInput.dataset.editado = compInput.value ? '1' : '';
-        });
+        compInput.addEventListener('change', () => { compInput.dataset.editado = '1'; });
     }
 
     // Dia da recorrência: só números, 2 dígitos; recalcula "pagar no vencimento"
@@ -125,12 +122,9 @@ function configurarEventListeners() {
     const pagarVenc = document.getElementById('pagarVencimento');
     if (pagarVenc) pagarVenc.addEventListener('change', aplicarPagarVencimento);
 
-    // Recorrências "dia útil fixo": competência (mm/aaaa)
+    // Recorrências "dia útil fixo": mês de referência (select de tricode)
     const compRec = document.getElementById('compRecorrente');
-    if (compRec) compRec.addEventListener('input', () => {
-        mascaraMes(compRec);
-        atualizarCamposRecorrencia();
-    });
+    if (compRec) compRec.addEventListener('change', () => atualizarCamposRecorrencia());
 
     // Botões "+" para criar categoria/método sem sair do lançamento
     const btnCat = document.getElementById('btnNovaCategoria');
@@ -226,7 +220,7 @@ function mudarTipoTransacao(tipo) {
         form?.reset();
         if (tipoField) tipoField.value = tipo;            // reset() volta ao default
         const dataEl = document.querySelector(SELECTORS.data);
-        if (dataEl) { dataEl.value = dataHojeBR(); dataEl.readOnly = false; dataEl.classList.remove('campo-travado'); delete dataEl.dataset.userVal; delete dataEl.dataset.autoReceita; }
+        if (dataEl) { dataEl.value = dataHojeDiaMes(); dataEl.readOnly = false; dataEl.classList.remove('campo-travado'); delete dataEl.dataset.userVal; delete dataEl.dataset.autoReceita; }
         const pv = document.getElementById('pagarVencimento');
         if (pv) pv.checked = false;
         if (typeof semanasMarcadas !== 'undefined') semanasMarcadas = new Set();

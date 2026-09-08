@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Estado inicial do formulário
     const dataInput = document.querySelector(SELECTORS.data);
-    if (dataInput && !dataInput.value) dataInput.value = dataHojeBR();
+    if (dataInput && !dataInput.value) dataInput.value = dataHojeDiaMes();
     atualizarCamposRecorrencia();
     atualizarCampoCredito();
     atualizarLabelsPorTipo();

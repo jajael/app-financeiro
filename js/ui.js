@@ -467,7 +467,7 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
         b.classList.toggle('active', b.dataset.tipo === tipoTransacao));
     atualizarLabelsPorTipo();
 
-    document.querySelector(SELECTORS.data).value = isoParaDataBR(trans.data);
+    document.querySelector(SELECTORS.data).value = isoParaDiaMes(trans.data);
     document.querySelector(SELECTORS.valor).value =
         (trans.tipoRecorrencia === 'Semanal' && trans.valorSessao != null) ? trans.valorSessao : trans.valor;
     semanasMarcadas = new Set(trans.semanas || []);
@@ -485,7 +485,7 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
     const parc = document.getElementById('parcelas');
     if (parc) parc.value = 1;
     const comp = document.getElementById('competencia');
-    if (comp) { comp.value = competenciaParaBR(trans.competencia); comp.dataset.editado = comp.value ? '1' : ''; }
+    if (comp) { comp.value = mesDeCompetencia(trans.competencia) || comp.value; comp.dataset.editado = "1"; }
 
     // Recorrências "dia útil fixo": restaura a competência
     const ehDiaUtil = typeof RECORRENCIA_DIA_UTIL !== 'undefined'
@@ -733,7 +733,7 @@ function atualizarCamposRecorrencia() {
     // Prefill do dia de vencimento/pagamento com o dia da data digitada, se vazio
     const diaInput = document.getElementById('diaRecorrencia');
     if (comDia && diaInput && !diaInput.value) {
-        const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+        const iso = dataCampoParaISO(document.querySelector(SELECTORS.data).value);
         if (iso) diaInput.value = String(parseInt(iso.slice(8, 10), 10));
     }
 
@@ -754,8 +754,8 @@ function atualizarCamposRecorrencia() {
         const compISO = competenciaDeMes(compEl ? compEl.value : '');
         const dataISO = compISO ? dataDiaUtilPorCompetencia(compISO, tipo) : '';
         const campo = document.getElementById('dataCalculada');
-        if (campo) campo.value = dataISO ? isoParaDataBR(dataISO) : '';
-        if (dataMain && dataISO) dataMain.value = isoParaDataBR(dataISO);
+        if (campo) campo.value = dataISO ? isoParaDiaMes(dataISO) : "";
+        if (dataMain && dataISO) dataMain.value = isoParaDiaMes(dataISO);
     }
 
     // Receita Mensal/Parcelada: data automática = dia informado no próximo dia útil
@@ -765,7 +765,7 @@ function atualizarCamposRecorrencia() {
             const compISO = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
                 ? formatarDataISO(estadoApp.mesAtual) : hojeISO();
             const dia = document.getElementById('diaRecorrencia')?.value || '';
-            dataMain.value = isoParaDataBR(dataReceitaMensal(compISO, dia));
+            dataMain.value = isoParaDiaMes(dataReceitaMensal(compISO, dia));
             dataMain.readOnly = true;
             dataMain.classList.add('campo-travado');
         } else {
@@ -966,10 +966,10 @@ function aplicarPagarVencimento() {
         if (dataEl.dataset.userVal == null) dataEl.dataset.userVal = dataEl.value;
         const dia = document.getElementById('diaRecorrencia').value;
         const compBR = document.getElementById('competencia')?.value;
-        const compISO = parseCompetencia(compBR || '') ||
-            competenciaDe(parseDataBR(dataEl.value) || hojeISO());
+        const compISO = competenciaDeMes(compBR || "") ||
+            competenciaDe(dataCampoParaISO(dataEl.value) || hojeISO());
         const venc = dataVencimento(compISO, dia);
-        if (venc) dataEl.value = isoParaDataBR(venc);
+        if (venc) dataEl.value = isoParaDiaMes(venc);
         dataEl.readOnly = true;
         dataEl.classList.add('campo-travado');
     } else {
@@ -995,7 +995,7 @@ function renderSemanasChips() {
     const dow = parseInt(document.getElementById('diaSemana').value, 10);
     const temDiaFixo = Number.isInteger(dow) && dow >= 0 && dow <= 6;
     // Semanal não tem campo de data -> usa o mês em exibição
-    const iso = parseDataBR(document.querySelector(SELECTORS.data).value)
+    const iso = dataCampoParaISO(document.querySelector(SELECTORS.data).value)
         || (typeof estadoApp !== 'undefined' && estadoApp.mesAtual ? formatarDataISO(estadoApp.mesAtual) : hojeISO());
     if (!iso) { box.innerHTML = ''; return; }
 
@@ -1089,16 +1089,16 @@ function recalcularCompetencia() {
     const campo = document.getElementById('competencia');
     if (!campo || campo.dataset.editado) return;
 
-    const iso = parseDataBR(document.querySelector(SELECTORS.data).value);
+    const iso = dataCampoParaISO(document.querySelector(SELECTORS.data).value);
     if (!iso) {
         // Sem data ainda: assume o mês vigente (usuário pode editar)
         if (typeof estadoApp !== 'undefined' && estadoApp.mesAtual) {
-            campo.value = competenciaParaBR(formatarDataISO(estadoApp.mesAtual));
+            campo.value = mesDeCompetencia(formatarDataISO(estadoApp.mesAtual));
         }
         return;
     }
 
     const metodo = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
     const fech = metodo && metodo.metodoKind === 'Crédito' ? metodo.diaFechamento : null;
-    campo.value = competenciaParaBR(competenciaDe(iso, fech));
+    campo.value = mesDeCompetencia(competenciaDe(iso, fech));
 }
