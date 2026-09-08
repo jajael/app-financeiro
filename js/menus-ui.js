@@ -42,7 +42,7 @@ async function carregarAbaMenus() {
 
       <div class="subtabs" role="tablist">
         <button class="subtab active" data-sub="cat">Categorias</button>
-        <button class="subtab" data-sub="met">Métodos</button>
+        <button class="subtab" data-sub="met">Métodos de pagamento</button>
         <button class="subtab" data-sub="rec">Recorrências</button>
         <button class="subtab" data-sub="fer">Feriados</button>
       </div>

@@ -412,7 +412,9 @@ function descParcela(nome, num, n, valorParc, valorTotal, sufixo) {
 async function adicionarParceladoAPI(dados) {
     const n = Math.max(1, parseInt(dados.parcelas, 10) || 1);
     const grupoId = crypto.randomUUID();
-    const total = parseFloat(dados.valor);
+    // dados.valor é o valor de CADA parcela; o total é valor x nº de parcelas
+    const valorParcela = parseFloat(dados.valor) || 0;
+    const total = Math.round(valorParcela * n * 100) / 100;
     const nome = dados.descricao || dados.categoria;
 
     const base = montarRegistro(dados);
