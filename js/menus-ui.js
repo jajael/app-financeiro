@@ -112,7 +112,11 @@ async function carregarAbaMenus() {
           </select>
           <button type="button" class="mini-btn feriados-sync" id="btnSyncFeriados" title="Buscar feriados nacionais (e da UF) na Nager.Date">↻ sincronizar</button>
         </div>
-        <p class="menu-hint">Nacionais e estaduais são oficiais: não podem ser apagados, só desativados. "Sincronizar" busca na Nager.Date os nacionais e, com uma UF escolhida, os estaduais. Municipais e avulsos você cadastra em "+".</p>
+        <p class="menu-hint">
+          Nacionais e estaduais são oficiais: não podem ser apagados, só desativados.<br>
+          "Sincronizar" busca na <a href="https://date.nager.at" target="_blank" rel="noopener"><em>Nager.Date</em></a> os nacionais e, com uma UF escolhida, os estaduais.<br>
+          Municipais e avulsos você cadastra em "+".
+        </p>
         ${['nacional', 'estadual', 'municipal'].map(cat => `
         <details class="fer-grupo" data-fer-cat="${cat}">
           <summary>
@@ -246,16 +250,18 @@ function abrirNovoFeriado() {
       <div class="campo"><label for="dlgFerCat">Categoria</label>
         <select id="dlgFerCat">${opts}</select></div>
       <div class="campo"><label for="dlgFerData">Data</label>
-        <input type="date" id="dlgFerData" value="${feriadosAnoView}-01-01"></div>
+        <input type="text" id="dlgFerData" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" value="01/01/${feriadosAnoView}"></div>
       <div class="campo"><label for="dlgFerNome">Nome</label>
         <input type="text" id="dlgFerNome" placeholder="Ex: Aniversário da cidade" maxlength="60"></div>`,
     acoes: [
       { label: 'Cancelar' },
       { label: 'Adicionar', primario: true, onClick: async (ov) => {
-          const iso = ov.querySelector('#dlgFerData').value;
+          const iso = (typeof parseDataBR === 'function')
+            ? parseDataBR(ov.querySelector('#dlgFerData').value)
+            : ov.querySelector('#dlgFerData').value;
           const nome = ov.querySelector('#dlgFerNome').value.trim();
           const cat = ov.querySelector('#dlgFerCat').value;
-          if (!iso || !nome) { mostrarNotificacao('❌ Informe data e nome', 'erro'); return true; }
+          if (!iso || !nome) { mostrarNotificacao('❌ Informe uma data válida e o nome', 'erro'); return true; }
           try {
             await criarFeriado(iso, nome, cat);
             feriadosAnoView = Number(iso.slice(0, 4));
@@ -269,6 +275,10 @@ function abrirNovoFeriado() {
       } }
     ]
   });
+  const inpData = document.querySelector('.dialogo-overlay #dlgFerData');
+  if (inpData && typeof mascaraDataBR === 'function') {
+    inpData.addEventListener('input', () => mascaraDataBR(inpData));
+  }
 }
 
 function mostrarSubConfig(sub) {

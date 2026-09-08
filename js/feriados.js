@@ -170,7 +170,7 @@ const UFS_BR = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG'
   'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
 function feriadosUF() {
-  try { return localStorage.getItem('feriadosUF') || ''; } catch (_) { return ''; }
+  try { return localStorage.getItem('feriadosUF') || 'RJ'; } catch (_) { return 'RJ'; }
 }
 function definirFeriadosUF(uf) {
   try { localStorage.setItem('feriadosUF', uf || ''); } catch (_) {}

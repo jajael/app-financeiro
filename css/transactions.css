@@ -9,6 +9,23 @@
     gap: var(--spacing-md);
 }
 
+/* Faturas de cartão (topo das Próximas) */
+.faturas-cartao { display: flex; flex-direction: column; gap: .4rem; margin-bottom: var(--spacing-md); }
+.faturas-titulo { font-size: .8rem; font-weight: 700; color: var(--text-muted); margin: 0 0 .1rem; text-transform: uppercase; letter-spacing: .03em; }
+.fatura-item {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    padding: .5rem .7rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--cor-cartao, var(--primary));
+    border-radius: var(--radius-sm);
+}
+.fatura-nome { flex: 1; min-width: 0; font-weight: var(--font-weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fatura-venc { font-size: .72rem; color: var(--text-muted); white-space: nowrap; }
+.fatura-total { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* Alternância de visão da aba Despesas: Por recorrência / Por método */
 .modo-lista {
     display: flex;
