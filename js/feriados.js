@@ -67,8 +67,45 @@ function feriadosNacionaisDoAno(ano) {
 const CATEGORIAS_FERIADO = ['nacional', 'estadual', 'municipal'];
 const CATEGORIA_FERIADO_ROTULO = { nacional: 'Nacionais', estadual: 'Estaduais', municipal: 'Municipais' };
 
+/**
+ * Feriados estaduais por UF: [mês 1-12, dia, nome]. Lista curada — a
+ * Nager.Date (usada no "sincronizar") só cobre alguns estados. O usuário
+ * pode desativar os que não valerem e adicionar outros em "+".
+ */
+const FERIADOS_ESTADUAIS = {
+  AC: [[1, 23, 'Dia do Evangélico'], [6, 15, 'Aniversário do Acre'], [9, 5, 'Dia da Amazônia'], [11, 17, 'Assinatura do Tratado de Petrópolis']],
+  AL: [[6, 24, 'São João'], [6, 29, 'São Pedro'], [9, 16, 'Emancipação Política de Alagoas']],
+  AM: [[9, 5, 'Elevação do Amazonas à Província'], [12, 8, 'Nossa Senhora da Conceição']],
+  AP: [[3, 19, 'São José'], [9, 13, 'Criação do Território Federal do Amapá']],
+  BA: [[7, 2, 'Independência da Bahia']],
+  CE: [[3, 19, 'São José'], [3, 25, 'Data Magna do Ceará']],
+  DF: [[4, 21, 'Fundação de Brasília'], [11, 30, 'Dia do Evangélico']],
+  ES: [],
+  GO: [],
+  MA: [[7, 28, 'Adesão do Maranhão à Independência']],
+  MG: [],
+  MS: [[10, 11, 'Criação do Estado de Mato Grosso do Sul']],
+  MT: [],
+  PA: [[8, 15, 'Adesão do Pará à Independência']],
+  PB: [[8, 5, 'Fundação do Estado da Paraíba']],
+  PE: [[3, 6, 'Revolução Pernambucana de 1817'], [6, 24, 'São João']],
+  PI: [[10, 19, 'Dia do Piauí']],
+  PR: [[12, 19, 'Emancipação do Paraná']],
+  RJ: [[4, 23, 'São Jorge']],
+  RN: [[10, 3, 'Mártires de Cunhaú e Uruaçu']],
+  RO: [[1, 4, 'Criação do Estado de Rondônia']],
+  RR: [[10, 5, 'Criação do Estado de Roraima']],
+  RS: [[9, 20, 'Revolução Farroupilha']],
+  SC: [[8, 11, 'Dia de Santa Catarina'], [11, 25, 'Santa Catarina de Alexandria']],
+  SE: [[7, 8, 'Emancipação Política de Sergipe']],
+  SP: [[7, 9, 'Revolução Constitucionalista de 1932']],
+  TO: [[10, 5, 'Criação do Estado do Tocantins']]
+};
+
 const feriadosState = {
   nacionalCalc: new Map(), // iso -> nome (nacionais calculados; sem linha no banco)
+  estadualCalc: new Map(), // iso -> nome (estaduais da UF selecionada; sem linha)
+  estadualUF: null,        // UF cujos estaduais estão em estadualCalc
   rows: [],                // linhas do banco: {id, data, nome, origem, oficial, ativo}
   anos: []                 // anos já calculados
 };
@@ -84,6 +121,22 @@ function calcularFeriadosNacionais(anoIni, anoFim) {
   }
 }
 
+/** Estaduais calculados da UF em `feriadosUF()` para uma janela de anos */
+function calcularFeriadosEstaduais(anoIni, anoFim) {
+  const uf = (typeof feriadosUF === 'function') ? feriadosUF() : '';
+  if (feriadosState.estadualUF !== uf) {
+    feriadosState.estadualCalc.clear();
+    feriadosState.estadualUF = uf;
+  }
+  const lista = FERIADOS_ESTADUAIS[uf] || [];
+  for (let ano = anoIni; ano <= anoFim; ano++) {
+    lista.forEach(([mes, dia, nome]) => {
+      const iso = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      if (!feriadosState.estadualCalc.has(iso)) feriadosState.estadualCalc.set(iso, nome);
+    });
+  }
+}
+
 function _rowsData(iso) {
   const s = String(iso).slice(0, 10);
   return feriadosState.rows.filter(r => String(r.data).slice(0, 10) === s);
@@ -95,6 +148,7 @@ function ehFeriado(iso) {
   const rs = _rowsData(s);
   if (rs.some(r => r.ativo)) return true;
   if (feriadosState.nacionalCalc.has(s) && !rs.some(r => r.origem === 'nacional' && !r.ativo)) return true;
+  if (feriadosState.estadualCalc.has(s) && !rs.some(r => r.origem === 'estadual' && !r.ativo)) return true;
   return false;
 }
 
@@ -103,7 +157,7 @@ function nomeFeriado(iso) {
   const s = String(iso).slice(0, 10);
   const ativo = _rowsData(s).find(r => r.ativo);
   if (ativo) return ativo.nome;
-  return feriadosState.nacionalCalc.get(s) || '';
+  return feriadosState.nacionalCalc.get(s) || feriadosState.estadualCalc.get(s) || '';
 }
 
 /* ================= Supabase ================= */
@@ -119,11 +173,12 @@ async function _recarregarRows() {
   }
 }
 
-/** Carga inicial: calcula nacionais do intervalo e lê as linhas do banco */
+/** Carga inicial: calcula nacionais/estaduais do intervalo e lê as linhas do banco */
 async function carregarFeriados() {
   const anoBase = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
     ? estadoApp.mesAtual.getFullYear() : new Date().getFullYear();
   calcularFeriadosNacionais(anoBase - 1, anoBase + 3);
+  calcularFeriadosEstaduais(anoBase - 1, anoBase + 3);
   await _recarregarRows();
 }
 
@@ -174,6 +229,11 @@ function feriadosUF() {
 }
 function definirFeriadosUF(uf) {
   try { localStorage.setItem('feriadosUF', uf || ''); } catch (_) {}
+  // recalcula os estaduais da nova UF para a janela de anos já conhecida
+  feriadosState.estadualCalc.clear();
+  feriadosState.estadualUF = null;
+  const anos = feriadosState.anos.length ? feriadosState.anos : [new Date().getFullYear()];
+  calcularFeriadosEstaduais(Math.min(...anos), Math.max(...anos));
 }
 
 /**
@@ -196,6 +256,7 @@ async function sincronizarFeriados(anos) {
       throw new Error(`Falha ao consultar a Nager.Date (${ano}): ${e.message || e}`);
     }
     calcularFeriadosNacionais(ano, ano);
+    calcularFeriadosEstaduais(ano, ano);
     for (const f of lista) {
       const ehNacional = f.global === true || !f.counties;
       const ehEstadual = !ehNacional && alvoUF && Array.isArray(f.counties) && f.counties.includes(alvoUF);
@@ -205,7 +266,7 @@ async function sincronizarFeriados(anos) {
       const nome = f.localName || f.name;
       const jaTem = ehNacional
         ? (feriadosState.nacionalCalc.has(iso) || _rowsData(iso).some(r => r.origem === 'nacional'))
-        : _rowsData(iso).some(r => r.origem === 'estadual');
+        : (feriadosState.estadualCalc.has(iso) || _rowsData(iso).some(r => r.origem === 'estadual'));
       if (jaTem) continue;
       const { error } = await sb.from('feriados')
         .upsert({ data: iso, nome, origem, oficial: true, ativo: true },
@@ -221,18 +282,22 @@ async function sincronizarFeriados(anos) {
 function feriadosView(categoria, ano) {
   const pref = String(ano) + '-';
   const out = [];
-  if (categoria === 'nacional') {
-    calcularFeriadosNacionais(ano, ano);
-    for (const [iso, nome] of feriadosState.nacionalCalc) {
+  const calc = categoria === 'nacional' ? feriadosState.nacionalCalc
+    : categoria === 'estadual' ? feriadosState.estadualCalc : null;
+
+  if (calc) {
+    if (categoria === 'nacional') calcularFeriadosNacionais(ano, ano);
+    else calcularFeriadosEstaduais(ano, ano);
+    for (const [iso, nome] of calc) {
       if (!iso.startsWith(pref)) continue;
-      const row = _rowsData(iso).find(r => r.origem === 'nacional');
+      const row = _rowsData(iso).find(r => r.origem === categoria);
       out.push(row
         ? { id: row.id, data: iso, nome: row.nome, ativo: row.ativo, oficial: row.oficial }
         : { id: null, data: iso, nome, ativo: true, oficial: true });
     }
     for (const r of feriadosState.rows) {
       const iso = String(r.data).slice(0, 10);
-      if (r.origem === 'nacional' && iso.startsWith(pref) && !feriadosState.nacionalCalc.has(iso)) {
+      if (r.origem === categoria && iso.startsWith(pref) && !calc.has(iso)) {
         out.push({ id: r.id, data: iso, nome: r.nome, ativo: r.ativo, oficial: r.oficial });
       }
     }

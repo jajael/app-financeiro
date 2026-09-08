@@ -114,7 +114,7 @@ async function carregarAbaMenus() {
         </div>
         <p class="menu-hint">
           Nacionais e estaduais são oficiais: não podem ser apagados, só desativados.<br>
-          "Sincronizar" busca na <a href="https://date.nager.at" target="_blank" rel="noopener"><em>Nager.Date</em></a> os nacionais e, com uma UF escolhida, os estaduais.<br>
+          Estaduais: os principais de cada UF (escolha a UF); "sincronizar" completa com a <a href="https://date.nager.at" target="_blank" rel="noopener"><em>Nager.Date</em></a>.<br>
           Municipais e avulsos você cadastra em "+".
         </p>
         ${['nacional', 'estadual', 'municipal'].map(cat => `
@@ -148,7 +148,11 @@ async function carregarAbaMenus() {
   const selUf = document.getElementById('feriadosUf');
   if (selUf && typeof feriadosUF === 'function') {
     selUf.value = feriadosUF();
-    selUf.addEventListener('change', () => definirFeriadosUF(selUf.value));
+    selUf.addEventListener('change', () => {
+      definirFeriadosUF(selUf.value);
+      renderFeriados();
+      if (typeof atualizarUI === 'function') atualizarUI();
+    });
   }
 }
 
