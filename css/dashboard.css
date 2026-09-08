@@ -46,11 +46,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.card-linhas .linha.total b,
-.card-linhas .linha.total i {
-    margin-top: 0.35rem;
-    padding-top: 0.35rem;
+/* Separador contínuo acima da linha "total" (linha própria no grid) */
+.card-linhas .linha-sep {
+    grid-column: 1 / -1;
     border-top: 1px solid currentColor;
+    opacity: 0.45;
+    margin: 0.2rem 0 0.05rem;
 }
 .card-linhas .linha.total .amount {
     font-size: 1.4rem;
