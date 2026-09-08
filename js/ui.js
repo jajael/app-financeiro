@@ -622,9 +622,11 @@ function atualizarCamposRecorrencia() {
     } else {
         definirLabelResp('label[for="data"]', 'Data', null);
     }
+    const grpDiaRec = document.getElementById('diaRecorrenciaGroup');
+    if (grpDiaRec) grpDiaRec.classList.toggle('campo-mini--wide', ehReceita);
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'D.pg.' : 'Vcto.',
-        ehReceita ? 'D.pg.' : 'Vcto.');
+        ehReceita ? 'Dia pgto.' : 'Vcto.',
+        ehReceita ? 'Dia pg.' : 'Vcto.');
     definirLabelResp('label[for="parcelas"]', 'Qtd.', 'Qtd.');
     atualizarValorTotal();
 
@@ -711,9 +713,11 @@ function atualizarLabelsPorTipo() {
         atualizarCampoCredito();
     }
 
+    const grpDiaRec2 = document.getElementById('diaRecorrenciaGroup');
+    if (grpDiaRec2) grpDiaRec2.classList.toggle('campo-mini--wide', ehReceita);
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'D.pg.' : 'Vcto.',
-        ehReceita ? 'D.pg.' : 'Vcto.');
+        ehReceita ? 'Dia pgto.' : 'Vcto.',
+        ehReceita ? 'Dia pg.' : 'Vcto.');
     const lblChk = document.getElementById('pagarVencimentoLabel');
     if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vcto.';
 

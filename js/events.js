@@ -73,15 +73,14 @@ function configurarEventListeners() {
     const cancelar = document.getElementById('cancelarEdicao');
     if (cancelar) cancelar.addEventListener('click', cancelarEdicaoTransacao);
 
-    // Botão "×" do formulário: fecha o lançamento (cancela edição ou limpa) e
-    // volta para a aba anterior
+    // Botão "×" do formulário: em edição volta para a origem; senão, só fecha
     const btnLimparForm = document.getElementById('btnLimparForm');
     if (btnLimparForm) btnLimparForm.addEventListener('click', () => {
         if (estadoApp.editandoId) {
-            cancelarEdicaoTransacao();            // já volta para a aba de origem
+            cancelarEdicaoTransacao();            // volta para a aba de origem
         } else {
             limparFormulario();
-            mudarAba(estadoApp.abaAnterior || 'entradas');
+            fecharAbas();
         }
     });
 
@@ -249,21 +248,14 @@ function fecharAbas() {
 function mudarAba(novaAba) {
     const ativa = document.querySelector('.tab-content.active')?.id;
 
+    // Clicar na aba já aberta apenas fecha tudo (sem reabrir nada).
     if (novaAba === ativa) {
-        // "Configurações": fechar volta para a aba de conteúdo anterior.
-        if (novaAba === 'menus' && estadoApp.abaAnterior && estadoApp.abaAnterior !== 'menus') {
-            novaAba = estadoApp.abaAnterior;
-        } else {
-            // Demais abas: toggle simplesmente fecha (nada selecionado).
-            estadoApp.abaAnterior = ativa;
-            fecharAbas();
-            return;
-        }
+        fecharAbas();
+        return;
     }
-    if (ativa && ativa !== novaAba) estadoApp.abaAnterior = ativa;
     console.log(`📑 Mudando para aba: ${novaAba}`);
 
-    // Remover classe active
+    // Abrir a nova aba fecha automaticamente qualquer outra.
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
