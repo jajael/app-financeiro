@@ -111,6 +111,36 @@
     position: relative;
 }
 
+/* Célula do grid que agrupa campos relacionados lado a lado
+   (Recorrência+Parcelas, Dia de vencimento+Data) */
+.form-cell {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    min-width: 0;
+}
+.form-cell .form-group { margin: 0; }
+
+#recorrenciaCell { flex-direction: row; gap: .5rem; align-items: flex-start; }
+#recorrenciaCell > .form-group { flex: 1 1 auto; min-width: 0; }
+
+.cell-linha { display: flex; gap: .5rem; align-items: flex-start; }
+.cell-linha > .form-group { flex: 1 1 auto; min-width: 0; }
+
+/* Campo estreito: dia do vencimento / mês de competência / nº de parcelas */
+.form-group.campo-dia { flex: 0 0 5.5rem; }
+
+/* Subcampos internos de #dataCalculadaGroup (mês + data automática) */
+#dataCalculadaGroup { display: flex; gap: .5rem; align-items: flex-start; }
+#dataCalculadaGroup .sub-campo {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+#dataCalculadaGroup .sub-campo.campo-dia { flex: 0 0 5.5rem; }
+#dataCalculadaGroup .rotulo-secundario { margin-top: 0; }
+
 .form-group.full-width {
     grid-column: 1 / -1;
 }
@@ -335,6 +365,18 @@
     margin: 0;
 }
 .inline-check input { width: auto; }
+.inline-check span { font-size: inherit; font-style: inherit; }
+
+/* Variante compacta e em itálico (checkbox "pagar no vencimento") */
+.inline-check--sm {
+    font-size: .72rem;
+    font-style: italic;
+    font-weight: 400;
+    gap: .3rem;
+    margin-top: .1rem;
+    color: var(--text-muted);
+}
+.inline-check--sm input { transform: scale(.85); }
 
 /* 2º rótulo dentro do mesmo form-group (ex.: "Data (automática)") */
 .rotulo-secundario { margin-top: .5rem; }
@@ -404,8 +446,7 @@
   color: #fff;
 }
 .semanas-chips .chip.passada:not(.on) {
-  opacity: .5;
-  text-decoration: line-through;
+  opacity: .6;
 }
 .semanas-resumo {
   margin-top: .5rem;

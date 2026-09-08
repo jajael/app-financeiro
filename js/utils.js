@@ -86,6 +86,10 @@ function validarFormularioTransacao(dados) {
         return { valido: false, erro: 'Informe o dia de vencimento (1-31)' };
     }
 
+    if (dados.tipoRecorrencia === 'Parcelada' && !(parseInt(dados.parcelas, 10) >= 1)) {
+        return { valido: false, erro: 'Informe o número de parcelas' };
+    }
+
     // Semanal com dia da semana fixo: precisa de ao menos 1 semana marcada
     if (dados.tipoRecorrencia === 'Semanal' && dados.diaSemana !== '' && dados.diaSemana != null
         && !(dados.semanas && dados.semanas.length >= 1)) {
@@ -188,6 +192,27 @@ function parseCompetencia(str) {
 function competenciaParaBR(iso) {
     const m = String(iso).slice(0, 10).match(/^(\d{4})-(\d{2})/);
     return m ? `${m[2]}/${m[1]}` : '';
+}
+
+/** 'YYYY-MM-01' -> 'MM' (só o mês) */
+function mesDeCompetencia(iso) {
+    const m = String(iso).slice(0, 10).match(/^\d{4}-(\d{2})/);
+    return m ? m[1] : '';
+}
+
+/** 'MM' (mês) + ano do mês em exibição -> 'YYYY-MM-01' (ou '') */
+function competenciaDeMes(mm) {
+    const mo = parseInt(String(mm).replace(/\D/g, ''), 10);
+    if (!(mo >= 1 && mo <= 12)) return '';
+    const ano = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
+        ? estadoApp.mesAtual.getFullYear()
+        : new Date().getFullYear();
+    return `${ano}-${String(mo).padStart(2, '0')}-01`;
+}
+
+/** Máscara de mês: só números, 2 dígitos */
+function mascaraMes(input) {
+    input.value = input.value.replace(/\D/g, '').slice(0, 2);
 }
 
 /**
@@ -303,12 +328,9 @@ function obterDadosFormulario() {
     const tipoRecorrencia = document.querySelector(SELECTORS.tipoRecorrencia).value;
     const diaRecorrencia = document.getElementById('diaRecorrencia')?.value || '';
 
-    // "Dia útil fixo": competência vem do próprio grupo; senão, do campo de Crédito
+    // "Dia útil fixo": competência (mês) vem do próprio grupo; senão, do campo de Crédito
     const ehDiaUtil = typeof RECORRENCIA_DIA_UTIL !== 'undefined'
         && RECORRENCIA_DIA_UTIL.includes(tipoRecorrencia);
-    const compBR = ehDiaUtil
-        ? (document.getElementById('compRecorrente')?.value || '')
-        : (document.getElementById('competencia')?.value || '');
 
     const ehEntrada = document.querySelector(SELECTORS.tipoTransacao).value === 'entradas';
     const mesExib = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
@@ -317,13 +339,15 @@ function obterDadosFormulario() {
     // Semanal não tem campo de data: usa a 1ª semana marcada (ou o mês em exibição)
     const semanasSel = typeof semanasMarcadas !== 'undefined' ? [...semanasMarcadas].sort() : [];
     let dataISO = parseDataBR(document.querySelector(SELECTORS.data).value);
-    let compFinal = compBR;
+    let compISO = ehDiaUtil
+        ? competenciaDeMes(document.getElementById('compRecorrente')?.value || '')
+        : parseCompetencia(document.getElementById('competencia')?.value || '');
     if (tipoRecorrencia === 'Semanal') {
         dataISO = semanasSel[0] || mesExib;
     } else if (ehEntrada && (tipoRecorrencia === 'Mensal' || tipoRecorrencia === 'Parcelada')) {
         // Receita Mensal/Parcelada: competência = mês em exibição; data = próximo dia útil
-        compFinal = competenciaParaBR(mesExib);
-        dataISO = dataReceitaMensal(parseCompetencia(compFinal), diaRecorrencia);
+        compISO = mesExib.slice(0, 8) + '01';
+        dataISO = dataReceitaMensal(compISO, diaRecorrencia);
     }
 
     return {
@@ -340,7 +364,7 @@ function obterDadosFormulario() {
         semanas: semanasSel,
         valorSessao: parseFloat(document.querySelector(SELECTORS.valor).value) || 0,
         parcelas: parseInt(document.getElementById('parcelas')?.value, 10) || 1,
-        competencia: parseCompetencia(compFinal),
+        competencia: compISO || '',
         descricao: document.querySelector(SELECTORS.descricao).value
     };
 }
