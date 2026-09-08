@@ -623,8 +623,8 @@ function atualizarCamposRecorrencia() {
         definirLabelResp('label[for="data"]', 'Data', null);
     }
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'Dia pg.' : 'Vcto.',
-        ehReceita ? 'Dia pg.' : 'Vcto.');
+        ehReceita ? 'D.pg.' : 'Vcto.',
+        ehReceita ? 'D.pg.' : 'Vcto.');
     definirLabelResp('label[for="parcelas"]', 'Qtd.', 'Qtd.');
     atualizarValorTotal();
 
@@ -711,8 +711,8 @@ function atualizarLabelsPorTipo() {
     }
 
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'Dia pg.' : 'Vcto.',
-        ehReceita ? 'Dia pg.' : 'Vcto.');
+        ehReceita ? 'D.pg.' : 'Vcto.',
+        ehReceita ? 'D.pg.' : 'Vcto.');
     const lblChk = document.getElementById('pagarVencimentoLabel');
     if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vcto.';
 
