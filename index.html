@@ -160,9 +160,15 @@
 
                     <!-- Campos do lançamento: empilhado / 2 col (pares) / 3 col conforme a largura -->
                     <div class="form-row" id="linhaCampos">
-                        <div class="form-group">
-                            <label for="tipoRecorrencia">Recorrência:</label>
-                            <select id="tipoRecorrencia" required></select>
+                        <div class="form-cell" id="recorrenciaCell">
+                            <div class="form-group" id="recorrenciaGroup">
+                                <label for="tipoRecorrencia">Recorrência:</label>
+                                <select id="tipoRecorrencia" required></select>
+                            </div>
+                            <div class="form-group campo-dia" id="parceleGroup" hidden>
+                                <label for="parcelas">Parcelas:</label>
+                                <input type="number" id="parcelas" min="1" max="48" value="1">
+                            </div>
                         </div>
                         <div class="form-group" id="diaSemanaGroup" hidden>
                             <label for="diaSemana">Dia da semana:</label>
@@ -177,24 +183,28 @@
                                 <option value="6">Sábado</option>
                             </select>
                         </div>
-                        <div class="form-group" id="dataCalculadaGroup" hidden>
-                            <label for="compRecorrente">Competência (mm/aaaa):</label>
-                            <input type="text" id="compRecorrente" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
-                            <label for="dataCalculada" class="rotulo-secundario">Data (automática):</label>
-                            <input type="text" id="dataCalculada" class="campo-travado" readonly tabindex="-1">
-                        </div>
-                        <div class="form-group" id="dataGroup">
-                            <label for="data">Data:</label>
-                            <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
-                        </div>
-                        <div class="form-group" id="diaRecorrenciaGroup" hidden>
-                            <label for="diaRecorrencia">Dia de vencimento:</label>
-                            <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
-                            <label class="inline-check"><input type="checkbox" id="pagarVencimento"> <span id="pagarVencimentoLabel">pagar no vencimento</span></label>
-                        </div>
-                        <div class="form-group" id="parceleGroup" hidden>
-                            <label for="parcelas">Parcelas:</label>
-                            <input type="number" id="parcelas" min="1" max="48" value="1">
+                        <div class="form-cell" id="dataCell">
+                            <div class="cell-linha">
+                                <div class="form-group campo-dia" id="diaRecorrenciaGroup" hidden>
+                                    <label for="diaRecorrencia">Dia de vencimento:</label>
+                                    <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
+                                </div>
+                                <div class="form-group" id="dataCalculadaGroup" hidden>
+                                    <div class="sub-campo campo-dia">
+                                        <label for="compRecorrente">Mês de competência:</label>
+                                        <input type="text" id="compRecorrente" inputmode="numeric" placeholder="mm" maxlength="2" autocomplete="off">
+                                    </div>
+                                    <div class="sub-campo">
+                                        <label for="dataCalculada" class="rotulo-secundario">Data (automática):</label>
+                                        <input type="text" id="dataCalculada" class="campo-travado" readonly tabindex="-1">
+                                    </div>
+                                </div>
+                                <div class="form-group" id="dataGroup">
+                                    <label for="data">Data:</label>
+                                    <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
+                                </div>
+                            </div>
+                            <label class="inline-check inline-check--sm" id="pagarVencimentoWrap" hidden><input type="checkbox" id="pagarVencimento"> <span id="pagarVencimentoLabel">pagar no vencimento</span></label>
                         </div>
                         <div class="form-group" id="metodoGroup">
                             <label for="metodo">Método:</label>

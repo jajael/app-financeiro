@@ -427,7 +427,7 @@ function iniciarEdicaoTransacao(trans, tipoTransacao) {
     const ehDiaUtil = typeof RECORRENCIA_DIA_UTIL !== 'undefined'
         && RECORRENCIA_DIA_UTIL.includes(trans.tipoRecorrencia);
     const compRec = document.getElementById('compRecorrente');
-    if (compRec) compRec.value = ehDiaUtil ? competenciaParaBR(trans.competencia) : '';
+    if (compRec) compRec.value = ehDiaUtil ? mesDeCompetencia(trans.competencia) : '';
 
     atualizarCamposRecorrencia();
     atualizarCampoCredito();
@@ -570,9 +570,9 @@ function atualizarCamposRecorrencia() {
     set('diaSemanaGroup', ehSemanal);
     set('dataCalculadaGroup', ehCalculada);
 
-    // Checkbox "pagar no vencimento": só despesa
-    const chkWrap = document.querySelector('#diaRecorrenciaGroup .inline-check');
-    if (chkWrap) chkWrap.hidden = ehReceita;
+    // Checkbox "pagar no vencimento": só despesa com dia de vencimento (Contas/Parcelada)
+    const chkWrap = document.getElementById('pagarVencimentoWrap');
+    if (chkWrap) chkWrap.hidden = ehReceita || !comDia;
     const chk = document.getElementById('pagarVencimento');
     if (ehReceita && chk) chk.checked = false;
 
@@ -601,9 +601,9 @@ function atualizarCamposRecorrencia() {
     if (ehCalculada) {
         const compEl = document.getElementById('compRecorrente');
         if (compEl && !compEl.value && typeof estadoApp !== 'undefined' && estadoApp.mesAtual) {
-            compEl.value = competenciaParaBR(formatarDataISO(estadoApp.mesAtual));
+            compEl.value = mesDeCompetencia(formatarDataISO(estadoApp.mesAtual));
         }
-        const compISO = parseCompetencia(compEl ? compEl.value : '');
+        const compISO = competenciaDeMes(compEl ? compEl.value : '');
         const dataISO = compISO ? dataDiaUtilPorCompetencia(compISO, tipo) : '';
         const campo = document.getElementById('dataCalculada');
         if (campo) campo.value = dataISO ? isoParaDataBR(dataISO) : '';

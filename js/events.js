@@ -118,7 +118,7 @@ function configurarEventListeners() {
     // Recorrências "dia útil fixo": competência (mm/aaaa)
     const compRec = document.getElementById('compRecorrente');
     if (compRec) compRec.addEventListener('input', () => {
-        mascaraCompetencia(compRec);
+        mascaraMes(compRec);
         atualizarCamposRecorrencia();
     });
 
