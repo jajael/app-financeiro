@@ -330,6 +330,34 @@
   color: #6B7280;
   margin: -.25rem 0 .6rem;
 }
+
+/* Feriados */
+.feriados-barra {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin: .2rem 0 .5rem;
+}
+#feriadosAno { font-weight: 700; min-width: 3ch; text-align: center; }
+.feriados-barra .feriados-sync { margin-left: auto; }
+.feriados-subtitulo {
+  margin: 1rem 0 .4rem;
+  font-size: .82rem;
+  color: var(--text-muted, #6B7280);
+}
+.mini-btn {
+  border: 1px solid var(--border-strong, #D1D5DB);
+  background: #fff;
+  color: var(--text-muted, #6B7280);
+  border-radius: var(--radius-sm);
+  padding: .18rem .5rem;
+  font-size: .72rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mini-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.mini-btn:disabled { opacity: .6; cursor: default; }
+.mini-btn.armed { color: #DC2626; border-color: #DC2626; font-weight: 700; }
 .btn-icon.armed {
   width: auto;
   padding: 0 .5rem;
