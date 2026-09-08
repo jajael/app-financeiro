@@ -47,53 +47,39 @@ function validarCampo(valor) {
  */
 function validarFormularioTransacao(dados) {
     // Receita (entradas) não tem método
-    const campos = dados.tipo === 'saidas'
-        ? ['tipo', 'data', 'valor', 'metodo', 'categoria']
-        : ['tipo', 'data', 'valor', 'categoria'];
+    const rotulo = { data: 'a data', valor: 'o valor', metodo: 'o método', categoria: 'a categoria' };
+    const obrig = dados.tipo === 'saidas'
+        ? ['data', 'valor', 'metodo', 'categoria']
+        : ['data', 'valor', 'categoria'];
 
-    for (let campo of campos) {
+    for (const campo of obrig) {
         if (!validarCampo(dados[campo])) {
-            return {
-                valido: false,
-                erro: `Campo "${campo}" é obrigatório`
-            };
+            return { valido: false, erro: `Preencha ${rotulo[campo] || campo}` };
         }
     }
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dados.data)) {
-        return { valido: false, erro: 'Data inválida (use dd/mm/aaaa)' };
+        return { valido: false, erro: 'Data inválida — use dd/mm' };
     }
 
     if (isNaN(parseFloat(dados.valor)) || parseFloat(dados.valor) <= 0) {
-        return {
-            valido: false,
-            erro: 'Valor deve ser um número positivo'
-        };
+        return { valido: false, erro: 'O valor precisa ser maior que zero' };
     }
 
-    const met = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
-    if (met && met.metodoKind === 'Crédito' && !dados.competencia) {
-        return { valido: false, erro: 'Informe a competência (mm/aaaa)' };
-    }
-
-    if (typeof RECORRENCIA_DIA_UTIL !== 'undefined'
-        && RECORRENCIA_DIA_UTIL.includes(dados.tipoRecorrencia) && !dados.competencia) {
-        return { valido: false, erro: 'Informe a competência (mm/aaaa)' };
-    }
-
+    // Contas / Parcelada: dia do vencimento (o campo já vem pré-preenchido).
+    // Competência não é pedida: no crédito ela sai da data + fechamento do cartão.
     if ((dados.tipoRecorrencia === 'Mensal' || dados.tipoRecorrencia === 'Parcelada')
         && !(parseInt(dados.diaRecorrencia, 10) >= 1 && parseInt(dados.diaRecorrencia, 10) <= 31)) {
-        return { valido: false, erro: 'Informe o dia de vencimento (1-31)' };
+        return { valido: false, erro: 'Informe o dia do vencimento (1 a 31)' };
     }
 
     if (dados.tipoRecorrencia === 'Parcelada' && !(parseInt(dados.parcelas, 10) >= 1)) {
-        return { valido: false, erro: 'Informe o número de parcelas' };
+        return { valido: false, erro: 'Informe em quantas parcelas' };
     }
 
-    // Semanal com dia da semana fixo: precisa de ao menos 1 semana marcada
     if (dados.tipoRecorrencia === 'Semanal' && dados.diaSemana !== '' && dados.diaSemana != null
         && !(dados.semanas && dados.semanas.length >= 1)) {
-        return { valido: false, erro: 'Marque ao menos uma semana' };
+        return { valido: false, erro: 'Marque pelo menos uma semana' };
     }
 
     return { valido: true };
@@ -450,6 +436,15 @@ function obterDadosFormulario() {
         compISO = mesExib.slice(0, 8) + '01';
         dataISO = dataReceitaMensal(compISO, diaRecorrencia);
     }
+
+    // Crédito (à vista ou parcelada): a competência é sempre derivada da data da
+    // compra + fechamento do cartão — nunca depende de campo obrigatório.
+    const _met = typeof metodoSelecionado === 'function' ? metodoSelecionado() : null;
+    if (!ehEntrada && _met && _met.metodoKind === 'Crédito' && dataISO && !ehDiaUtil) {
+        compISO = competenciaDe(dataISO, _met.diaFechamento || null);
+    }
+    // Última rede: se ainda não há competência, usa o mês em exibição
+    if (!compISO) compISO = mesExib.slice(0, 8) + '01';
 
     return {
         tipo: document.querySelector(SELECTORS.tipoTransacao).value,
