@@ -10,7 +10,9 @@
  */
 function mapearTransacao(row) {
     let valor = parseFloat(row.valor) || 0;
-    let valorMes = row.valor_total != null ? parseFloat(row.valor_total) : valor;
+    // valorMes = valor do mês. Só o Semanal difere (Y = todas as sessões);
+    // NÃO usar valor_total aqui — no parcelado ele é o total do parcelamento.
+    let valorMes = valor;
     const semanas = Array.isArray(row.semanas) ? row.semanas : null;
     const valorSessao = row.valor_sessao != null ? parseFloat(row.valor_sessao) : null;
 
@@ -435,7 +437,12 @@ async function adicionarParceladoAPI(dados) {
                     ? dataReceitaMensal(addMeses(base.competencia, i), base.dia_recorrencia)
                     : addMeses(base.data, i)),
             competencia: i === 0 ? base.competencia : addMeses(base.competencia, i),
-            proxima_data: i < n - 1 ? addMeses(base.competencia, i + 1) : null,
+            // próxima data = data REAL da parcela seguinte (não o 1º dia da competência)
+            proxima_data: i < n - 1
+                ? (base.tipo === 'entradas'
+                    ? dataReceitaMensal(addMeses(base.competencia, i + 1), base.dia_recorrencia)
+                    : addMeses(base.data, i + 1))
+                : null,
             descricao: descParcela(nome, num, n, valor, total)
         });
     }
