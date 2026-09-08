@@ -124,14 +124,7 @@ function configurarSubtabsConfig() {
   if (!barra) return;
   barra.addEventListener('click', e => {
     const btn = e.target.closest('.subtab');
-    if (!btn) return;
-    let sub = btn.dataset.sub;
-    // toggle: clicar na sub-aba já ativa volta para a anterior
-    if (sub === subConfigAtiva) {
-      if (subConfigAnterior && subConfigAnterior !== sub) sub = subConfigAnterior;
-      else return;
-    }
-    mostrarSubConfig(sub);
+    if (btn && btn.dataset.sub !== subConfigAtiva) mostrarSubConfig(btn.dataset.sub);
   });
 }
 

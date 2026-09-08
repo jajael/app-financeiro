@@ -96,24 +96,34 @@ input.campo-travado,
 .add-item-form { background-color: var(--surface-2); border-color: var(--border); }
 
 /* ---------- Abas ---------- */
-.tabs { border-bottom-color: var(--border); }
 .tab-btn { color: var(--text-muted); }
 .tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--primary); }
 .tab-content { color: var(--text); }
 
-/* Receitas / Despesas nas cores dos cards do dashboard (sem detalhe roxo) */
-.tab-btn[data-tab="entradas"],
-.tab-btn[data-tab="entradas"]:hover,
-.tab-btn[data-tab="entradas"].active { color: var(--receita-text); }
-.tab-btn[data-tab="saidas"],
-.tab-btn[data-tab="saidas"]:hover,
-.tab-btn[data-tab="saidas"].active { color: var(--despesa-text); }
-
-.tab-btn[data-tab="entradas"].active { border-bottom-color: var(--receita-text); }
-.tab-btn[data-tab="saidas"].active   { border-bottom-color: var(--despesa-text); }
-.tab-btn[data-tab="entradas"].active::after { background: var(--receita-text); }
-.tab-btn[data-tab="saidas"].active::after   { background: var(--despesa-text); }
+/* Receitas / Despesas nas cores dos cards do dashboard */
+.tab-btn[data-tab="entradas"] {
+    color: var(--receita-text);
+    background: var(--receita-bg);
+    border-color: var(--receita-border);
+}
+.tab-btn[data-tab="saidas"] {
+    color: var(--despesa-text);
+    background: var(--despesa-bg);
+    border-color: var(--despesa-border);
+}
+/* Selecionado: preenchido mais forte + outline na mesma cor */
+.tab-btn[data-tab="entradas"].active {
+    background: color-mix(in srgb, var(--receita-text) 18%, var(--receita-bg));
+    color: var(--receita-text);
+    border-color: var(--receita-text);
+    outline-color: var(--receita-text);
+}
+.tab-btn[data-tab="saidas"].active {
+    background: color-mix(in srgb, var(--despesa-text) 18%, var(--despesa-bg));
+    color: var(--despesa-text);
+    border-color: var(--despesa-text);
+    outline-color: var(--despesa-text);
+}
 
 /* "+ Lançamento": botão principal, sempre em destaque; "+" com cor própria */
 .tab-btn[data-tab="adicionar"],
@@ -122,44 +132,15 @@ input.campo-travado,
     color: #fff;
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     border-color: var(--primary);
-    border-radius: var(--radius-sm);
     font-weight: 700;
+    padding: 0.7rem;
+    font-size: var(--font-size-base);
+    outline: none;
 }
 .tab-mais {
     color: #FFD54A;
     font-weight: 800;
     margin-right: .15rem;
-}
-
-@media (max-width: 768px) {
-    .tabs [data-tab="entradas"] {
-        background: var(--receita-bg);
-        border-color: var(--receita-border);
-    }
-    .tabs [data-tab="saidas"] {
-        background: var(--despesa-bg);
-        border-color: var(--despesa-border);
-    }
-    /* Selecionado: verde/vermelho mais forte, sem roxo */
-    .tabs [data-tab="entradas"].active {
-        background: color-mix(in srgb, var(--receita-border) 55%, var(--receita-bg));
-        border-color: var(--receita-text);
-        box-shadow: none;
-        font-weight: 700;
-    }
-    .tabs [data-tab="saidas"].active {
-        background: color-mix(in srgb, var(--despesa-border) 55%, var(--despesa-bg));
-        border-color: var(--despesa-text);
-        box-shadow: none;
-        font-weight: 700;
-    }
-
-    .tabs [data-tab="adicionar"] {
-        padding: 0.7rem;
-        font-size: var(--font-size-base);
-        box-shadow: var(--shadow-md);
-    }
-    .tabs [data-tab="adicionar"].active { box-shadow: 0 0 0 2px var(--primary), var(--shadow-md); }
 }
 
 /* ---------- Chips / semanas ---------- */

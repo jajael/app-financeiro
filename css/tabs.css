@@ -3,53 +3,44 @@
  * Navegação por abas (Entradas, Saídas, Próximas, Adicionar)
  */
 
+/* Grade fixa: "+ Lançamento" ocupa a linha; Receitas | Despesas | Próximas dividem */
 .tabs {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-xl);
-    border-bottom: 2px solid var(--light);
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    margin-bottom: var(--spacing-md);
 }
 
 .tab-btn {
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: none;
-    border: none;
-    border-bottom: 3px solid transparent;
-    color: var(--gray);
-    font-size: var(--font-size-base);
+    padding: 0.55rem 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
-    transition: all var(--transition-normal);
+    transition: background var(--transition-normal), color var(--transition-normal), border-color var(--transition-normal);
     white-space: nowrap;
-    position: relative;
+    text-align: center;
 }
 
-.tab-btn:hover {
-    color: var(--primary);
-}
+.tab-btn:hover { color: var(--text); }
 
+/* Selecionado: preenchido + outline (sem traço/underline) */
 .tab-btn.active {
+    background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+    border-color: var(--primary);
     color: var(--primary);
-    border-bottom-color: var(--primary);
     font-weight: var(--font-weight-semibold);
+    outline: 2px solid var(--primary);
+    outline-offset: -1px;
 }
 
-.tab-btn::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: var(--primary);
-    opacity: 0;
-}
-
-.tab-btn.active::after {
-    opacity: 1;
-}
+.tabs [data-tab="adicionar"] { order: -1; grid-column: 1 / -1; }
+.tabs [data-tab="entradas"] { order: 1; }
+.tabs [data-tab="saidas"]   { order: 2; }
+.tabs [data-tab="proximas"] { order: 3; }
 
 /* Conteúdo das abas */
 .tab-content {
