@@ -111,8 +111,8 @@
     position: relative;
 }
 
-/* Linha da recorrência: Recorrência + campo auxiliar + Data numa só linha,
-   quebrando só quando não couber (telas muito estreitas) */
+/* Linha da recorrência: duas metades — "Recorrência" (dividida com o campo
+   auxiliar, se houver) e "Data" (largura fixa, sempre a mesma). */
 #linhaRecorrencia {
     display: flex;
     flex-wrap: wrap;
@@ -120,14 +120,26 @@
     gap: .5rem;
     margin-bottom: 0.85rem;
 }
-#linhaRecorrencia > .form-group { margin: 0; min-width: 0; }
-#linhaRecorrencia > #recorrenciaGroup { flex: 2 1 8.5rem; min-width: 0; }
-#linhaRecorrencia > #dataGroup,
-#linhaRecorrencia > #dataCalculadaGroup { flex: 2 1 8rem; min-width: 0; }
-/* Campos auxiliares estreitos ao lado da Recorrência */
-#linhaRecorrencia > .campo-mini { flex: 0 1 5rem; }
-#linhaRecorrencia > .campo-mini--xs { flex: 0 1 4.5rem; }
-#linhaRecorrencia > #diaSemanaGroup { flex: 0 1 6rem; }   /* "s/ dia fixo" */
+#recorrenciaBloco,
+#dataBloco {
+    flex: 1 1 0;
+    min-width: 8rem;
+}
+#dataBloco > .form-group { margin: 0; }
+
+/* Metade da Recorrência: dropdown + (opcional) campo auxiliar lado a lado */
+#recorrenciaBloco {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .4rem;
+}
+#recorrenciaBloco > .form-group { margin: 0; min-width: 0; }
+#recorrenciaBloco > #recorrenciaGroup { flex: 1 1 7rem; }
+#recorrenciaBloco > .campo-mini { flex: 0 1 5rem; }
+#recorrenciaBloco > .campo-mini--xs { flex: 0 1 4.25rem; }
+#recorrenciaBloco > #diaSemanaGroup { flex: 0 1 5.5rem; }   /* "s/ dia fixo" */
+
 #linhaRecorrencia > #pagarVencimentoWrap { flex: 1 0 100%; }
 
 .form-group.full-width {

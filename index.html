@@ -160,45 +160,49 @@
                     
                     <input type="hidden" id="tipoTransacao" value="entradas">
 
-                    <!-- Linha da recorrência: Recorrência + campo auxiliar + Data,
-                         tudo na mesma linha (só quebra em telas muito estreitas) -->
+                    <!-- Linha da recorrência: metade "Recorrência" (dividida com o
+                         campo auxiliar, se houver) + metade "Data" (largura fixa) -->
                     <div class="form-row" id="linhaRecorrencia">
-                        <div class="form-group" id="recorrenciaGroup">
-                            <label for="tipoRecorrencia">Recorrência:</label>
-                            <select id="tipoRecorrencia" required></select>
+                        <div id="recorrenciaBloco">
+                            <div class="form-group" id="recorrenciaGroup">
+                                <label for="tipoRecorrencia">Recorrência:</label>
+                                <select id="tipoRecorrencia" required></select>
+                            </div>
+                            <div class="form-group campo-mini campo-mini--xs" id="parceleGroup" hidden>
+                                <label for="parcelas">Parcelas:</label>
+                                <input type="number" id="parcelas" min="1" max="48" value="1">
+                            </div>
+                            <div class="form-group campo-mini campo-mini--xs" id="diaRecorrenciaGroup" hidden>
+                                <label for="diaRecorrencia">Vencimento</label>
+                                <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
+                            </div>
+                            <div class="form-group campo-mini" id="diaSemanaGroup" hidden>
+                                <label for="diaSemana">Dia</label>
+                                <select id="diaSemana">
+                                    <option value="0">Dom.</option>
+                                    <option value="1">Seg.</option>
+                                    <option value="2">Ter.</option>
+                                    <option value="3">Qua.</option>
+                                    <option value="4">Qui.</option>
+                                    <option value="5">Sex.</option>
+                                    <option value="6">Sáb.</option>
+                                    <option value="" selected>s/ dia fixo</option>
+                                </select>
+                            </div>
+                            <div class="form-group campo-mini" id="mesRefGroup" hidden>
+                                <label for="compRecorrente">Mês de ref.</label>
+                                <input type="text" id="compRecorrente" inputmode="numeric" placeholder="mm" maxlength="2" autocomplete="off">
+                            </div>
                         </div>
-                        <div class="form-group campo-mini campo-mini--xs" id="parceleGroup" hidden>
-                            <label for="parcelas">Parcelas:</label>
-                            <input type="number" id="parcelas" min="1" max="48" value="1">
-                        </div>
-                        <div class="form-group campo-mini campo-mini--xs" id="diaRecorrenciaGroup" hidden>
-                            <label for="diaRecorrencia">Vencimento</label>
-                            <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
-                        </div>
-                        <div class="form-group campo-mini" id="diaSemanaGroup" hidden>
-                            <label for="diaSemana">Dia</label>
-                            <select id="diaSemana">
-                                <option value="0">Dom.</option>
-                                <option value="1">Seg.</option>
-                                <option value="2">Ter.</option>
-                                <option value="3">Qua.</option>
-                                <option value="4">Qui.</option>
-                                <option value="5">Sex.</option>
-                                <option value="6">Sáb.</option>
-                                <option value="" selected>s/ dia fixo</option>
-                            </select>
-                        </div>
-                        <div class="form-group campo-mini" id="mesRefGroup" hidden>
-                            <label for="compRecorrente">Mês de ref.</label>
-                            <input type="text" id="compRecorrente" inputmode="numeric" placeholder="mm" maxlength="2" autocomplete="off">
-                        </div>
-                        <div class="form-group" id="dataGroup">
-                            <label for="data">Data:</label>
-                            <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
-                        </div>
-                        <div class="form-group" id="dataCalculadaGroup" hidden>
-                            <label for="dataCalculada">Data</label>
-                            <input type="text" id="dataCalculada" class="campo-travado" readonly tabindex="-1">
+                        <div id="dataBloco">
+                            <div class="form-group" id="dataGroup">
+                                <label for="data">Data:</label>
+                                <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
+                            </div>
+                            <div class="form-group" id="dataCalculadaGroup" hidden>
+                                <label for="dataCalculada">Data</label>
+                                <input type="text" id="dataCalculada" class="campo-travado" readonly tabindex="-1">
+                            </div>
                         </div>
                         <label class="inline-check inline-check--sm" id="pagarVencimentoWrap" hidden><input type="checkbox" id="pagarVencimento"> <span id="pagarVencimentoLabel">pagar no vencimento</span></label>
                     </div>
