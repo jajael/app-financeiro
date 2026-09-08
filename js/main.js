@@ -31,6 +31,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('📑 Carregando menus...');
     await carregarMenus();
 
+    // Feriados (nacionais calculados + do usuário) — usados no cálculo de dia útil
+    if (typeof carregarFeriados === 'function') {
+        try { await carregarFeriados(); } catch (e) { console.warn('Feriados:', e); }
+    }
+
     // Estado inicial do formulário
     const dataInput = document.querySelector(SELECTORS.data);
     if (dataInput && !dataInput.value) dataInput.value = dataHojeBR();

@@ -29,10 +29,12 @@ function parseDataLocal(dataStr) {
   return new Date(ano, mes - 1, dia);
 }
 
-/** Fim de semana ou feriado fixo? */
+/** Fim de semana ou feriado (nacional calculado + do usuário, via feriados.js)? */
 function ehFimDeSemanaOuFeriado(data) {
   const dow = data.getDay();
   if (dow === 0 || dow === 6) return true;
+  if (typeof ehFeriado === 'function') return ehFeriado(formatarDataISO(data));
+  // fallback se feriados.js não carregou: só os fixos
   return FERIADOS_FIXOS.some(f => f.mes === data.getMonth() + 1 && f.dia === data.getDate());
 }
 

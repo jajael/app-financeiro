@@ -85,3 +85,26 @@ create policy "own menu_itens" on public.menu_itens for all to authenticated
 
 -- Os menus padrão são criados pelo app no primeiro acesso de cada usuário
 -- (js/menus-api.js -> semearMenusPadraoSeVazio), então não há seed global aqui.
+
+-- ============================================================
+-- Feriados (adicionado depois — aplicado via migração "create_feriados")
+-- Nacionais: calculados no front (js/feriados.js). Uma linha origem='nacional'
+-- só existe quando o usuário desativa/reativa um deles, ou ao sincronizar
+-- com a BrasilAPI. Feriados origem='usuario' são livres (criar/apagar).
+-- ============================================================
+create table if not exists public.feriados (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  data date not null,
+  nome text not null,
+  origem text not null default 'usuario' check (origem in ('nacional','usuario')),
+  ativo boolean not null default true,
+  created_at timestamptz not null default now(),
+  unique (user_id, data, origem)
+);
+alter table public.feriados enable row level security;
+create policy "feriados_select_own" on public.feriados for select using (user_id = auth.uid());
+create policy "feriados_insert_own" on public.feriados for insert with check (user_id = auth.uid());
+create policy "feriados_update_own" on public.feriados for update using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "feriados_delete_own" on public.feriados for delete using (user_id = auth.uid());
+create index if not exists feriados_user_data_idx on public.feriados (user_id, data);
