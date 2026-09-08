@@ -417,7 +417,6 @@ async function adicionarParceladoAPI(dados) {
     // dados.valor é o valor de CADA parcela; o total é valor x nº de parcelas
     const valorParcela = parseFloat(dados.valor) || 0;
     const total = Math.round(valorParcela * n * 100) / 100;
-    const nome = dados.descricao || dados.categoria;
 
     const base = montarRegistro(dados);
     base.grupo_id = grupoId;
@@ -443,7 +442,7 @@ async function adicionarParceladoAPI(dados) {
                     ? dataReceitaMensal(addMeses(base.competencia, i + 1), base.dia_recorrencia)
                     : addMeses(base.data, i + 1))
                 : null,
-            descricao: descParcela(nome, num, n, valor, total)
+            descricao: dados.descricao || ''   // exatamente o que o usuário digitou
         });
     }
 
@@ -460,20 +459,18 @@ async function adicionarParceladoAPI(dados) {
  */
 async function quitarParcelamentoAPI(id, quitar) {
     const { data: alvo, error: e1 } = await sb.from('transacoes')
-        .select('grupo_id, competencia, parcela_num, parcelas_total, valor_total, tipo_recorrencia, descricao')
+        .select('grupo_id, competencia, parcela_num, parcelas_total, valor_total, tipo_recorrencia')
         .eq('id', id).single();
     if (e1) throw e1;
     if (!alvo.grupo_id || alvo.tipo_recorrencia !== 'Parcelada') throw new Error('Não é um parcelamento');
 
     const { data: rows, error: e2 } = await sb.from('transacoes')
-        .select('id, parcela_num, descricao')
+        .select('id, parcela_num')
         .eq('grupo_id', alvo.grupo_id).order('parcela_num');
     if (e2) throw e2;
 
     const n = alvo.parcelas_total || rows.length;
     const total = alvo.valor_total;
-    const nome = nomeBaseParcela(alvo.descricao) || 'Parcela';
-    const mm = competenciaParaBR(alvo.competencia);
 
     let updates;
     if (quitar) {
@@ -483,17 +480,14 @@ async function quitarParcelamentoAPI(id, quitar) {
         const saldoR = Math.round(saldo * 100) / 100;
 
         updates = rows.filter(r => r.parcela_num >= k).map(r => r.parcela_num === k
-            ? { id: r.id, patch: { valor: saldoR, quitada: false, quitado_em: alvo.competencia,
-                  descricao: descParcela(nome, r.parcela_num, n, saldoR, total, 'quitado') } }
-            : { id: r.id, patch: { valor: 0, quitada: true, quitado_em: alvo.competencia,
-                  descricao: descParcela(nome, r.parcela_num, n, 0, total, `quitado em ${mm}`) } });
+            ? { id: r.id, patch: { valor: saldoR, quitada: false, quitado_em: alvo.competencia } }
+            : { id: r.id, patch: { valor: 0, quitada: true, quitado_em: alvo.competencia } });
     } else {
         updates = rows.map(r => ({
             id: r.id,
             patch: {
                 valor: valorParcelaOriginal(total, n, r.parcela_num),
-                quitada: false, quitado_em: null,
-                descricao: descParcela(nome, r.parcela_num, n, valorParcelaOriginal(total, n, r.parcela_num), total)
+                quitada: false, quitado_em: null
             }
         }));
     }

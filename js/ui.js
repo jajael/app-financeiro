@@ -268,6 +268,14 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
     const ehParcela = !!trans.parcelasTotal;
     const ehOriginal = ehParcela && trans.parcelaNum === 1;
 
+    // Info da parcela (nunca vai para a descrição — vem dos campos da linha)
+    const parcelaTag = ehParcela
+        ? `<span class="parcela-tag" title="Parcelamento de ${formatarMoeda(trans.valorTotal || 0)}">${trans.parcelaNum}/${trans.parcelasTotal}</span>`
+        : '';
+    const quitadoTag = ehParcela && trans.quitadoEm
+        ? `<span class="quitado-badge">quitado ${typeof mesTri === 'function' ? mesTri(String(trans.quitadoEm).slice(5, 7)) + '/' + String(trans.quitadoEm).slice(2, 4) : ''}</span>`
+        : '';
+
     // Botão expandir/colapsar — fica no canto esquerdo, ao lado do dia
     const toggle = compacto
         ? `<button class="btn-expandir" data-act="expandir-trans" data-id="${trans.id}" title="Ver detalhes">+</button>`
@@ -305,8 +313,10 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             ${lado}
             <span class="despesa-valor">${sinal} ${valorFormatado}</span>
+            ${parcelaTag}
             ${quandoTag}
             ${tagPendente}
+            ${quitadoTag}
             <div class="despesa-actions">${acoes}</div>
         </div>`;
     }
@@ -328,8 +338,10 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
             <div class="despesa-info">
                 <div class="despesa-topo">
                     <span class="despesa-valor">${sinal} ${valorFormatado}</span>
+                    ${parcelaTag}
                     ${quandoTag}
                     ${tagPendente}
+                    ${quitadoTag}
                 </div>
                 <div class="despesa-chips">${metodoChip}${catChip}</div>
                 ${descLinha}
