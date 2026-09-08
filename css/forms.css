@@ -24,10 +24,12 @@
     margin: 0;
     color: var(--dark);
     font-size: 1.2rem;
-    padding-right: 2.4rem;   /* espaço para o botão "×" no canto */
+    text-align: center;
+    padding: 0 2.2rem;   /* respiro para o botão "×" no canto */
 }
 
-/* Botão "×" para limpar / fechar o formulário — canto superior direito */
+/* Botão "×" para limpar / fechar o formulário — canto superior direito.
+   O X é uma imagem SVG (não usa transform, que o reset de animações zera no hover) */
 .btn-fechar-form {
     position: absolute;
     top: 1rem;
@@ -36,25 +38,16 @@
     height: 1.9rem;
     border: 1px solid var(--border-strong);
     border-radius: 50%;
-    background: var(--surface-2);
-    color: var(--text-muted);
-    font-size: 0;            /* esconde o glifo; o X é desenhado abaixo */
+    background-color: var(--surface-2);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 2.5l7 7M9.5 2.5l-7 7' stroke='%236B7280' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: .8rem;
+    font-size: 0;
     cursor: pointer;
     padding: 0;
 }
-.btn-fechar-form::before,
-.btn-fechar-form::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: .78rem;
-    height: 2px;
-    background: currentColor;
-}
-.btn-fechar-form::before { transform: translate(-50%, -50%) rotate(45deg); }
-.btn-fechar-form::after  { transform: translate(-50%, -50%) rotate(-45deg); }
-.btn-fechar-form:hover { background: var(--surface-3); color: var(--text); }
+.btn-fechar-form:hover { background-color: var(--surface-3); }
 
 /* Seletor de tipo: sempre abaixo do título, dividindo 100% */
 .tipo-selector {
@@ -137,15 +130,18 @@
 #dataBloco { position: relative; }
 #dataBloco > .form-group { margin: 0; }
 
-/* Label "Pagamento" + checkbox "pagar no vcto." na mesma linha, um ao lado do outro */
+/* Label "Pagamento" + chip "pagar no vcto." na mesma linha.
+   Altura travada = altura de um label normal, para o input de baixo ficar
+   alinhado com o dos outros campos (o chip transborda sem empurrar). */
 #dataGroup .label-linha {
     display: flex;
     align-items: center;
     gap: .45rem;
-    flex-wrap: wrap;
+    height: 1.15rem;   /* = altura de um label normal (.form-group label) */
+    margin-bottom: .25rem;
 }
-#dataGroup .label-linha > label[for="data"] { margin-bottom: .25rem; }
-#dataGroup .label-linha > #pagarVencimentoWrap { margin: 0 0 .25rem; }
+#dataGroup .label-linha > * { margin: 0 !important; }
+#dataGroup .label-linha > #pagarVencimentoWrap { flex: none; }
 
 /* Metade da Recorrência: dropdown + (opcional) campo auxiliar lado a lado,
    sempre na mesma linha (Recorrência + Qtd. + Vencimento/Dia pg.) */
@@ -506,12 +502,12 @@
 .hint-inline { font-weight: 400; color: #6B7280; font-size: .85em; }
 .semanas-chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;      /* nunca passa de 1 linha */
   gap: .3rem;
 }
 .semanas-chips .chip {
-  flex: 1 1 auto;
-  min-width: 1.9rem;
+  flex: 1 1 0;
+  min-width: 0;
   min-height: 2.2rem;   /* mesma altura dos inputs de preenchimento */
   display: flex;
   align-items: center;
@@ -520,8 +516,8 @@
   border: 1px solid #D1D5DB;
   background: #fff;
   color: #374151;
-  border-radius: 999px;
-  padding: 0 .4rem;
+  border-radius: var(--radius-sm);   /* mesmo canto dos campos */
+  padding: 0 .3rem;
   font-size: .8rem;
   line-height: 1.2;
   cursor: pointer;
