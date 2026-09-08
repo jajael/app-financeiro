@@ -106,9 +106,13 @@ async function carregarAbaMenus() {
           <button type="button" class="mini-btn" data-fer-ano="-1">←</button>
           <span id="feriadosAno"></span>
           <button type="button" class="mini-btn" data-fer-ano="1">→</button>
-          <button type="button" class="mini-btn feriados-sync" id="btnSyncFeriados" title="Buscar novos feriados nacionais na BrasilAPI">↻ sincronizar</button>
+          <select id="feriadosUf" class="mini-btn" title="Feriados estaduais desta UF ao sincronizar">
+            <option value="">UF…</option>
+            ${(typeof UFS_BR !== 'undefined' ? UFS_BR : []).map(u => `<option value="${u}">${u}</option>`).join('')}
+          </select>
+          <button type="button" class="mini-btn feriados-sync" id="btnSyncFeriados" title="Buscar feriados nacionais (e da UF) na Nager.Date">↻ sincronizar</button>
         </div>
-        <p class="menu-hint">Nacionais são calculados automaticamente; não podem ser apagados, só desativados. Você pode adicionar os seus (e apagá-los).</p>
+        <p class="menu-hint">Nacionais são calculados automaticamente; não podem ser apagados, só desativados. "Sincronizar" busca na Nager.Date os nacionais e — se escolher uma UF — os feriados estaduais. Municipais: cadastre em "Meus feriados".</p>
         <div class="menu-list" id="feriadosNacionaisList"></div>
         <h4 class="feriados-subtitulo">Meus feriados</h4>
         <div class="menu-list" id="feriadosUsuarioList"></div>
@@ -132,6 +136,11 @@ async function carregarAbaMenus() {
   renderFeriados();
   const secFer = document.querySelector('.menu-section[data-sub="fer"]');
   if (secFer) secFer.addEventListener('click', onFeriadosClick);
+  const selUf = document.getElementById('feriadosUf');
+  if (selUf && typeof feriadosUF === 'function') {
+    selUf.value = feriadosUF();
+    selUf.addEventListener('change', () => definirFeriadosUF(selUf.value));
+  }
 }
 
 let feriadosAnoView = new Date().getFullYear();
@@ -188,8 +197,8 @@ async function onFeriadosClick(e) {
     btn.textContent = '↻ ...';
     try {
       const anos = [feriadosAnoView, feriadosAnoView + 1];
-      const n = await sincronizarFeriadosBrasilAPI(anos);
-      mostrarNotificacao(n ? `✓ ${n} feriado(s) nacional(is) adicionado(s)` : '✓ Já está tudo atualizado', 'sucesso');
+      const n = await sincronizarFeriados(anos);
+      mostrarNotificacao(n ? `✓ ${n} feriado(s) adicionado(s)` : '✓ Já está tudo atualizado', 'sucesso');
       renderFeriados();
       if (typeof atualizarUI === 'function') atualizarUI();
     } catch (err) {
