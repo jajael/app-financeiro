@@ -589,8 +589,11 @@ async function atualizarProximasTransacoes() {
         const proximas = [...proximasEntradas, ...proximasSaidas]
             .sort((a, b) => new Date(a.proximaData) - new Date(b.proximaData));
         
+        const faturasHTML = renderFaturasCartao();
+
         if (proximas.length === 0) {
-            container.innerHTML = '<p class="empty-message">Nenhuma transação programada nos próximos 30 dias</p>';
+            container.innerHTML = faturasHTML
+                + '<p class="empty-message">Nenhuma transação programada nos próximos 30 dias</p>';
             container.onclick = null;
             _proximasCtx = [];
             return;
@@ -604,7 +607,7 @@ async function atualizarProximasTransacoes() {
             return { trans: { ...trans, data: trans.proximaData }, tipoUI, opts: { quando, semAcoes: true } };
         });
 
-        container.innerHTML = _proximasCtx
+        container.innerHTML = faturasHTML + _proximasCtx
             .map(c => gerarHTMLTransacao(c.trans, c.tipoUI, c.opts))
             .join('');
         container.onclick = onListaTransacaoClick;
@@ -612,6 +615,39 @@ async function atualizarProximasTransacoes() {
         console.error('Erro ao atualizar próximas transações:', error);
         container.innerHTML = '<p class="empty-message">Erro ao carregar próximas transações</p>';
     }
+}
+
+/** Bloco "Faturas de cartão" no topo das Próximas: cada cartão de crédito
+ *  com o total lançado no mês e o dia de vencimento. */
+function renderFaturasCartao() {
+    const cartoes = ((estadoApp.menus && estadoApp.menus.metodos) || [])
+        .filter(m => m.metodoKind === 'Crédito');
+    if (!cartoes.length) return '';
+    const mes = estadoApp.mesAtual || new Date();
+    const ultimoDia = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate();
+    const coresMet = (estadoApp.menus && estadoApp.menus.cores && estadoApp.menus.cores.metodo) || {};
+    const valorDe = t => (t.valorMes != null ? t.valorMes : t.valor) || 0;
+
+    const linhas = cartoes.map(m => {
+        const rot = (typeof rotuloMetodo === 'function') ? rotuloMetodo(m) : m.nome;
+        const total = estadoApp.transacoes.saidas
+            .filter(t => t.metodo === rot)
+            .reduce((s, t) => s + valorDe(t), 0);
+        if (!total) return '';
+        const diaV = Math.min(parseInt(m.diaVencimento, 10) || 1, ultimoDia);
+        const venc = `${String(diaV).padStart(2, '0')}/${String(mes.getMonth() + 1).padStart(2, '0')}`;
+        const cor = coresMet[rot] || (typeof corPadraoChip === 'function' ? corPadraoChip(rot) : 'var(--primary)');
+        return `
+        <div class="fatura-item" style="--cor-cartao:${cor}">
+            <span class="fatura-nome">${rot}</span>
+            <span class="fatura-venc">vence ${venc}</span>
+            <span class="fatura-total">${formatarMoeda(total)}</span>
+        </div>`;
+    }).filter(Boolean).join('');
+
+    return linhas
+        ? `<div class="faturas-cartao"><h3 class="faturas-titulo">Faturas de cartão</h3>${linhas}</div>`
+        : '';
 }
 
 /**
