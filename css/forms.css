@@ -140,12 +140,12 @@
 /* Label "Pagamento" + checkbox "pagar no vcto." na mesma linha, um ao lado do outro */
 #dataGroup .label-linha {
     display: flex;
-    align-items: baseline;
-    gap: .5rem;
+    align-items: center;
+    gap: .45rem;
     flex-wrap: wrap;
 }
-#dataGroup .label-linha > label { margin-bottom: .25rem; }
-#dataGroup .label-linha > #pagarVencimentoWrap { margin: 0; }
+#dataGroup .label-linha > label[for="data"] { margin-bottom: .25rem; }
+#dataGroup .label-linha > #pagarVencimentoWrap { margin: 0 0 .25rem; }
 
 /* Metade da Recorrência: dropdown + (opcional) campo auxiliar lado a lado,
    sempre na mesma linha (Recorrência + Qtd. + Vencimento/Dia pg.) */
@@ -160,6 +160,8 @@
 #recorrenciaBloco > .campo-mini { flex: 0 1 5rem; }
 /* Boxes de 2 dígitos: menor largura possível (Vcto., Qtd., Dia pg., Mês de ref.) */
 #recorrenciaBloco > .campo-mini--xs { flex: 0 0 2.6rem; }
+/* "Dia pgto." (receita) precisa de um pouco mais de largura que "Vcto." */
+#recorrenciaBloco > .campo-mini--wide { flex: 0 0 4.1rem; }
 .campo-mini--xs input {
     padding-left: .3rem;
     padding-right: .3rem;
@@ -177,8 +179,6 @@
 /* Semanas do mês ocupam a metade da "Data" quando a recorrência é Semanal */
 #dataBloco > #semanasChipsGroup { margin: 0; }
 #dataBloco > #semanasChipsGroup .semanas-chips { gap: .25rem; }
-
-#linhaRecorrencia > #pagarVencimentoWrap { flex: 1 0 100%; }
 
 .form-group.full-width {
     grid-column: 1 / -1;
@@ -433,16 +433,29 @@
 .inline-check input { width: auto; }
 .inline-check span { font-size: inherit; font-style: inherit; }
 
-/* Variante compacta e em itálico (checkbox "pagar no vencimento") */
-.inline-check--sm {
-    font-size: .72rem;
-    font-style: italic;
-    font-weight: 400;
-    gap: .3rem;
-    margin-top: .1rem;
-    color: var(--text-muted);
+/* "pagar no vcto." como chip toggle (não selecionado por default) */
+.chip-toggle {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    padding: .12rem .5rem;
+    border: 1px solid var(--border-strong, #D1D5DB);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--text-muted, #6B7280);
+    font-size: .68rem;
+    line-height: 1.4;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--transition-normal), color var(--transition-normal), border-color var(--transition-normal);
 }
-.inline-check--sm input { transform: scale(.85); }
+.chip-toggle:hover { border-color: var(--primary); color: var(--primary); }
+.chip-toggle:has(input:checked) {
+    background: var(--primary, #4F46E5);
+    border-color: var(--primary, #4F46E5);
+    color: #fff;
+}
 
 /* 2º rótulo dentro do mesmo form-group (ex.: "Data (automática)") */
 .rotulo-secundario { margin-top: .5rem; }
@@ -499,12 +512,16 @@
 .semanas-chips .chip {
   flex: 1 1 auto;
   min-width: 1.9rem;
+  min-height: 2.2rem;   /* mesma altura dos inputs de preenchimento */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   border: 1px solid #D1D5DB;
   background: #fff;
   color: #374151;
   border-radius: 999px;
-  padding: .3rem .4rem;
+  padding: 0 .4rem;
   font-size: .8rem;
   line-height: 1.2;
   cursor: pointer;
