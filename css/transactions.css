@@ -53,17 +53,17 @@
     color: var(--text);
 }
 
+/* ---- Card único do lançamento: DIA DOW — VALOR MÉTODO CATEGORIA DESCRIÇÃO ---- */
 .despesa-item {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: .7rem;
-    padding: var(--spacing-md);
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: .3rem .5rem;
+    padding: .55rem var(--spacing-md);
     background: var(--light);
     border-left: 4px solid var(--secondary);
     border-radius: var(--radius-sm);
-    transition: all var(--transition-normal);
-    cursor: pointer;   /* o box inteiro expande/retrai */
+    transition: box-shadow var(--transition-normal);
 }
 
 .despesa-item:hover {
@@ -78,78 +78,39 @@
     border-left-color: var(--danger);
 }
 
-.despesa-info {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-}
-
-/* Canto esquerdo: botão +/- centralizado ao lado do dia */
-.despesa-lado {
-    flex: 0 0 auto;
-    align-self: center;
-    display: flex;
-    align-items: center;
-    gap: .3rem;
-}
-
-/* Dia do mês + tricode do dia da semana */
+/* Dia do mês + tricode do dia da semana (ex.: 28 SEG) */
 .despesa-data {
-    display: flex;
+    flex: 0 0 auto;
+    display: inline-flex;
     align-items: baseline;
-    justify-content: center;
     gap: .25rem;
+    font-variant-numeric: tabular-nums;
 }
 .despesa-dia {
-    font-size: 2rem;
+    font-size: 1.05rem;
     line-height: 1;
     font-weight: var(--font-weight-bold);
     color: var(--text);
-    font-variant-numeric: tabular-nums;
-    text-align: center;
 }
 .despesa-dow {
+    font-size: .9rem;
     font-weight: var(--font-weight-medium);
-    letter-spacing: .02em;
     color: var(--text-muted);
-    text-align: center;
 }
 
-/* Compacto: "07 SEG" na mesma linha, mesmo tamanho de fonte */
-.despesa-item.compacta .despesa-dia { font-size: 1.15rem; }
-.despesa-item.compacta .despesa-dow { font-size: 1.15rem; letter-spacing: 0; }
-
-/* Expandido: 07 em cima, SEG embaixo — bloco de largura parecida */
-.despesa-item:not(.compacta) .despesa-data {
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    min-width: 2.6rem;
-}
-.despesa-item:not(.compacta) .despesa-dow {
-    font-size: 1.1rem;
+.despesa-valor {
     font-weight: var(--font-weight-semibold);
-    letter-spacing: .12em;
-    margin-right: -.12em;   /* compensa o letter-spacing p/ centralizar */
+    white-space: nowrap;
 }
 
-/* Linha 1: valor + badges */
-.despesa-topo {
-    display: flex;
-    align-items: baseline;
-    gap: .4rem;
-    flex-wrap: wrap;
-}
-
-/* Linha 2: método (deixa o chip quebrar para a linha de baixo, sem cortar) */
-.despesa-metodo {
-    font-size: var(--font-size-sm);
+/* Descrição — no fim da linha, discreta */
+.despesa-desc {
     color: var(--text-muted);
+    font-style: italic;
+    word-break: break-word;
 }
 
-/* "Chip" / tarjinha colorida para método e categoria */
+/* "Chip" / tarjinha colorida para método / categoria / recorrência */
 .chip {
     display: inline-block;
     font-size: 0.72rem;
@@ -166,15 +127,6 @@
 }
 .chip--neutro { background: var(--surface-3); color: var(--text-muted); }
 
-/* Método + categoria lado a lado (box expandido) */
-.despesa-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .3rem;
-    align-items: center;
-    line-height: 1.3;
-    margin: 1px 0;
-}
 /* Info da parcela: "3/12" */
 .parcela-tag {
     font-size: .68rem;
@@ -206,50 +158,6 @@
     padding: .05rem .45rem;
     white-space: nowrap;
 }
-
-/* Box completo: uma coisa por linha */
-.despesa-cat { line-height: 1.3; }
-.despesa-desc-linha {
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-    line-height: 1.35;
-    word-break: break-word;
-    padding-left: 0.55rem;   /* alinha com o texto dos chips de método/categoria */
-    font-style: italic;
-}
-
-/* ---- Lançamento compacto (visão padrão) ---- */
-.despesa-item.compacta {
-    gap: .55rem;
-}
-.despesa-item.compacta .despesa-dia {
-    font-size: 1.15rem;
-    min-width: 1.4em;
-}
-.despesa-item.compacta .despesa-valor {
-    flex: 1;
-    font-size: 1rem;
-}
-
-/* Botão +/- ao lado do dia */
-.btn-expandir {
-    flex: none;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: 1px solid var(--border-strong);
-    border-radius: 50%;
-    background: var(--surface-2);
-    color: var(--text-muted);
-    font-weight: 700;
-    font-size: .95rem;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.btn-expandir:hover { background: var(--surface-3); color: var(--text); }
 
 /* Ícones de editar/excluir menores nas listas */
 .despesa-actions .btn-icon {
@@ -459,7 +367,7 @@
   align-items: center;
   gap: .25rem;
   flex-shrink: 0;
-  margin-left: .5rem;
+  margin-left: auto;
 }
 .despesa-actions .btn-icon.armed {
   width: auto;

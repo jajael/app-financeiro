@@ -145,3 +145,9 @@ update public.menu_itens
 --     (o app cria as que faltarem em garantirRecorrenciasNoBanco()).
 -- ============================================================
 alter table public.menu_itens add column if not exists cor text;
+
+-- ============================================================
+-- 13) Remove o travessão do rótulo do método ("Crédito — Bradesco" -> "Crédito Bradesco")
+--     O app passou a gravar "Crédito Bradesco"; isto normaliza os lançamentos antigos.
+-- ============================================================
+update public.transacoes set metodo = replace(metodo, ' — ', ' ') where metodo like '% — %';

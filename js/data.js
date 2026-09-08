@@ -269,7 +269,7 @@ function calcularResumoMes() {
             } else if (t.tipoRecorrencia === 'Semanal' && t.valorMes != null) {
                 realizado = t.valor || 0;                 // X (sessões já ocorridas)
             } else {
-                realizado = (!t.pendente && String(t.data).slice(0, 10) <= hoje) ? tot : 0;
+                realizado = (!t.pendente && String(t.data).slice(0, 10) < hoje) ? tot : 0;
             }
             total += tot;
             atual += realizado;
