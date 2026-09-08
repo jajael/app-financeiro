@@ -128,7 +128,7 @@
 .cell-linha > .form-group { flex: 1 1 auto; min-width: 0; }
 
 /* Campo estreito: dia do vencimento / mês de competência / nº de parcelas */
-.form-group.campo-dia { flex: 0 0 5.5rem; }
+.form-group.campo-dia { flex: 0 0 5rem; }
 
 /* Subcampos internos de #dataCalculadaGroup (mês + data automática) */
 #dataCalculadaGroup { display: flex; gap: .5rem; align-items: flex-start; }
@@ -138,7 +138,7 @@
     flex: 1 1 auto;
     min-width: 0;
 }
-#dataCalculadaGroup .sub-campo.campo-dia { flex: 0 0 5.5rem; }
+#dataCalculadaGroup .sub-campo.campo-dia { flex: 0 0 5rem; }
 #dataCalculadaGroup .rotulo-secundario { margin-top: 0; }
 
 .form-group.full-width {
