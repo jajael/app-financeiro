@@ -255,10 +255,11 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
     const cor = (mapa, nome) => (mapa && mapa[nome]) || corPadraoChip(nome);
     const chip = (c, txt) => `<span class="chip" style="background:${c}" title="${String(txt).replace(/"/g, '&quot;')}">${txt}</span>`;
 
-    // Dia do mês (sem mês/ano)
-    const diaFormatado = trans.data
-        ? String(parseDataLocal(trans.data).getDate()).padStart(2, '0')
-        : '--';
+    // Dia do mês + tricode do dia da semana (ex.: 07 SEG)
+    const _dowTri = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+    const _dt = trans.data ? parseDataLocal(trans.data) : null;
+    const diaFormatado = _dt ? String(_dt.getDate()).padStart(2, '0') : '--';
+    const dowFormatado = _dt ? _dowTri[_dt.getDay()] : '';
 
     const tagPendente = trans.pendente
         ? '<span class="pendente-badge">a confirmar</span>' : '';
@@ -271,7 +272,10 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
     const toggle = compacto
         ? `<button class="btn-expandir" data-act="expandir-trans" data-id="${trans.id}" title="Ver detalhes">+</button>`
         : `<button class="btn-expandir" data-act="colapsar-trans" data-id="${trans.id}" title="Recolher">−</button>`;
-    const lado = `<div class="despesa-lado">${toggle}<span class="despesa-dia">${diaFormatado}</span></div>`;
+    const lado = `<div class="despesa-lado">${toggle}<span class="despesa-data">`
+        + `<span class="despesa-dia">${diaFormatado}</span>`
+        + (dowFormatado ? `<span class="despesa-dow">${dowFormatado}</span>` : '')
+        + `</span></div>`;
 
     // Ações (nas "próximas" fica só o botão de expandir)
     let acoes = '';
@@ -307,18 +311,17 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
         </div>`;
     }
 
-    // Box completo
-    let metodoLinha = '';
+    // Box completo — método e categoria como chips lado a lado
+    let metodoChip = '';
     if (trans.metodo) {
-        metodoLinha = `<div class="despesa-metodo">${chip(cor(cores.metodo, trans.metodo), trans.metodo)}</div>`;
+        metodoChip = chip(cor(cores.metodo, trans.metodo), trans.metodo);
     } else if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
-        metodoLinha = `<div class="despesa-metodo">${trans.formaPagamento}</div>`;
+        metodoChip = `<span class="chip chip--neutro">${trans.formaPagamento}</span>`;
     }
     const catChip = chip(cor(cores.categoria, trans.categoria), trans.categoria);
     const descLinha = trans.descricao
         ? `<div class="despesa-desc-linha">${trans.descricao}</div>` : '';
 
-    // Box completo: uma coisa por linha — valor / método / categoria / descrição
     return `
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             ${lado}
@@ -328,8 +331,7 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
                     ${quandoTag}
                     ${tagPendente}
                 </div>
-                ${metodoLinha}
-                <div class="despesa-cat">${catChip}</div>
+                <div class="despesa-chips">${metodoChip}${catChip}</div>
                 ${descLinha}
             </div>
             <div class="despesa-actions">${acoes}</div>
