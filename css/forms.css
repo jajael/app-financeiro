@@ -125,20 +125,35 @@
     flex: 1 1 0;
     min-width: 8rem;
 }
+#dataBloco { position: relative; }
 #dataBloco > .form-group { margin: 0; }
 
-/* Metade da Recorrência: dropdown + (opcional) campo auxiliar lado a lado */
+/* Checkbox "pagar no vencimento" ao lado da label "Pagamento" */
+#dataBloco > #pagarVencimentoWrap {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0;
+    max-width: 62%;
+}
+#dataBloco:has(> #pagarVencimentoWrap:not([hidden])) #dataGroup > label {
+    padding-right: 7rem;
+}
+
+/* Metade da Recorrência: dropdown + (opcional) campo auxiliar lado a lado,
+   sempre na mesma linha (Recorrência + Qtd. + Vencimento/Dia pg.) */
 #recorrenciaBloco {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: flex-start;
     gap: .4rem;
 }
 #recorrenciaBloco > .form-group { margin: 0; min-width: 0; }
-#recorrenciaBloco > #recorrenciaGroup { flex: 1 1 7rem; }
+#recorrenciaBloco > #recorrenciaGroup { flex: 1 1 5rem; }
 #recorrenciaBloco > .campo-mini { flex: 0 1 5rem; }
 #recorrenciaBloco > .campo-mini--xs { flex: 0 1 4.25rem; }
-#recorrenciaBloco > #diaSemanaGroup { flex: 0 1 5.5rem; }   /* "s/ dia fixo" */
+#recorrenciaBloco > #parceleGroup { flex: 0 1 3.25rem; }   /* só "Qtd." */
+#recorrenciaBloco > #diaSemanaGroup { flex: 0 1 5.5rem; }  /* "s/ dia fixo" */
 
 #linhaRecorrencia > #pagarVencimentoWrap { flex: 1 0 100%; }
 
