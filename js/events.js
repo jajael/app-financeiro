@@ -281,6 +281,9 @@ function mudarAba(novaAba) {
     } else if (novaAba === 'menus') {
         // Carregar aba de gerenciamento de menus
         carregarAbaMenus();
+    } else if (novaAba === 'adicionar' && !estadoApp.editandoId) {
+        // Abrir "+ Lançamento" novo: começa sempre limpo e coerente
+        if (typeof limparFormulario === 'function') limparFormulario();
     }
 }
 

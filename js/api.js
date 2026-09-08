@@ -87,22 +87,28 @@ async function carregarTransacoes(tipo, mes, ano) {
 }
 
 /**
- * Carrega transações recorrentes que "vencem" nos próximos 30 dias
+ * Recorrentes que ainda vão acontecer NO MÊS em exibição (a partir de hoje,
+ * quando o mês exibido é o corrente).
  */
-async function carregarProximas(tipo) {
+async function carregarProximas(tipo, mes, ano) {
     try {
-        const hoje = new Date();
-        const em30 = new Date(hoje.getTime() + 30 * 24 * 60 * 60 * 1000);
-        const iso = d => d.toISOString().slice(0, 10);
+        const agora = new Date();
+        const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const y = ano || agora.getFullYear();
+        const m = mes || (agora.getMonth() + 1);
+        const ini = new Date(y, m - 1, 1);
+        const fim = new Date(y, m, 0);              // último dia do mês
+        const de = ini > hoje ? ini : hoje;        // não mostra o que já passou
+        if (fim < de) return [];                    // mês já encerrado
 
         const { data, error } = await sb
             .from('transacoes')
             .select('*')
             .eq('tipo', tipo)
             .neq('tipo_recorrencia', 'Pontual')
-            .gte('proxima_data', iso(hoje))
-            .lte('proxima_data', iso(em30))
-            .order('proxima_data', { ascending: true });
+            .gte('data', formatarDataISO(de))
+            .lte('data', formatarDataISO(fim))
+            .order('data', { ascending: true });
 
         if (error) throw error;
         return (data || []).map(mapearTransacao);

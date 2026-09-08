@@ -137,7 +137,7 @@
             <!-- Tab: Próximas Transações -->
             <section id="proximas" class="tab-content">
                 <div class="proximas-container">
-                    <h2>Próximas Transações (30 dias)</h2>
+                    <h2 id="proximasTitulo">Próximas transações</h2>
                     <div id="proximasLista" class="transacoes-lista">
                         <!-- Próximas transações -->
                     </div>
@@ -211,6 +211,17 @@
                                 </div>
                                 <input type="text" id="data" inputmode="numeric" placeholder="dd/mm" maxlength="5" autocomplete="off" required>
                             </div>
+                            <div class="form-group campo-mini" id="competenciaGroup" hidden>
+                                <label for="competencia">Comp.</label>
+                                <select id="competencia">
+                                    <option value="01">JAN</option><option value="02">FEV</option>
+                                    <option value="03">MAR</option><option value="04">ABR</option>
+                                    <option value="05">MAI</option><option value="06">JUN</option>
+                                    <option value="07">JUL</option><option value="08">AGO</option>
+                                    <option value="09">SET</option><option value="10">OUT</option>
+                                    <option value="11">NOV</option><option value="12">DEZ</option>
+                                </select>
+                            </div>
                             <div class="form-group" id="dataCalculadaGroup" hidden>
                                 <label for="dataCalculada">Data</label>
                                 <input type="text" id="dataCalculada" class="campo-travado" readonly tabindex="-1">
@@ -233,17 +244,6 @@
                                 </select>
                                 <button type="button" id="btnNovoMetodo" class="btn-mini-add" title="Novo método">+</button>
                             </div>
-                        </div>
-                        <div class="form-group" id="competenciaGroup" hidden>
-                            <label for="competencia">Competência</label>
-                            <select id="competencia">
-                                <option value="01">JAN</option><option value="02">FEV</option>
-                                <option value="03">MAR</option><option value="04">ABR</option>
-                                <option value="05">MAI</option><option value="06">JUN</option>
-                                <option value="07">JUL</option><option value="08">AGO</option>
-                                <option value="09">SET</option><option value="10">OUT</option>
-                                <option value="11">NOV</option><option value="12">DEZ</option>
-                            </select>
                         </div>
                         <div id="valorBloco">
                             <div class="form-group" id="valorGroup">

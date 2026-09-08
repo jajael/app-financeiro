@@ -28,6 +28,11 @@ function atualizarUI() {
     // Atualizar listas
     atualizarEntradasLista();
     atualizarSaidasLista();
+
+    // "Próximas" acompanha o mês em exibição
+    if (document.getElementById('proximas')?.classList.contains('active')) {
+        atualizarProximasTransacoes();
+    }
 }
 
 /**
@@ -594,29 +599,33 @@ async function atualizarProximasTransacoes() {
     if (!container) return;
     
     try {
-        // Carregar próximas de ambos os tipos
-        const proximasEntradas = await carregarProximas('entradas');
-        const proximasSaidas = await carregarProximas('saidas');
+        // Próximas do MÊS em exibição
+        const mRef = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual) ? estadoApp.mesAtual : new Date();
+        const mes = mRef.getMonth() + 1, ano = mRef.getFullYear();
+        const elTit = document.getElementById('proximasTitulo');
+        if (elTit) elTit.textContent = `Próximas em ${obterMesAnoFormatado(mRef)}`;
+        const proximasEntradas = await carregarProximas('entradas', mes, ano);
+        const proximasSaidas = await carregarProximas('saidas', mes, ano);
         
         const proximas = [...proximasEntradas, ...proximasSaidas]
-            .sort((a, b) => new Date(a.proximaData) - new Date(b.proximaData));
-        
+            .sort((a, b) => new Date(a.data) - new Date(b.data));
+
         const faturasHTML = renderFaturasCartao();
 
         if (proximas.length === 0) {
             container.innerHTML = faturasHTML
-                + '<p class="empty-message">Nenhuma transação programada nos próximos 30 dias</p>';
+                + `<p class="empty-message">Nada programado para ${obterMesAnoFormatado(mRef)}</p>`;
             container.onclick = null;
             _proximasCtx = [];
             return;
         }
 
-        // Mesmo box de Receitas/Despesas: dia (da próxima data) + valor, expansível
+        // Mesmo box de Receitas/Despesas: dia da ocorrência + valor, expansível
         _proximasCtx = proximas.map(trans => {
             const tipoUI = proximasEntradas.some(t => t.id === trans.id) ? 'entrada' : 'saida';
-            const dias = calcularDiasAte(trans.proximaData);
+            const dias = calcularDiasAte(trans.data);
             const quando = dias <= 0 ? 'hoje' : `em ${dias}d`;
-            return { trans: { ...trans, data: trans.proximaData }, tipoUI, opts: { quando, semAcoes: true } };
+            return { trans: { ...trans }, tipoUI, opts: { quando, semAcoes: true } };
         });
 
         container.innerHTML = faturasHTML + _proximasCtx
