@@ -51,7 +51,7 @@
                     <button id="nextMonth" class="month-btn">→</button>
                 </div>
                 <button id="btnConfig" class="month-btn month-btn--config" data-tab="menus"
-                        aria-pressed="false" title="Configurações">⚙️ <span class="cfg-label">Configurações</span></button>
+                        aria-pressed="false" title="Configurações"><span class="cfg-ico">⚙️</span> <span class="cfg-label">Configurações</span></button>
             </div>
 
             <!-- Resumo compacto: aparece ao rolar para além do dashboard -->
@@ -145,11 +145,9 @@
             <!-- Tab: Adicionar Lançamento -->
             <section id="adicionar" class="tab-content">
                 <form id="formTransacao" class="form-transacao">
+                    <button type="button" id="btnLimparForm" class="btn-fechar-form" title="Limpar formulário" aria-label="Limpar formulário">&times;</button>
                     <div class="form-header">
-                        <div class="form-header-topo">
-                            <h2>Adicionar Lançamento</h2>
-                            <button type="button" id="btnLimparForm" class="btn-fechar-form" title="Limpar formulário" aria-label="Limpar formulário">&times;</button>
-                        </div>
+                        <h2>Adicionar Lançamento</h2>
                         <div class="tipo-selector">
                             <button type="button" class="tipo-btn active" data-tipo="entradas">
                                 📥 Receita
@@ -198,7 +196,10 @@
                         </div>
                         <div id="dataBloco">
                             <div class="form-group" id="dataGroup">
-                                <label for="data">Data:</label>
+                                <div class="label-linha">
+                                    <label for="data">Data:</label>
+                                    <label class="inline-check inline-check--sm" id="pagarVencimentoWrap" hidden><input type="checkbox" id="pagarVencimento"> <span id="pagarVencimentoLabel">pagar no vencimento</span></label>
+                                </div>
                                 <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
                             </div>
                             <div class="form-group" id="dataCalculadaGroup" hidden>
@@ -210,7 +211,6 @@
                                 <div id="semanasChips" class="semanas-chips"></div>
                                 <div id="semanasResumo" class="semanas-resumo"></div>
                             </div>
-                            <label class="inline-check inline-check--sm" id="pagarVencimentoWrap" hidden><input type="checkbox" id="pagarVencimento"> <span id="pagarVencimentoLabel">pagar no vencimento</span></label>
                         </div>
                     </div>
 
