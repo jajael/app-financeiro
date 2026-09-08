@@ -558,9 +558,10 @@ function definirLabelResp(sel, full, short) {
     const el = typeof sel === 'string' ? document.querySelector(sel) : sel;
     if (!el) return;
     el.textContent = full;
-    if (short && el.offsetParent !== null && el.scrollWidth > el.clientWidth + 1) {
-        el.textContent = short;
-    }
+    if (!short) return;
+    const semEspaco = window.innerWidth < 480
+        || (el.offsetParent !== null && el.scrollWidth > el.clientWidth + 1);
+    if (semEspaco) el.textContent = short;
 }
 
 /**

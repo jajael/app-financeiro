@@ -16,49 +16,45 @@
     cursor: pointer;   /* abre a aba correspondente */
 }
 
-/* Linhas "Atual / A receber|pagar / Total" dentro dos cards */
+/* Linhas "Atual / A receber|pagar / Total" dentro dos cards.
+   Grid de 2 colunas: a 1ª tem a largura do MAIOR valor (sem sobra de
+   espaço), com os valores alinhados à direita; o label vem logo depois. */
 .card-linhas {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-/* Bloco alinhado à esquerda: VALOR (alinhado à direita numa coluna curta),
-   depois o label logo em seguida */
-.card-linhas .linha {
-    display: flex;
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 0;
+    row-gap: 0.3rem;
     align-items: baseline;
-    justify-content: flex-start;
-    font-size: var(--font-size-sm);
 }
+.card-linhas .linha { display: contents; }
 .card-linhas .linha b {
-    order: 1;
-    flex: 0 0 5rem;        /* coluna fixa -> valores alinhados à direita */
-    min-width: 0;
+    grid-column: 1;
     text-align: right;
     white-space: nowrap;
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-bold);
 }
 .card-linhas .linha i {
-    order: 2;
-    flex: 1 1 auto;
+    grid-column: 2;
     min-width: 0;
     padding-left: 0.3rem;   /* label logo após o valor */
     font-style: italic;
     opacity: 0.7;
     text-align: left;
-    /* menor e encolhe conforme a largura da tela */
     font-size: clamp(0.5rem, 2.4vw, 0.66rem);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.card-linhas .linha.total {
+.card-linhas .linha.total b,
+.card-linhas .linha.total i {
     margin-top: 0.35rem;
     padding-top: 0.35rem;
     border-top: 1px solid currentColor;
-    font-size: var(--font-size-base);
 }
-.card-linhas .linha.total .amount { font-size: 1.4rem; }
+.card-linhas .linha.total .amount {
+    font-size: 1.4rem;
+}
 
 .summary-card {
     padding: var(--spacing-lg);
