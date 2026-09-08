@@ -47,21 +47,21 @@ async function carregarAbaMenus() {
         <button class="subtab" data-sub="fer">Feriados</button>
       </div>
 
-      <div class="menu-section" data-sub="cat">
-        <details class="cat-subgrupo">
-          <summary>
-            <span class="cat-subgrupo-titulo">📤 Categorias de despesa</span>
-            <button type="button" class="h3-add" onclick="event.preventDefault();event.stopPropagation();abrirNovaCategoria('saidas')" title="Nova categoria de despesa">+</button>
-          </summary>
+      <div class="menu-section menu-section--cols" data-sub="cat">
+        <div class="cat-coluna">
+          <div class="cat-coluna-topo">
+            <span class="cat-subgrupo-titulo">📤 Despesa</span>
+            <button type="button" class="h3-add" onclick="abrirNovaCategoria('saidas')" title="Nova categoria de despesa">+</button>
+          </div>
           <div class="menu-list" id="categoriasDespesaList"></div>
-        </details>
-        <details class="cat-subgrupo">
-          <summary>
-            <span class="cat-subgrupo-titulo">📥 Categorias de receita</span>
-            <button type="button" class="h3-add" onclick="event.preventDefault();event.stopPropagation();abrirNovaCategoria('entradas')" title="Nova categoria de receita">+</button>
-          </summary>
+        </div>
+        <div class="cat-coluna">
+          <div class="cat-coluna-topo">
+            <span class="cat-subgrupo-titulo">📥 Receita</span>
+            <button type="button" class="h3-add" onclick="abrirNovaCategoria('entradas')" title="Nova categoria de receita">+</button>
+          </div>
           <div class="menu-list" id="categoriasReceitaList"></div>
-        </details>
+        </div>
       </div>
 
       <div class="menu-section" data-sub="met" hidden>
