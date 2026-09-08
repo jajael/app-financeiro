@@ -39,29 +39,11 @@
         grid-template-columns: 1fr 1fr;
     }
 
-    /* Tabs: Lançamento (linha inteira) + Receitas·Despesas·Próximas na mesma linha */
-    .tabs {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-sm);
-        overflow: visible;
-        border-bottom: none;
-    }
+    /* Abas: fontes/padding menores no mobile (layout já é grid por padrão) */
     .tabs .tab-btn {
-        padding: 0.4rem 0.2rem;
-        font-size: 0.78rem;
-        text-align: center;
-        border: 1px solid var(--border);
-        border-radius: var(--radius-sm);
+        padding: 0.45rem 0.25rem;
+        font-size: 0.76rem;
     }
-    .tabs .tab-btn.active {
-        border-color: var(--primary);
-        background: color-mix(in srgb, var(--primary) 12%, transparent);
-    }
-    .tabs [data-tab="adicionar"] { order: -1; grid-column: 1 / -1; }
-    .tabs [data-tab="entradas"] { order: 1; }
-    .tabs [data-tab="saidas"]   { order: 2; }
-    .tabs [data-tab="proximas"] { order: 3; }
 
     /* Barra do mês: mais estreita p/ caber a engrenagem à direita */
     .month-bar { gap: var(--spacing-sm); }
@@ -171,15 +153,9 @@
     }
 
     /* Tabs */
-    .tabs {
-        margin-bottom: var(--spacing-lg);
-        border-bottom: 1px solid var(--light);
-    }
-
     .tab-btn {
-        padding: var(--spacing-sm) var(--spacing-md);
-        font-size: 0.8rem;
-        flex: 1;
+        padding: 0.4rem 0.2rem;
+        font-size: 0.74rem;
     }
 
     .tab-badge {
@@ -318,8 +294,8 @@
     }
 
     .tab-btn {
-        padding: var(--spacing-sm) var(--spacing-sm);
-        font-size: 0.7rem;
+        padding: 0.35rem 0.15rem;
+        font-size: 0.68rem;
     }
 
     .despesa-item {
@@ -335,7 +311,7 @@
 /* ============ GRANDE (1024px) ============ */
 @media (min-width: 1024px) {
     .container {
-        max-width: 1400px;
+        max-width: 1024px;
     }
 
     :root {
@@ -358,7 +334,7 @@
 /* ============ MUITO GRANDE (1440px) ============ */
 @media (min-width: 1440px) {
     .container {
-        max-width: 1600px;
+        max-width: 1024px;
     }
 
     .grid-2 {

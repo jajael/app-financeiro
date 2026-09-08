@@ -42,9 +42,9 @@ function configurarEventListeners() {
         });
     });
 
-    // Engrenagem "Configuração" na barra do mês (toggle tratado em mudarAba)
+    // Engrenagem "Configuração" na barra do mês: abre/fecha (toggle)
     const btnConfig = document.getElementById('btnConfig');
-    if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus'));
+    if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus', true));
 
     // Cards de Receitas/Despesas do dashboard abrem a aba correspondente (sem toggle)
     const abrirAba = alvo => {
@@ -203,16 +203,15 @@ function mudarTipoTransacao(tipo) {
 /**
  * Muda aba ativa
  */
-function mudarAba(novaAba) {
+function mudarAba(novaAba, permitirToggle = false) {
     const ativa = document.querySelector('.tab-content.active')?.id;
 
-    // Todos os botões do menu funcionam como toggle: clicar na aba já ativa
-    // volta para a aba anterior.
     if (novaAba === ativa) {
-        if (estadoApp.abaAnterior && estadoApp.abaAnterior !== ativa) {
+        // Só "Configurações" se comporta como toggle (abre/fecha o painel).
+        if (permitirToggle && estadoApp.abaAnterior && estadoApp.abaAnterior !== ativa) {
             novaAba = estadoApp.abaAnterior;
         } else {
-            return;
+            return; // já está nessa aba
         }
     }
     if (ativa && ativa !== novaAba) estadoApp.abaAnterior = ativa;
