@@ -51,10 +51,14 @@ footer.footer {
 .category-item:hover,
 .sugestao-item:hover { background-color: var(--surface-3); }
 
-/* Cards coloridos mantêm suas cores (tokens receita/despesa/balanço) */
-.summary-card.entradas { background-color: var(--receita-bg); color: var(--receita-text); border-color: var(--receita-border); }
-.summary-card.saidas   { background-color: var(--despesa-bg); color: var(--despesa-text); border-color: var(--despesa-border); }
+/* Cards coloridos: mesmo verde/vermelho dos botões "Receitas"/"Despesas" ativos */
+.summary-card.entradas { background-color: color-mix(in srgb, var(--receita-text) 18%, var(--receita-bg)); color: var(--receita-text); border-color: var(--receita-border); }
+.summary-card.saidas   { background-color: color-mix(in srgb, var(--despesa-text) 18%, var(--despesa-bg)); color: var(--despesa-text); border-color: var(--despesa-border); }
 .summary-card.balanco  { background-color: var(--balanco-bg); color: var(--balanco-text); border-color: var(--balanco-border); }
+
+/* Fundo da aba de conteúdo segue o padrão (Próximas fica branco, como os chips) */
+#entradas.tab-content.active { background: var(--receita-bg); }
+#saidas.tab-content.active   { background: var(--despesa-bg); }
 
 /* ---------- Texto ---------- */
 h1, h2, h3, h4, label, .item-nome, .despesa-categoria, .amount { color: var(--text); }
