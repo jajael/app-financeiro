@@ -94,6 +94,7 @@ function configurarEventListeners() {
     // Campo Data: máscara dd/mm/aaaa + recalcular competência
     const dataInput = document.querySelector(SELECTORS.data);
     if (dataInput) {
+        ligarCampoData(dataInput);
         dataInput.addEventListener('input', () => {
             mascaraDataBR(dataInput);
             // Guarda a data digitada pelo usuário (para restaurar ao desmarcar

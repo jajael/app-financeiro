@@ -281,6 +281,7 @@ function abrirNovoFeriado() {
   });
   const inpData = document.querySelector('.dialogo-overlay #dlgFerData');
   if (inpData && typeof mascaraDataBR === 'function') {
+    if (typeof ligarCampoData === 'function') ligarCampoData(inpData);
     inpData.addEventListener('input', () => mascaraDataBR(inpData));
   }
 }

@@ -101,12 +101,67 @@ function validarFormularioTransacao(dados) {
 
 // ===== Máscaras / conversão de datas (dd/mm/aaaa) =====
 
-/** Aplica a máscara dd/mm/aaaa enquanto digita */
+/**
+ * Máscara dd/mm/aaaa.
+ * - Ao DIGITAR: insere as "/" e preserva a posição do cursor.
+ * - Ao APAGAR: não reinsere "/" nem reformata (evita a barra "pular pra
+ *   frente"); só remove caracteres inválidos e o excesso. As "/" voltam
+ *   sozinhas quando o usuário digitar de novo.
+ */
 function mascaraDataBR(input) {
-    let v = input.value.replace(/\D/g, '').slice(0, 8);
-    if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
-    else if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
-    input.value = v;
+    const original = input.value;
+    const digitos = original.replace(/\D/g, '').slice(0, 8);
+    const anteriores = input.dataset.qtdDigitos ? +input.dataset.qtdDigitos : digitos.length;
+    input.dataset.qtdDigitos = String(digitos.length);
+
+    // Apagando: mantém o que o usuário deixou (sem reformatar)
+    if (digitos.length < anteriores) {
+        const limpo = original.replace(/[^\d/]/g, '').replace(/\/{2,}/g, '/').slice(0, 10);
+        if (limpo !== original) input.value = limpo;
+        return;
+    }
+
+    // Digitando: aplica a máscara
+    const caret = (input.selectionStart != null) ? input.selectionStart : original.length;
+    const digitosAntesDoCaret = original.slice(0, caret).replace(/\D/g, '').length;
+
+    let out = digitos;
+    if (digitos.length > 4) out = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
+    else if (digitos.length > 2) out = digitos.slice(0, 2) + '/' + digitos.slice(2);
+    if (out === original) return;
+    input.value = out;
+
+    let pos = 0, vistos = 0;
+    while (pos < out.length && vistos < digitosAntesDoCaret) {
+        const c = out.charCodeAt(pos);
+        if (c >= 48 && c <= 57) vistos++;
+        pos++;
+    }
+    try { input.setSelectionRange(pos, pos); } catch (_) {}
+}
+
+/** Liga a máscara de data num input: keydown (backspace na "/") + sincroniza o
+ *  contador de dígitos ao focar (o valor pode ter sido setado por código). */
+function ligarCampoData(input) {
+    if (!input || input.dataset.dataLigado) return;
+    input.dataset.dataLigado = '1';
+    input.addEventListener('keydown', mascaraDataKeydown);
+    input.addEventListener('focus', () => {
+        input.dataset.qtdDigitos = String((input.value.match(/\d/g) || []).length);
+    });
+}
+
+/** keydown p/ campos de data: Backspace logo depois de uma "/" apaga o dígito antes dela */
+function mascaraDataKeydown(e) {
+    const input = e.target;
+    if (e.key !== 'Backspace') return;
+    if (input.selectionStart !== input.selectionEnd || input.selectionStart < 2) return;
+    if (input.value[input.selectionStart - 1] !== '/') return;
+    e.preventDefault();
+    const p = input.selectionStart;
+    input.value = input.value.slice(0, p - 2) + input.value.slice(p - 1); // tira o dígito, mantém a "/"
+    try { input.setSelectionRange(p - 2, p - 2); } catch (_) {}
+    input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 /** 'dd/mm/aaaa' ou 'dd/mm/aa' -> 'YYYY-MM-DD' (ou '' se incompleto/ inválido) */
