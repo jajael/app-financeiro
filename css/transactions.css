@@ -109,6 +109,8 @@
     color: var(--text-muted);
     line-height: 1.35;
     word-break: break-word;
+    padding-left: 0.55rem;   /* alinha com o texto dos chips de método/categoria */
+    font-style: italic;
 }
 
 /* ---- Lançamento compacto (visão padrão) ---- */
