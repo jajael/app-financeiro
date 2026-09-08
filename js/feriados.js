@@ -159,32 +159,49 @@ async function apagarFeriadoUsuario(id) {
   for (const [iso, v] of [...feriadosState.usuario]) if (v.id === id) feriadosState.usuario.delete(iso);
 }
 
+// UF selecionada para os feriados estaduais (persistida no navegador)
+const UFS_BR = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG',
+  'PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+function feriadosUF() {
+  try { return localStorage.getItem('feriadosUF') || ''; } catch (_) { return ''; }
+}
+function definirFeriadosUF(uf) {
+  try { localStorage.setItem('feriadosUF', uf || ''); } catch (_) {}
+}
+
 /**
- * Sincroniza com a BrasilAPI: para os anos pedidos, adiciona como
- * "nacional" qualquer feriado que ainda não conheçamos (ex.: mudança de
- * legislação). Não remove nada. Retorna quantos foram adicionados.
+ * Sincroniza com a Nager.Date: para os anos pedidos, adiciona como
+ * "nacional" (não apagável, só desativável) qualquer feriado NACIONAL que
+ * ainda não conheçamos e — se houver UF selecionada — os feriados desse
+ * estado (counties = ["BR-XX"]). Não remove nada. Retorna quantos entraram.
  */
-async function sincronizarFeriadosBrasilAPI(anos) {
+async function sincronizarFeriados(anos) {
+  const uf = feriadosUF();
+  const alvoUF = uf ? `BR-${uf}` : null;
   let adicionados = 0;
   for (const ano of anos) {
     let lista;
     try {
-      const resp = await fetch(`https://brasilapi.com.br/api/feriados/v1/${ano}`);
+      const resp = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${ano}/BR`);
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       lista = await resp.json();
     } catch (e) {
-      throw new Error(`Falha ao consultar a BrasilAPI (${ano}): ${e.message || e}`);
+      throw new Error(`Falha ao consultar a Nager.Date (${ano}): ${e.message || e}`);
     }
     calcularFeriadosNacionais(ano, ano);
     for (const f of lista) {
+      const nacional = f.global === true || !f.counties;
+      const doEstado = !nacional && alvoUF && Array.isArray(f.counties) && f.counties.includes(alvoUF);
+      if (!nacional && !doEstado) continue;
       const iso = String(f.date).slice(0, 10);
-      if (!feriadosState.nacional.has(iso)) {
-        feriadosState.nacional.set(iso, { nome: f.name, ativo: true });
-        const { error } = await sb.from('feriados')
-          .upsert({ data: iso, nome: f.name, origem: 'nacional', ativo: true },
-                  { onConflict: 'user_id,data,origem' });
-        if (!error) adicionados++;
-      }
+      const nome = f.localName || f.name;
+      if (feriadosState.nacional.has(iso)) continue;
+      feriadosState.nacional.set(iso, { nome, ativo: true });
+      const { error } = await sb.from('feriados')
+        .upsert({ data: iso, nome, origem: 'nacional', ativo: true },
+                { onConflict: 'user_id,data,origem' });
+      if (!error) adicionados++;
     }
   }
   return adicionados;
