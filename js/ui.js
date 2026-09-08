@@ -622,7 +622,7 @@ function atualizarCamposRecorrencia() {
     definirLabelResp('label[for="diaRecorrencia"]',
         ehReceita ? 'Dia de pagamento' : 'Vencimento',
         ehReceita ? 'Dia pg.' : 'Vcto.');
-    definirLabelResp('label[for="parcelas"]', 'Parcelas', 'Parc.');
+    definirLabelResp('label[for="parcelas"]', 'Qtd.', 'Qtd.');
 
     // Prefill do dia de vencimento/pagamento com o dia da data digitada, se vazio
     const diaInput = document.getElementById('diaRecorrencia');
