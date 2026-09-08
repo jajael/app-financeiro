@@ -300,4 +300,6 @@ async function recarregarDados() {
     console.log('🔄 Recarregando dados...');
     await carregarDados();
     atualizarUI();
+    // Navegou de mês: o campo Data acompanha o mês em exibição (se intocado)
+    if (typeof aplicarDataPadrao === 'function') aplicarDataPadrao(false);
 }

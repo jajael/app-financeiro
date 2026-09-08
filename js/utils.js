@@ -158,10 +158,32 @@ function dataCampoParaISO(valor) {
     return parseDataBR(s);
 }
 
-/** hoje como 'dd/mm' */
-function dataHojeDiaMes() {
-    const d = new Date();
-    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+/** Data padrão do formulário: dia de hoje + MÊS EM EXIBIÇÃO, como 'dd/mm'
+ *  (o ano fica no seletor de mês do topo). */
+function dataPadraoDiaMes() {
+    const hoje = new Date();
+    const ref = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual) ? estadoApp.mesAtual : hoje;
+    const ultimo = new Date(ref.getFullYear(), ref.getMonth() + 1, 0).getDate();
+    const dia = Math.min(hoje.getDate(), ultimo);
+    return `${String(dia).padStart(2, '0')}/${String(ref.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Aplica a data padrão no campo #data.
+ * force=true: sempre (limpar formulário, carga inicial, troca de tipo).
+ * force=false: só se o usuário ainda não mexeu no campo (ex.: navegou de mês).
+ */
+function aplicarDataPadrao(force) {
+    const el = document.querySelector(SELECTORS.data);
+    if (!el) return;
+    if (typeof estadoApp !== 'undefined' && estadoApp.editandoId) return;
+    if (!force && el.value && el.value !== el.dataset.padrao) return;
+    const nova = dataPadraoDiaMes();
+    el.value = nova;
+    el.dataset.padrao = nova;
+    el.dataset.qtdDigitos = String((nova.match(/\d/g) || []).length);
+    delete el.dataset.userVal;
+    if (typeof recalcularCompetencia === 'function') recalcularCompetencia();
 }
 
 /** Liga a máscara de data num input: keydown (backspace na "/") + sincroniza o
@@ -386,7 +408,7 @@ function limparFormulario() {
     const form = document.querySelector(SELECTORS.formTransacao);
     if (form) {
         form.reset();
-        document.querySelector(SELECTORS.data).value = dataHojeDiaMes();
+        aplicarDataPadrao(true);
         document.querySelector(SELECTORS.tipoTransacao).value = 'entradas';
         const pv = document.getElementById('pagarVencimento');
         if (pv) pv.checked = false;

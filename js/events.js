@@ -140,9 +140,10 @@ function configurarEventListeners() {
         if (typeof atualizarResumoSemanas === 'function') atualizarResumoSemanas();
         if (typeof atualizarValorTotal === 'function') atualizarValorTotal();
     });
-    // Parcelada: nº de parcelas -> recalcula o total
+    // Parcelada: nº de parcelas (só números, 2 dígitos) -> recalcula o total
     const parcInput = document.getElementById('parcelas');
     if (parcInput) parcInput.addEventListener('input', () => {
+        soNumeros(parcInput, 2);
         if (typeof atualizarValorTotal === 'function') atualizarValorTotal();
     });
     
@@ -220,7 +221,7 @@ function mudarTipoTransacao(tipo) {
         form?.reset();
         if (tipoField) tipoField.value = tipo;            // reset() volta ao default
         const dataEl = document.querySelector(SELECTORS.data);
-        if (dataEl) { dataEl.value = dataHojeDiaMes(); dataEl.readOnly = false; dataEl.classList.remove('campo-travado'); delete dataEl.dataset.userVal; delete dataEl.dataset.autoReceita; }
+        if (dataEl) { dataEl.readOnly = false; dataEl.classList.remove('campo-travado'); delete dataEl.dataset.autoReceita; aplicarDataPadrao(true); }
         const pv = document.getElementById('pagarVencimento');
         if (pv) pv.checked = false;
         if (typeof semanasMarcadas !== 'undefined') semanasMarcadas = new Set();
