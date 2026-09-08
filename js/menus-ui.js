@@ -48,20 +48,20 @@ async function carregarAbaMenus() {
       </div>
 
       <div class="menu-section menu-section--cols" data-sub="cat">
-        <div class="cat-coluna">
-          <div class="cat-coluna-topo">
+        <details class="cat-coluna">
+          <summary class="cat-coluna-topo">
             <span class="cat-subgrupo-titulo">📥 Receita</span>
-            <button type="button" class="h3-add" onclick="abrirNovaCategoria('entradas')" title="Nova categoria de receita">+</button>
-          </div>
+            <button type="button" class="h3-add" onclick="event.preventDefault();event.stopPropagation();abrirNovaCategoria('entradas')" title="Nova categoria de receita">+</button>
+          </summary>
           <div class="menu-list" id="categoriasReceitaList"></div>
-        </div>
-        <div class="cat-coluna">
-          <div class="cat-coluna-topo">
+        </details>
+        <details class="cat-coluna">
+          <summary class="cat-coluna-topo">
             <span class="cat-subgrupo-titulo">📤 Despesa</span>
-            <button type="button" class="h3-add" onclick="abrirNovaCategoria('saidas')" title="Nova categoria de despesa">+</button>
-          </div>
+            <button type="button" class="h3-add" onclick="event.preventDefault();event.stopPropagation();abrirNovaCategoria('saidas')" title="Nova categoria de despesa">+</button>
+          </summary>
           <div class="menu-list" id="categoriasDespesaList"></div>
-        </div>
+        </details>
       </div>
 
       <div class="menu-section" data-sub="met" hidden>
@@ -112,10 +112,15 @@ async function carregarAbaMenus() {
           </select>
           <button type="button" class="mini-btn feriados-sync" id="btnSyncFeriados" title="Buscar feriados nacionais (e da UF) na Nager.Date">↻ sincronizar</button>
         </div>
-        <p class="menu-hint">Nacionais são calculados automaticamente; não podem ser apagados, só desativados. "Sincronizar" busca na Nager.Date os nacionais e — se escolher uma UF — os feriados estaduais. Municipais: cadastre em "Meus feriados".</p>
-        <div class="menu-list" id="feriadosNacionaisList"></div>
-        <h4 class="feriados-subtitulo">Meus feriados</h4>
-        <div class="menu-list" id="feriadosUsuarioList"></div>
+        <p class="menu-hint">Nacionais e estaduais são oficiais: não podem ser apagados, só desativados. "Sincronizar" busca na Nager.Date os nacionais e, com uma UF escolhida, os estaduais. Municipais e avulsos você cadastra em "+".</p>
+        ${['nacional', 'estadual', 'municipal'].map(cat => `
+        <details class="fer-grupo" data-fer-cat="${cat}">
+          <summary>
+            <span class="fer-grupo-nome">${CATEGORIA_FERIADO_ROTULO[cat]}</span>
+            <span class="fer-grupo-contagem" data-fer-count="${cat}">0</span>
+          </summary>
+          <div class="menu-list" id="feriados-${cat}-list"></div>
+        </details>`).join('')}
       </div>
 
     </div>
@@ -150,35 +155,26 @@ function _ferDataBR(iso) {
   return m ? `${m[3]}/${m[2]}` : iso;
 }
 
-/** (Re)desenha as listas de feriados do ano em exibição */
+/** (Re)desenha os 3 grupos de feriados do ano em exibição */
 function renderFeriados() {
   const elAno = document.getElementById('feriadosAno');
   if (elAno) elAno.textContent = feriadosAnoView;
 
-  const nac = (typeof feriadosNacionaisView === 'function') ? feriadosNacionaisView(feriadosAnoView) : [];
-  const nacBox = document.getElementById('feriadosNacionaisList');
-  if (nacBox) nacBox.innerHTML = nac.length ? nac.map(f => `
-    <div class="menu-item ${f.ativo ? 'ativo' : 'inativo'}">
-      <div class="item-info">
-        <div class="item-nome">${_ferDataBR(f.data)} · ${f.nome}</div>
-      </div>
-      <div class="item-actions">
-        <button class="mini-btn" data-fer-toggle-nac="${f.data}">${f.ativo ? 'desativar' : 'ativar'}</button>
-      </div>
-    </div>`).join('') : '<p class="empty-text">Nada calculado para este ano</p>';
-
-  const usr = (typeof feriadosUsuarioView === 'function') ? feriadosUsuarioView() : [];
-  const usrBox = document.getElementById('feriadosUsuarioList');
-  if (usrBox) usrBox.innerHTML = usr.length ? usr.map(f => `
-    <div class="menu-item ${f.ativo ? 'ativo' : 'inativo'}">
-      <div class="item-info">
-        <div class="item-nome">${_ferDataBR(f.data)}/${String(f.data).slice(0,4)} · ${f.nome}</div>
-      </div>
-      <div class="item-actions">
-        <button class="mini-btn" data-fer-toggle-usr="${f.id}">${f.ativo ? 'desativar' : 'ativar'}</button>
-        <button class="mini-btn armar-remover" data-fer-del="${f.id}">apagar</button>
-      </div>
-    </div>`).join('') : '<p class="empty-text">Você ainda não adicionou feriados</p>';
+  ['nacional', 'estadual', 'municipal'].forEach(cat => {
+    const lista = (typeof feriadosView === 'function') ? feriadosView(cat, feriadosAnoView) : [];
+    const box = document.getElementById(`feriados-${cat}-list`);
+    const cnt = document.querySelector(`[data-fer-count="${cat}"]`);
+    if (cnt) cnt.textContent = lista.filter(f => f.ativo).length;
+    if (!box) return;
+    box.innerHTML = lista.length ? lista.map(f => `
+      <div class="menu-item ${f.ativo ? 'ativo' : 'inativo'}">
+        <div class="item-info"><div class="item-nome">${_ferDataBR(f.data)} · ${f.nome}</div></div>
+        <div class="item-actions">
+          <button class="mini-btn" data-fer-toggle="1" data-fer-id="${f.id || ''}" data-fer-iso="${f.data}" data-fer-cat="${cat}" data-fer-ativo="${f.ativo ? 1 : 0}">${f.ativo ? 'desativar' : 'ativar'}</button>
+          ${f.oficial ? '' : `<button class="mini-btn" data-fer-del="${f.id}">apagar</button>`}
+        </div>
+      </div>`).join('') : `<p class="empty-text">Nenhum feriado ${CATEGORIA_FERIADO_ROTULO[cat].toLowerCase()} em ${feriadosAnoView}</p>`;
+  });
 }
 
 async function onFeriadosClick(e) {
@@ -196,8 +192,7 @@ async function onFeriadosClick(e) {
     const txt = btn.textContent;
     btn.textContent = '↻ ...';
     try {
-      const anos = [feriadosAnoView, feriadosAnoView + 1];
-      const n = await sincronizarFeriados(anos);
+      const n = await sincronizarFeriados([feriadosAnoView, feriadosAnoView + 1]);
       mostrarNotificacao(n ? `✓ ${n} feriado(s) adicionado(s)` : '✓ Já está tudo atualizado', 'sucesso');
       renderFeriados();
       if (typeof atualizarUI === 'function') atualizarUI();
@@ -210,23 +205,14 @@ async function onFeriadosClick(e) {
     return;
   }
 
-  if (btn.dataset.ferToggleNac) {
-    const iso = btn.dataset.ferToggleNac;
-    const atual = feriadosState.nacional.get(iso);
+  if (btn.dataset.ferToggle) {
     try {
-      await definirFeriadoNacionalAtivo(iso, !(atual && atual.ativo));
-      renderFeriados();
-      if (typeof atualizarUI === 'function') atualizarUI();
-    } catch (_) { mostrarNotificacao('❌ Não foi possível salvar', 'erro'); }
-    return;
-  }
-
-  if (btn.dataset.ferToggleUsr) {
-    const id = btn.dataset.ferToggleUsr;
-    let ativo = true;
-    for (const v of feriadosState.usuario.values()) if (v.id === id) ativo = v.ativo;
-    try {
-      await definirFeriadoUsuarioAtivo(id, !ativo);
+      await definirFeriadoAtivo({
+        id: btn.dataset.ferId || null,
+        iso: btn.dataset.ferIso,
+        origem: btn.dataset.ferCat,
+        ativo: btn.dataset.ferAtivo !== '1'
+      });
       renderFeriados();
       if (typeof atualizarUI === 'function') atualizarUI();
     } catch (_) { mostrarNotificacao('❌ Não foi possível salvar', 'erro'); }
@@ -242,7 +228,7 @@ async function onFeriadosClick(e) {
       return;
     }
     try {
-      await apagarFeriadoUsuario(btn.dataset.ferDel);
+      await apagarFeriado(btn.dataset.ferDel);
       renderFeriados();
       if (typeof atualizarUI === 'function') atualizarUI();
     } catch (_) { mostrarNotificacao('❌ Não foi possível apagar', 'erro'); }
@@ -250,11 +236,15 @@ async function onFeriadosClick(e) {
   }
 }
 
-/** Diálogo "Novo feriado" (data + nome) */
+/** Diálogo "Novo feriado" (categoria + data + nome) */
 function abrirNovoFeriado() {
+  const opts = ['nacional', 'estadual', 'municipal']
+    .map(c => `<option value="${c}"${c === 'municipal' ? ' selected' : ''}>${CATEGORIA_FERIADO_ROTULO[c]}</option>`).join('');
   mostrarDialogo({
     titulo: 'Novo feriado',
     corpoHTML: `
+      <div class="campo"><label for="dlgFerCat">Categoria</label>
+        <select id="dlgFerCat">${opts}</select></div>
       <div class="campo"><label for="dlgFerData">Data</label>
         <input type="date" id="dlgFerData" value="${feriadosAnoView}-01-01"></div>
       <div class="campo"><label for="dlgFerNome">Nome</label>
@@ -264,11 +254,13 @@ function abrirNovoFeriado() {
       { label: 'Adicionar', primario: true, onClick: async (ov) => {
           const iso = ov.querySelector('#dlgFerData').value;
           const nome = ov.querySelector('#dlgFerNome').value.trim();
+          const cat = ov.querySelector('#dlgFerCat').value;
           if (!iso || !nome) { mostrarNotificacao('❌ Informe data e nome', 'erro'); return true; }
           try {
-            await criarFeriadoUsuario(iso, nome);
+            await criarFeriado(iso, nome, cat);
             feriadosAnoView = Number(iso.slice(0, 4));
             renderFeriados();
+            document.querySelector(`.fer-grupo[data-fer-cat="${cat}"]`)?.setAttribute('open', '');
             if (typeof atualizarUI === 'function') atualizarUI();
           } catch (err) {
             mostrarNotificacao('❌ ' + (err.message || 'Falha ao adicionar'), 'erro');

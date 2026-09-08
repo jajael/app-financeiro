@@ -82,7 +82,8 @@
 .despesa-data {
     display: flex;
     align-items: baseline;
-    gap: .3rem;
+    justify-content: center;
+    gap: .25rem;
 }
 .despesa-dia {
     font-size: 2rem;
@@ -90,24 +91,32 @@
     font-weight: var(--font-weight-bold);
     color: var(--text);
     font-variant-numeric: tabular-nums;
-    min-width: 1.6em;
     text-align: center;
 }
 .despesa-dow {
-    font-size: .82rem;
     font-weight: var(--font-weight-medium);
-    letter-spacing: .04em;
+    letter-spacing: .02em;
     color: var(--text-muted);
+    text-align: center;
 }
-/* Compacto: "07 SEG" na mesma linha */
-.despesa-item.compacta .despesa-data { align-items: baseline; }
-/* Expandido: tricode na linha de baixo do dia */
+
+/* Compacto: "07 SEG" na mesma linha, mesmo tamanho de fonte */
+.despesa-item.compacta .despesa-dia { font-size: 1.15rem; }
+.despesa-item.compacta .despesa-dow { font-size: 1.15rem; letter-spacing: 0; }
+
+/* Expandido: 07 em cima, SEG embaixo — bloco de largura parecida */
 .despesa-item:not(.compacta) .despesa-data {
     flex-direction: column;
     align-items: center;
     gap: 0;
+    min-width: 2.6rem;
 }
-.despesa-item:not(.compacta) .despesa-dow { font-size: .72rem; }
+.despesa-item:not(.compacta) .despesa-dow {
+    font-size: 1.1rem;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: .12em;
+    margin-right: -.12em;   /* compensa o letter-spacing p/ centralizar */
+}
 
 /* Linha 1: valor + badges */
 .despesa-topo {
@@ -223,7 +232,6 @@
     overflow: hidden;
 }
 .rec-grupo > summary {
-    --cor-rec: var(--primary);
     list-style: none;
     cursor: pointer;
     display: flex;

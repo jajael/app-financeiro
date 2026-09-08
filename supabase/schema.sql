@@ -108,3 +108,12 @@ create policy "feriados_insert_own" on public.feriados for insert with check (us
 create policy "feriados_update_own" on public.feriados for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "feriados_delete_own" on public.feriados for delete using (user_id = auth.uid());
 create index if not exists feriados_user_data_idx on public.feriados (user_id, data);
+
+-- Feriados: categorias (migração "feriados_categorias")
+alter table public.feriados drop constraint if exists feriados_origem_check;
+alter table public.feriados add column if not exists oficial boolean not null default false;
+alter table public.feriados add constraint feriados_origem_check
+  check (origem in ('nacional','estadual','municipal'));
+alter table public.feriados alter column origem set default 'municipal';
+-- oficial = true: calculado/sincronizado (não apagável, só desativável)
+-- oficial = false: criado pelo usuário (apagável)

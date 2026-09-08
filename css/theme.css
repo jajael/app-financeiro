@@ -45,6 +45,9 @@ footer.footer {
 }
 
 .menus-container { background: transparent; color: var(--text); }
+/* Sem "caixa branca" em volta das listas — o fundo colorido da aba aparece */
+.transacoes-container,
+.proximas-container { background: transparent; border: none; }
 
 .despesa-item:hover,
 .menu-item:hover,

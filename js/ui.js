@@ -138,8 +138,8 @@ function renderListaPorMetodo(container, transacoes, msgVazia) {
         const c = cores[nome] || corPadraoChip(nome);
         const pct = totalGeral ? Math.round((total / totalGeral) * 100) : 0;
         return `
-        <details class="rec-grupo">
-          <summary style="--cor-rec:${c}">
+        <details class="rec-grupo" style="--cor-rec:${c}">
+          <summary>
             <span class="rec-grupo-nome">${nome}</span>
             <span class="rec-grupo-contagem">${itens.length}</span>
             <span class="rec-grupo-total">${formatarMoeda(total)}${totalGeral ? ` · ${pct}%` : ''}</span>
@@ -187,8 +187,8 @@ function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
         const rotulo = (typeof rotuloRecorrencia === 'function') ? rotuloRecorrencia(tipoRec, ehDespesa) : tipoRec;
         const c = cores[tipoRec] || corPadraoChip(tipoRec);
         return `
-        <details class="rec-grupo">
-          <summary style="--cor-rec:${c}">
+        <details class="rec-grupo" style="--cor-rec:${c}">
+          <summary>
             <span class="rec-grupo-nome">${rotulo}</span>
             <span class="rec-grupo-contagem">${itens.length}</span>
             <span class="rec-grupo-total">${formatarMoeda(totalGrupo(itens))}</span>

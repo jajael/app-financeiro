@@ -83,36 +83,57 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
 }
-.cat-coluna-topo {
+.cat-coluna > summary.cat-coluna-topo {
+  list-style: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   padding: .4rem .5rem;
   font-size: 13px;
   font-weight: 700;
   color: var(--text);
-  border-bottom: 1px solid var(--border);
 }
+.cat-coluna[open] > summary.cat-coluna-topo { border-bottom: 1px solid var(--border); }
+.cat-coluna > summary::-webkit-details-marker { display: none; }
+.cat-coluna > summary::before {
+  content: "▸";
+  font-size: .75em;
+  color: var(--text-muted);
+}
+.cat-coluna[open] > summary::before { content: "▾"; }
 .cat-coluna-topo .cat-subgrupo-titulo { flex: 1; min-width: 0; }
 .cat-coluna-topo .h3-add {
   margin-left: 0;
-  width: 1.4rem;
-  height: 1.4rem;
-  font-size: .9rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  font-size: .85rem;
   flex: none;
 }
 .cat-coluna .menu-list {
   margin: 0;
-  padding: .4rem;
+  padding: .35rem;
   max-height: 320px;
 }
-/* Layout interno mais compacto quando em 2 colunas */
+/* Ícones/ações menores e mais juntos quando em 2 colunas */
 .menu-section--cols .menu-item {
-  padding: .3rem .4rem;
-  gap: .3rem;
+  padding: .25rem .35rem;
+  gap: .25rem;
 }
-.menu-section--cols .item-nome { font-size: .78rem; }
-.menu-section--cols .item-descricao { font-size: 11px; }
+.menu-section--cols .item-nome { font-size: .76rem; }
+.menu-section--cols .item-descricao { font-size: 10.5px; }
+.menu-section--cols .item-actions { gap: 1px; }
+.menu-section--cols .item-actions .btn-icon,
+.menu-section--cols .item-actions .cor-swatch,
+.menu-section--cols .item-actions button {
+  width: 1.35rem;
+  height: 1.35rem;
+  min-width: 0;
+  padding: 0;
+  font-size: .72rem;
+}
+.menu-section--cols .item-actions .cor-swatch { width: 1rem; height: 1rem; }
+.menu-section--cols .item-status { display: none; }
 
 @media (max-width: 460px) {
   .menu-section--cols { flex-direction: column; }
@@ -356,11 +377,43 @@
 }
 #feriadosAno { font-weight: 700; min-width: 3ch; text-align: center; }
 .feriados-barra .feriados-sync { margin-left: auto; }
-.feriados-subtitulo {
-  margin: 1rem 0 .4rem;
-  font-size: .82rem;
-  color: var(--text-muted, #6B7280);
+
+/* Grupos colapsáveis (Nacionais / Estaduais / Municipais) */
+.fer-grupo {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  margin-bottom: .4rem;
 }
+.fer-grupo > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .6rem;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.fer-grupo[open] > summary { border-bottom: 1px solid var(--border); }
+.fer-grupo > summary::-webkit-details-marker { display: none; }
+.fer-grupo > summary::before {
+  content: "▸";
+  font-size: .75em;
+  color: var(--text-muted);
+}
+.fer-grupo[open] > summary::before { content: "▾"; }
+.fer-grupo-nome { flex: 1; }
+.fer-grupo-contagem {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface-3);
+  border-radius: 999px;
+  padding: .05rem .45rem;
+}
+.fer-grupo .menu-list { margin: 0; padding: .4rem; max-height: 300px; }
 .mini-btn {
   border: 1px solid var(--border-strong, #D1D5DB);
   background: #fff;
