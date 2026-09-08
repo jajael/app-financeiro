@@ -119,6 +119,10 @@
             <section id="saidas" class="tab-content">
                 <div class="transacoes-container">
                     <h2>Despesas do Mês</h2>
+                    <div class="modo-lista" id="modoSaidas">
+                        <button type="button" class="modo-btn active" data-modo="recorrencia">Por recorrência</button>
+                        <button type="button" class="modo-btn" data-modo="metodo">Por método</button>
+                    </div>
                     <div id="saidasLista" class="transacoes-lista">
                         <!-- Saídas serão listadas aqui -->
                     </div>
@@ -165,7 +169,7 @@
                     <div class="form-row" id="linhaRecorrencia">
                         <div id="recorrenciaBloco">
                             <div class="form-group" id="recorrenciaGroup">
-                                <label for="tipoRecorrencia">Recorrência:</label>
+                                <label for="tipoRecorrencia">Recorrência</label>
                                 <select id="tipoRecorrencia" required></select>
                             </div>
                             <div class="form-group campo-mini campo-mini--xs" id="parceleGroup" hidden>
@@ -173,11 +177,11 @@
                                 <input type="number" id="parcelas" min="1" max="48" value="1">
                             </div>
                             <div class="form-group campo-mini campo-mini--xs" id="diaRecorrenciaGroup" hidden>
-                                <label for="diaRecorrencia">Vcto.</label>
+                                <label for="diaRecorrencia">vcto.</label>
                                 <input type="text" id="diaRecorrencia" inputmode="numeric" maxlength="2" placeholder="dia" autocomplete="off">
                             </div>
                             <div class="form-group campo-mini" id="diaSemanaGroup" hidden>
-                                <label for="diaSemana">Dia</label>
+                                <label for="diaSemana">dia</label>
                                 <select id="diaSemana">
                                     <option value="0">Dom.</option>
                                     <option value="1">Seg.</option>
@@ -186,7 +190,7 @@
                                     <option value="4">Qui.</option>
                                     <option value="5">Sex.</option>
                                     <option value="6">Sáb.</option>
-                                    <option value="" selected>s/ dia fixo</option>
+                                    <option value="" selected>—</option>
                                 </select>
                             </div>
                             <div class="form-group campo-mini campo-mini--xs" id="mesRefGroup" hidden>
@@ -197,7 +201,7 @@
                         <div id="dataBloco">
                             <div class="form-group" id="dataGroup">
                                 <div class="label-linha">
-                                    <label for="data">Data:</label>
+                                    <label for="data">Data</label>
                                     <label class="chip-toggle" id="pagarVencimentoWrap" hidden><input type="checkbox" id="pagarVencimento" hidden><span id="pagarVencimentoLabel">pagar no vcto.</span></label>
                                 </div>
                                 <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
@@ -217,7 +221,7 @@
                     <!-- Demais campos: empilhado / 2 col / 3 col conforme a largura -->
                     <div class="form-row" id="linhaCampos">
                         <div class="form-group" id="metodoGroup">
-                            <label for="metodo">Método:</label>
+                            <label for="metodo">Método</label>
                             <div class="campo-com-add">
                                 <select id="metodo" required>
                                     <option value="">Selecione...</option>
@@ -226,12 +230,12 @@
                             </div>
                         </div>
                         <div class="form-group" id="competenciaGroup" hidden>
-                            <label for="competencia">Competência:</label>
+                            <label for="competencia">Competência</label>
                             <input type="text" id="competencia" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
                         </div>
                         <div id="valorBloco">
                             <div class="form-group" id="valorGroup">
-                                <label for="valor">Valor:</label>
+                                <label for="valor">Valor</label>
                                 <input type="number" id="valor" step="0.01" placeholder="0,00" required>
                             </div>
                             <div class="form-group" id="valorTotalGroup" hidden>
@@ -240,7 +244,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="categoria">Categoria:</label>
+                            <label for="categoria">Categoria</label>
                             <div class="campo-com-add">
                                 <select id="categoria" required>
                                     <option value="">Selecione...</option>
@@ -249,7 +253,7 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="descricao">Descrição (opcional):</label>
+                            <label for="descricao">Descrição (opcional)</label>
                             <input type="text" id="descricao" placeholder="Ex: Mercado, Aluguel">
                         </div>
                     </div>

@@ -46,6 +46,13 @@ function configurarEventListeners() {
     const btnConfig = document.getElementById('btnConfig');
     if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus'));
 
+    // Aba Despesas: alternar "Por recorrência" / "Por método"
+    const modoSaidas = document.getElementById('modoSaidas');
+    if (modoSaidas) modoSaidas.addEventListener('click', e => {
+        const btn = e.target.closest('.modo-btn');
+        if (btn && typeof definirModoListaSaidas === 'function') definirModoListaSaidas(btn.dataset.modo);
+    });
+
     // Cards de Receitas/Despesas do dashboard abrem a aba correspondente (sem toggle)
     const abrirAba = alvo => {
         if (document.querySelector('.tab-content.active')?.id !== alvo) mudarAba(alvo);

@@ -86,9 +86,71 @@ function atualizarEntradasLista() {
         estadoApp.transacoes.entradas, 'entrada', 'Nenhuma receita neste mês');
 }
 
+// 'recorrencia' (padrão) | 'metodo' — visão da aba Despesas
+let modoListaSaidas = (() => {
+    try { return localStorage.getItem('modoListaSaidas') || 'recorrencia'; }
+    catch (_) { return 'recorrencia'; }
+})();
+
+function definirModoListaSaidas(modo) {
+    modoListaSaidas = (modo === 'metodo') ? 'metodo' : 'recorrencia';
+    try { localStorage.setItem('modoListaSaidas', modoListaSaidas); } catch (_) {}
+    document.querySelectorAll('#modoSaidas .modo-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.modo === modoListaSaidas));
+    atualizarSaidasLista();
+}
+
 function atualizarSaidasLista() {
-    renderListaAgrupada(document.querySelector(SELECTORS.saidasLista),
-        estadoApp.transacoes.saidas, 'saida', 'Nenhuma despesa neste mês');
+    document.querySelectorAll('#modoSaidas .modo-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.modo === modoListaSaidas));
+    const el = document.querySelector(SELECTORS.saidasLista);
+    if (modoListaSaidas === 'metodo') {
+        renderListaPorMetodo(el, estadoApp.transacoes.saidas, 'Nenhuma despesa neste mês');
+    } else {
+        renderListaAgrupada(el, estadoApp.transacoes.saidas, 'saida', 'Nenhuma despesa neste mês');
+    }
+}
+
+/** Despesas agrupadas por método de pagamento, ordenadas por total (maior primeiro) */
+function renderListaPorMetodo(container, transacoes, msgVazia) {
+    if (!container) return;
+    if (!transacoes || !transacoes.length) {
+        container.innerHTML = `<p class="empty-message">${msgVazia}</p>`;
+        container.onclick = null;
+        return;
+    }
+    const cores = (estadoApp.menus && estadoApp.menus.cores && estadoApp.menus.cores.metodo) || {};
+    const valorDe = t => (t.valorMes != null ? t.valorMes : t.valor) || 0;
+
+    const mapa = new Map();
+    transacoes.forEach(t => {
+        const k = t.metodo || 'Sem método';
+        if (!mapa.has(k)) mapa.set(k, []);
+        mapa.get(k).push(t);
+    });
+    const grupos = [...mapa.entries()]
+        .map(([nome, itens]) => [nome, itens.sort(_porDataDesc), itens.reduce((s, t) => s + valorDe(t), 0)])
+        .sort((a, b) => b[2] - a[2]);
+
+    const totalGeral = grupos.reduce((s, g) => s + g[2], 0);
+
+    container.innerHTML = grupos.map(([nome, itens, total]) => {
+        const c = cores[nome] || corPadraoChip(nome);
+        const pct = totalGeral ? Math.round((total / totalGeral) * 100) : 0;
+        return `
+        <details class="rec-grupo">
+          <summary style="--cor-rec:${c}">
+            <span class="rec-grupo-nome">${nome}</span>
+            <span class="rec-grupo-contagem">${itens.length}</span>
+            <span class="rec-grupo-total">${formatarMoeda(total)}${totalGeral ? ` · ${pct}%` : ''}</span>
+          </summary>
+          <div class="rec-grupo-itens">
+            ${itens.map(t => gerarHTMLTransacao(t, 'saida')).join('')}
+          </div>
+        </details>`;
+    }).join('');
+
+    container.onclick = onListaTransacaoClick;
 }
 
 const _porDataDesc = (a, b) => new Date(b.data) - new Date(a.data);
@@ -625,9 +687,9 @@ function atualizarCamposRecorrencia() {
     const grpDiaRec = document.getElementById('diaRecorrenciaGroup');
     if (grpDiaRec) grpDiaRec.classList.toggle('campo-mini--wide', ehReceita);
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'Dia pgto.' : 'Vcto.',
-        ehReceita ? 'Dia pg.' : 'Vcto.');
-    definirLabelResp('label[for="parcelas"]', 'Qtd.', 'Qtd.');
+        ehReceita ? 'dia pgto.' : 'vcto.',
+        ehReceita ? 'dia pg.' : 'vcto.');
+    definirLabelResp('label[for="parcelas"]', 'qtd.', 'qtd.');
     atualizarValorTotal();
 
     // Prefill do dia de vencimento/pagamento com o dia da data digitada, se vazio
@@ -716,8 +778,8 @@ function atualizarLabelsPorTipo() {
     const grpDiaRec2 = document.getElementById('diaRecorrenciaGroup');
     if (grpDiaRec2) grpDiaRec2.classList.toggle('campo-mini--wide', ehReceita);
     definirLabelResp('label[for="diaRecorrencia"]',
-        ehReceita ? 'Dia pgto.' : 'Vcto.',
-        ehReceita ? 'Dia pg.' : 'Vcto.');
+        ehReceita ? 'dia pgto.' : 'vcto.',
+        ehReceita ? 'dia pg.' : 'vcto.');
     const lblChk = document.getElementById('pagarVencimentoLabel');
     if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vcto.';
 

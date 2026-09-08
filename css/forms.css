@@ -22,10 +22,12 @@
 
 .form-header h2 {
     margin: 0;
+    width: 100%;
+    align-self: stretch;
     color: var(--dark);
     font-size: 1.2rem;
-    text-align: center;
-    padding: 0 2.2rem;   /* respiro para o botão "×" no canto */
+    text-align: center;   /* centralizado em relação a 100% da largura da div */
+    padding: 0;
 }
 
 /* Botão "×" para limpar / fechar o formulário — canto superior direito.

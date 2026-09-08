@@ -70,36 +70,52 @@
 }
 .h3-add:hover { background: var(--surface-3); }
 
-/* Sub-grupos de categorias (despesa x receita): recolhíveis */
-.cat-subgrupo {
+/* Categorias: Despesa | Receita lado a lado */
+.menu-section--cols {
+  display: flex;
+  gap: .6rem;
+  align-items: flex-start;
+}
+.cat-coluna {
+  flex: 1 1 0;
+  min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
-  margin-bottom: var(--spacing-sm);
 }
-.cat-subgrupo > summary {
-  list-style: none;
-  cursor: pointer;
+.cat-coluna-topo {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0.55rem 0.7rem;
-  font-size: 14px;
-  font-weight: 600;
+  gap: 6px;
+  padding: .4rem .5rem;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--text);
+  border-bottom: 1px solid var(--border);
 }
-.cat-subgrupo > summary::-webkit-details-marker { display: none; }
-.cat-subgrupo > summary::before {
-  content: "▸";
-  font-size: 0.8em;
-  color: var(--text-muted);
+.cat-coluna-topo .cat-subgrupo-titulo { flex: 1; min-width: 0; }
+.cat-coluna-topo .h3-add {
+  margin-left: 0;
+  width: 1.4rem;
+  height: 1.4rem;
+  font-size: .9rem;
+  flex: none;
 }
-.cat-subgrupo[open] > summary::before { content: "▾"; }
-.cat-subgrupo-titulo { flex: 1; }
-.cat-subgrupo > summary .h3-add { margin-left: 0; }
-.cat-subgrupo .menu-list {
-  margin-bottom: 0;
-  padding: 0 0.6rem 0.6rem;
+.cat-coluna .menu-list {
+  margin: 0;
+  padding: .4rem;
+  max-height: 320px;
+}
+/* Layout interno mais compacto quando em 2 colunas */
+.menu-section--cols .menu-item {
+  padding: .3rem .4rem;
+  gap: .3rem;
+}
+.menu-section--cols .item-nome { font-size: .78rem; }
+.menu-section--cols .item-descricao { font-size: 11px; }
+
+@media (max-width: 460px) {
+  .menu-section--cols { flex-direction: column; }
 }
 
 .menu-list {
