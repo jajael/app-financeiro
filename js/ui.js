@@ -150,7 +150,7 @@ function renderListaPorMetodo(container, transacoes, msgVazia) {
             <span class="rec-grupo-total">${formatarMoeda(total)}${totalGeral ? ` · ${pct}%` : ''}</span>
           </summary>
           <div class="rec-grupo-itens">
-            ${itens.map(t => gerarHTMLTransacao(t, 'saida')).join('')}
+            ${itens.map(t => gerarHTMLTransacao(t, 'saida', { comRecorrenciaChip: true })).join('')}
           </div>
         </details>`;
     }).join('');
@@ -207,55 +207,23 @@ function renderListaAgrupada(container, transacoes, tipoUI, msgVazia) {
     container.onclick = onListaTransacaoClick;
 }
 
-// Cache das "próximas" para permitir expandir/retrair esses boxes também
+// Cache das "próximas" (usado ao renderizar a aba Próximas)
 let _proximasCtx = [];
 
-/** Contexto de um lançamento nas listas do mês (Receitas/Despesas) */
-function ctxNoMes(id) {
-    const e = estadoApp.transacoes.entradas.find(t => t.id === id);
-    if (e) return { trans: e, tipoUI: 'entrada', opts: {} };
-    const s = estadoApp.transacoes.saidas.find(t => t.id === id);
-    if (s) return { trans: s, tipoUI: 'saida', opts: {} };
-    return null;
-}
-
-/** Acha um lançamento por id em qualquer lista (mês ou "próximas") */
-function acharCtxTransacao(id) {
-    return ctxNoMes(id) || _proximasCtx.find(x => x.trans.id === id) || null;
-}
-
 /**
- * Alterna o "box completo" (compacto <-> completo). Re-renderiza TODAS as
- * cópias do item (o mesmo id pode estar em Receitas/Despesas e em Próximas),
- * cada uma com o contexto certo.
+ * Gera HTML para uma transação — card único (sem versão compacta/expandida).
+ * Layout: DIA DOW — VALOR MÉTODO CATEGORIA DESCRIÇÃO (linha que quebra).
+ * opts.semMetodoChip: não mostra o chip de método (ex.: visão "Por método").
+ * opts.comRecorrenciaChip: mostra o chip da recorrência no lugar do método.
  */
-function alternarExpandirTransacao(id) {
-    if (itensExpandidos.has(id)) itensExpandidos.delete(id);
-    else itensExpandidos.add(id);
-
-    document.querySelectorAll(`.despesa-item[data-id="${id}"]`).forEach(el => {
-        const ctx = el.closest('#proximasLista')
-            ? _proximasCtx.find(x => x.trans.id === id)
-            : ctxNoMes(id);
-        if (ctx) el.outerHTML = gerarHTMLTransacao(ctx.trans, ctx.tipoUI, ctx.opts);
-    });
-}
-
-/**
- * Gera HTML para uma transação
- */
-// Ids de lançamentos com o "box completo" aberto (default: todos compactos)
-const itensExpandidos = new Set();
-
 function gerarHTMLTransacao(trans, tipo, opts = {}) {
-    const compacto = !itensExpandidos.has(trans.id);
     const ehSemanalChips = trans.tipoRecorrencia === 'Semanal' && Array.isArray(trans.semanas) && trans.semanas.length;
     const valorFormatado = ehSemanalChips
         ? `${formatarMoeda(trans.valor)} <span class="valor-meta">/ ${formatarMoeda(trans.valorMes)}</span>`
         : formatarMoeda(trans.valor);
     const sinal = tipo === 'entrada' ? '+' : '-';
 
-    // Cores dos "chips" (tarjinhas) de método / categoria
+    // Cores dos "chips" (tarjinhas) de método / categoria / recorrência
     const cores = (estadoApp.menus && estadoApp.menus.cores) || {};
     const cor = (mapa, nome) => (mapa && mapa[nome]) || corPadraoChip(nome);
     const chip = (c, txt) => `<span class="chip" style="background:${c}" title="${String(txt).replace(/"/g, '&quot;')}">${txt}</span>`;
@@ -281,22 +249,35 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
         ? `<span class="quitado-badge">quitado ${typeof mesTri === 'function' ? mesTri(String(trans.quitadoEm).slice(5, 7)) + '/' + String(trans.quitadoEm).slice(2, 4) : ''}</span>`
         : '';
 
-    // Botão expandir/colapsar — fica no canto esquerdo, ao lado do dia
-    const toggle = compacto
-        ? `<button class="btn-expandir" data-act="expandir-trans" data-id="${trans.id}" title="Ver detalhes">+</button>`
-        : `<button class="btn-expandir" data-act="colapsar-trans" data-id="${trans.id}" title="Recolher">−</button>`;
-    const lado = `<div class="despesa-lado">${toggle}<span class="despesa-data">`
+    const lado = `<span class="despesa-data">`
         + `<span class="despesa-dia">${diaFormatado}</span>`
         + (dowFormatado ? `<span class="despesa-dow">${dowFormatado}</span>` : '')
-        + `</span></div>`;
+        + `</span>`;
 
-    // Ações (nas "próximas" fica só o botão de expandir)
+    // Chip de método OU de recorrência (visão "Por método")
+    let metaChip = '';
+    if (opts.comRecorrenciaChip) {
+        const rec = trans.tipoRecorrencia || 'Pontual';
+        const rot = (typeof rotuloRecorrencia === 'function') ? rotuloRecorrencia(rec, tipo === 'saida') : rec;
+        metaChip = chip(cor(cores.recorrencia, rec), rot);
+    } else if (!opts.semMetodoChip) {
+        if (trans.metodo) {
+            metaChip = chip(cor(cores.metodo, trans.metodo), trans.metodo);
+        } else if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
+            metaChip = `<span class="chip chip--neutro">${trans.formaPagamento}</span>`;
+        }
+    }
+    const catChip = trans.categoria ? chip(cor(cores.categoria, trans.categoria), trans.categoria) : '';
+    const descTxt = trans.descricao
+        ? `<span class="despesa-desc">${trans.descricao}</span>` : '';
+
+    // Ações
     let acoes = '';
     if (!opts.semAcoes) {
         if (trans.pendente) {
             acoes += `<button class="btn-ok" data-act="confirmar-trans" data-id="${trans.id}" title="Confirmar este mês">OK</button>`;
         }
-        if (ehParcela && !trans.quitada && !compacto) {
+        if (ehParcela && !trans.quitada) {
             const chk = trans.quitadoEm ? 'checked' : '';
             acoes += `<label class="quitar-check" title="Quitar a partir deste mês"><input type="checkbox" data-act="quitar-parc" data-id="${trans.id}" ${chk}> quitar</label>`;
         }
@@ -309,73 +290,29 @@ function gerarHTMLTransacao(trans, tipo, opts = {}) {
     }
 
     const classes = `despesa-item ${tipo}`
-        + (compacto ? ' compacta' : '')
         + (trans.pendente ? ' pendente' : '')
         + (trans.quitada ? ' quitada' : '');
 
-    if (compacto) {
-        return `
+    return `
         <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
             ${lado}
             <span class="despesa-valor">${sinal} ${valorFormatado}</span>
+            ${metaChip}
+            ${catChip}
+            ${descTxt}
             ${parcelaTag}
             ${quandoTag}
             ${tagPendente}
             ${quitadoTag}
             <div class="despesa-actions">${acoes}</div>
         </div>`;
-    }
-
-    // Box completo — método e categoria como chips lado a lado
-    let metodoChip = '';
-    if (trans.metodo) {
-        metodoChip = chip(cor(cores.metodo, trans.metodo), trans.metodo);
-    } else if (trans.formaPagamento && trans.formaPagamento !== 'À vista') {
-        metodoChip = `<span class="chip chip--neutro">${trans.formaPagamento}</span>`;
-    }
-    const catChip = chip(cor(cores.categoria, trans.categoria), trans.categoria);
-    const descLinha = trans.descricao
-        ? `<div class="despesa-desc-linha">${trans.descricao}</div>` : '';
-
-    return `
-        <div class="${classes}" data-id="${trans.id}" data-tipo-transacao="${tipo === 'entrada' ? 'entradas' : 'saidas'}">
-            ${lado}
-            <div class="despesa-info">
-                <div class="despesa-topo">
-                    <span class="despesa-valor">${sinal} ${valorFormatado}</span>
-                    ${parcelaTag}
-                    ${quandoTag}
-                    ${tagPendente}
-                    ${quitadoTag}
-                </div>
-                <div class="despesa-chips">${metodoChip}${catChip}</div>
-                ${descLinha}
-            </div>
-            <div class="despesa-actions">${acoes}</div>
-        </div>
-    `;
 }
 
 /** Delegação de clique nas listas de transações */
 function onListaTransacaoClick(e) {
     const el = e.target.closest('[data-act]');
-    if (!el) {
-        // Clique em qualquer outra parte do box: expande/retrai
-        // (ignora cliques em controles como o checkbox "quitar")
-        if (e.target.closest('label, input, button, a')) return;
-        const item = e.target.closest('.despesa-item');
-        if (item && item.dataset.id && acharCtxTransacao(Number(item.dataset.id))) {
-            alternarExpandirTransacao(Number(item.dataset.id));
-        }
-        return;
-    }
+    if (!el) return;
     const id = Number(el.dataset.id);
-
-    // Expandir/retrair vale também para as "próximas" (não estão em estadoApp.transacoes)
-    if (el.dataset.act === 'expandir-trans' || el.dataset.act === 'colapsar-trans') {
-        alternarExpandirTransacao(id);
-        return;
-    }
 
     const trans = [...estadoApp.transacoes.entradas, ...estadoApp.transacoes.saidas]
         .find(t => t.id === id);

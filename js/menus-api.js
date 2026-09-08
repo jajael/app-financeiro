@@ -93,7 +93,7 @@ function mapearItemMenu(row) {
 /** Rótulo mostrado no dropdown do formulário para um método */
 function rotuloMetodo(item) {
     if (!item.metodoKind || item.metodoKind === 'Dinheiro') return item.nome;
-    return item.banco ? `${item.metodoKind} — ${item.banco}` : item.metodoKind;
+    return item.banco ? `${item.metodoKind} ${item.banco}` : item.metodoKind;
 }
 
 /**

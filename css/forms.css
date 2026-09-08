@@ -138,7 +138,6 @@
 }
 #dataBloco > .form-group { margin: 0; }
 #dataBloco > #dataGroup { flex: 1 1 6rem; min-width: 0; }
-#dataBloco > #competenciaGroup { flex: 0 0 auto; }   /* só "SET" */
 #dataBloco > #dataCalculadaGroup,
 #dataBloco > #semanasChipsGroup { flex: 1 1 100%; }
 /* Select "Comp." — largura do conteúdo (3 letras) */
@@ -189,6 +188,16 @@
 /* Campo "Valor" que se divide em 2 (valor informado + total calculado) */
 #valorBloco { display: flex; gap: .5rem; }
 #valorBloco > .form-group { flex: 1 1 0; min-width: 0; margin: 0; }
+
+/* Método divide espaço com "Comp." */
+#metodoBloco {
+    display: flex;
+    align-items: flex-start;
+    gap: .4rem;
+}
+#metodoBloco > .form-group { margin: 0; }
+#metodoBloco > #metodoGroup { flex: 1 1 0; min-width: 0; }
+#metodoBloco > #competenciaGroup { flex: 0 0 auto; }   /* só "SET" */
 
 /* Semanas do mês ocupam a metade da "Data" quando a recorrência é Semanal */
 #dataBloco > #semanasChipsGroup { margin: 0; }
