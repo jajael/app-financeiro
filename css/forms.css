@@ -145,17 +145,29 @@
     grid-column: 1 / -1;
 }
 
+/* Campo/célula que sobrou sozinho na última linha do grid -> ocupa 100% */
+#linhaCampos > .solo {
+    grid-column: 1 / -1;
+}
+
 .form-group.half-width {
     grid-column: span 1;
 }
 
-/* Labels */
+/* Labels — nunca quebram em mais de uma linha */
 .form-group label {
     display: block;
     margin-bottom: 0.25rem;
     font-weight: var(--font-weight-semibold);
     color: var(--dark);
-    font-size: 0.8rem;
+    font-size: 0.76rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.form-group.campo-dia label,
+#dataCalculadaGroup .sub-campo label {
+    font-size: 0.72rem;
 }
 
 .form-group label .required {

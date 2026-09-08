@@ -90,6 +90,9 @@ function configurarEventListeners() {
     if (dataInput) {
         dataInput.addEventListener('input', () => {
             mascaraDataBR(dataInput);
+            // Guarda a data digitada pelo usuário (para restaurar ao desmarcar
+            // "pagar no vencimento" ou sair de uma recorrência que calcula a data)
+            if (!dataInput.readOnly) dataInput.dataset.userVal = dataInput.value;
             recalcularCompetencia();
             atualizarCamposRecorrencia();
         });
@@ -143,6 +146,19 @@ function configurarEventListeners() {
         categoriaInput.addEventListener('blur', ocultarSugestoes);
     }
     
+    // Reavalia labels curtos/longos e campos "sozinhos" quando a largura muda
+    if (typeof atualizarCamposRecorrencia === 'function') {
+        let rTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(rTimer);
+            rTimer = setTimeout(() => {
+                if (document.getElementById('adicionar')?.classList.contains('active')) {
+                    atualizarCamposRecorrencia();
+                }
+            }, 150);
+        });
+    }
+
     console.log('✓ Event listeners configurados');
 }
 
@@ -177,24 +193,38 @@ function irParaMesVigente() {
  * Muda tipo de transação (entrada/saída)
  */
 function mudarTipoTransacao(tipo) {
+    const mudou = estadoApp.tipoAtual !== tipo;
     estadoApp.tipoAtual = tipo;
     console.log(`🔄 Tipo alterado para: ${tipo}`);
-    
+
     // Atualizar botões
     document.querySelectorAll('.tipo-btn').forEach(btn => {
         btn.classList.remove('active');
     });
     document.querySelector(`[data-tipo="${tipo}"]`)?.classList.add('active');
-    
+
     // Atualizar campo oculto
     const tipoField = document.querySelector(SELECTORS.tipoTransacao);
     if (tipoField) tipoField.value = tipo;
-    
+
+    // Trocar receita <-> despesa zera tudo que estiver preenchido (fora da edição)
+    if (mudou && !estadoApp.editandoId) {
+        const form = document.querySelector(SELECTORS.formTransacao);
+        form?.reset();
+        if (tipoField) tipoField.value = tipo;            // reset() volta ao default
+        const dataEl = document.querySelector(SELECTORS.data);
+        if (dataEl) { dataEl.value = dataHojeBR(); dataEl.readOnly = false; dataEl.classList.remove('campo-travado'); delete dataEl.dataset.userVal; delete dataEl.dataset.autoReceita; }
+        const pv = document.getElementById('pagarVencimento');
+        if (pv) pv.checked = false;
+        if (typeof semanasMarcadas !== 'undefined') semanasMarcadas = new Set();
+    }
+
     // Limpar categoria e recarregar opções
     const categoriaField = document.querySelector(SELECTORS.categoria);
     if (categoriaField) categoriaField.value = '';
 
     if (typeof atualizarLabelsPorTipo === 'function') atualizarLabelsPorTipo();
+    if (typeof atualizarCamposRecorrencia === 'function') atualizarCamposRecorrencia();
 
     // Recarregar menus para o novo tipo
     carregarMenus();

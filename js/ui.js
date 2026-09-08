@@ -551,6 +551,35 @@ async function atualizarProximasTransacoes() {
 }
 
 /**
+ * Define o texto de um label usando a versão curta quando a completa não
+ * couber em uma única linha (labels nunca podem quebrar linha no formulário).
+ */
+function definirLabelResp(sel, full, short) {
+    const el = typeof sel === 'string' ? document.querySelector(sel) : sel;
+    if (!el) return;
+    el.textContent = full;
+    if (short && el.offsetParent !== null && el.scrollWidth > el.clientWidth + 1) {
+        el.textContent = short;
+    }
+}
+
+/**
+ * Quando, no grid de campos, o último campo visível fica sozinho na linha,
+ * faz ele ocupar 100% da largura (ex.: "Descrição").
+ */
+function ajustarCamposSozinhos() {
+    const grid = document.getElementById('linhaCampos');
+    if (!grid) return;
+    grid.querySelectorAll('.solo').forEach(el => el.classList.remove('solo'));
+    const cols = (getComputedStyle(grid).gridTemplateColumns.match(/px|fr|%|rem/g) || []).length
+        || getComputedStyle(grid).gridTemplateColumns.split(/\s+/).filter(Boolean).length || 1;
+    const cells = [...grid.children].filter(el => !el.hidden && el.offsetParent !== null);
+    if (cols > 1 && cells.length % cols === 1) {
+        cells[cells.length - 1].classList.add('solo');
+    }
+}
+
+/**
  * Mostra/esconde os campos que dependem do tipo de recorrência
  * (dia + checkbox "vencimento" para Mensal/Parcelada; nº de parcelas para Parcelada)
  */
@@ -574,7 +603,7 @@ function atualizarCamposRecorrencia() {
     const chkWrap = document.getElementById('pagarVencimentoWrap');
     if (chkWrap) chkWrap.hidden = ehReceita || !comDia;
     const chk = document.getElementById('pagarVencimento');
-    if (ehReceita && chk) chk.checked = false;
+    if ((ehReceita || !comDia) && chk) chk.checked = false;
 
     // Campo "Data" livre: escondido para dia-útil fixo e Semanal
     const mostrarData = !ehCalculada && !ehSemanal;
@@ -582,12 +611,11 @@ function atualizarCamposRecorrencia() {
     const dataMain = document.querySelector(SELECTORS.data);
     if (dataMain) dataMain.required = mostrarData;
 
-    // Rótulo do campo Data conforme o contexto
-    const lblData = document.querySelector('label[for="data"]');
-    if (lblData) {
-        lblData.textContent = receitaAuto ? 'Data (próximo dia útil):'
-            : (!ehReceita && comDia) ? 'Data do pagamento:'
-            : 'Data:';
+    // Rótulo do campo Data conforme o contexto (nunca ocupa mais de 1 linha)
+    if (receitaAuto || (!ehReceita && comDia)) {
+        definirLabelResp('label[for="data"]', 'Pagamento', 'Pgto.');
+    } else {
+        definirLabelResp('label[for="data"]', 'Data', null);
     }
 
     // Prefill do dia de vencimento/pagamento com o dia da data digitada, se vazio
@@ -597,8 +625,15 @@ function atualizarCamposRecorrencia() {
         if (iso) diaInput.value = String(parseInt(iso.slice(8, 10), 10));
     }
 
+    // Guarda a data livre atual antes de qualquer cálculo automático sobrescrevê-la
+    if (dataMain && (ehCalculada || receitaAuto) && !dataMain.readOnly && !dataMain.dataset.userVal) {
+        dataMain.dataset.userVal = dataMain.value;
+    }
+
     // Data derivada da competência (primeiro / 5º / último dia útil, deste mês ou do anterior)
     if (ehCalculada) {
+        definirLabelResp('label[for="compRecorrente"]', 'Mês de ref.', 'Ref.');
+        definirLabelResp('label[for="dataCalculada"]', 'Data', null);
         const compEl = document.getElementById('compRecorrente');
         if (compEl && !compEl.value && typeof estadoApp !== 'undefined' && estadoApp.mesAtual) {
             compEl.value = mesDeCompetencia(formatarDataISO(estadoApp.mesAtual));
@@ -622,6 +657,15 @@ function atualizarCamposRecorrencia() {
             dataMain.classList.add('campo-travado');
         } else {
             delete dataMain.dataset.autoReceita;
+            // Voltou para uma data livre: restaura o que o usuário tinha digitado
+            if (!ehCalculada && dataMain.readOnly) {
+                dataMain.readOnly = false;
+                dataMain.classList.remove('campo-travado');
+            }
+            if (mostrarData && dataMain.dataset.userVal != null && !chk?.checked) {
+                dataMain.value = dataMain.dataset.userVal;
+                delete dataMain.dataset.userVal;
+            }
         }
     }
 
@@ -631,6 +675,8 @@ function atualizarCamposRecorrencia() {
 
     // "Pagar no vencimento": trava a data do lançamento no dia do vencimento (despesa)
     aplicarPagarVencimento();
+
+    ajustarCamposSozinhos();
 }
 
 /**
@@ -655,8 +701,9 @@ function atualizarLabelsPorTipo() {
         atualizarCampoCredito();
     }
 
-    const lblDia = document.querySelector('label[for="diaRecorrencia"]');
-    if (lblDia) lblDia.textContent = ehReceita ? 'Dia do pagamento:' : 'Dia de vencimento:';
+    definirLabelResp('label[for="diaRecorrencia"]',
+        ehReceita ? 'Pagamento' : 'Vencimento',
+        ehReceita ? 'Pgto.' : 'Vcto.');
     const lblChk = document.getElementById('pagarVencimentoLabel');
     if (lblChk) lblChk.textContent = ehReceita ? 'receber neste dia' : 'pagar no vencimento';
 
@@ -664,6 +711,8 @@ function atualizarLabelsPorTipo() {
     if (typeof preencherDropdownRecorrencias === 'function') preencherDropdownRecorrencias();
     // Categorias são específicas de receita x despesa
     if (typeof preencherDropdownCategorias === 'function') preencherDropdownCategorias();
+
+    ajustarCamposSozinhos();
 }
 
 /**
@@ -778,9 +827,13 @@ function aplicarPagarVencimento() {
     if (dataEl.dataset.autoReceita === '1') return;  // já travado por "próximo dia útil"
 
     const grupoDia = document.getElementById('diaRecorrenciaGroup');
-    const ativo = chk.checked && grupoDia && !grupoDia.hidden;
+    // Sem campo de dia de vencimento visível: o checkbox não se aplica; a data
+    // é gerenciada por atualizarCamposRecorrencia (não mexer aqui).
+    if (!grupoDia || grupoDia.hidden) return;
+    const ativo = chk.checked;
 
     if (ativo) {
+        if (dataEl.dataset.userVal == null) dataEl.dataset.userVal = dataEl.value;
         const dia = document.getElementById('diaRecorrencia').value;
         const compBR = document.getElementById('competencia')?.value;
         const compISO = parseCompetencia(compBR || '') ||
@@ -792,6 +845,11 @@ function aplicarPagarVencimento() {
     } else {
         dataEl.readOnly = false;
         dataEl.classList.remove('campo-travado');
+        // Desmarcou: a data volta para o valor original que estava antes
+        if (dataEl.dataset.userVal != null) {
+            dataEl.value = dataEl.dataset.userVal;
+            delete dataEl.dataset.userVal;
+        }
     }
 }
 
