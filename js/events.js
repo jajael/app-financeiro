@@ -131,12 +131,18 @@ function configurarEventListeners() {
     const btnMet = document.getElementById('btnNovoMetodo');
     if (btnMet) btnMet.addEventListener('click', abrirNovoMetodo);
 
-    // Semanal: dia da semana -> refaz as chips; valor -> atualiza o resumo X/Y
+    // Semanal: dia da semana -> refaz as chips; valor -> resumo X/Y + total
     const diaSem = document.getElementById('diaSemana');
     if (diaSem) diaSem.addEventListener('change', atualizarCamposRecorrencia);
     const valorInput = document.querySelector(SELECTORS.valor);
     if (valorInput) valorInput.addEventListener('input', () => {
         if (typeof atualizarResumoSemanas === 'function') atualizarResumoSemanas();
+        if (typeof atualizarValorTotal === 'function') atualizarValorTotal();
+    });
+    // Parcelada: nº de parcelas -> recalcula o total
+    const parcInput = document.getElementById('parcelas');
+    if (parcInput) parcInput.addEventListener('input', () => {
+        if (typeof atualizarValorTotal === 'function') atualizarValorTotal();
     });
     
     // Campo de categoria para sugestões (opcional)

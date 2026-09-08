@@ -199,6 +199,20 @@ const ORDEM_RECORRENCIA = ['Pontual', 'Mensal', 'Parcelada',
     'Primeiro dia útil do mês', 'Até o 5º dia útil do mês', 'Último dia útil do mês',
     'Último dia útil do mês anterior', 'Semanal'];
 
+// Rótulo curto exibido na UI (o valor interno / gravado no banco não muda)
+const RECORRENCIA_ROTULO = {
+    'Primeiro dia útil do mês': '1º dia útil',
+    'Até o 5º dia útil do mês': '5º dia útil',
+    'Último dia útil do mês': 'Último dia útil'
+    // 'Último dia útil do mês anterior' permanece igual
+};
+
+/** Nome exibido de um tipo de recorrência (Mensal -> "Contas" em despesa) */
+function rotuloRecorrencia(tipo, ehDespesa) {
+    if (tipo === 'Mensal' && ehDespesa) return 'Contas';
+    return RECORRENCIA_ROTULO[tipo] || tipo;
+}
+
 /**
  * Preenche o dropdown de recorrência. Tipos fixos do sistema (todos sempre).
  */
@@ -217,7 +231,7 @@ function preencherDropdownRecorrencias() {
     disponiveis.forEach(t => {
         const o = document.createElement('option');
         o.value = t;
-        o.textContent = (t === 'Mensal' && ehDespesa) ? 'Contas' : t;
+        o.textContent = rotuloRecorrencia(t, ehDespesa);
         sel.appendChild(o);
     });
     sel.value = disponiveis.includes(atual) ? atual : 'Pontual';

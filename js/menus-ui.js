@@ -4,9 +4,10 @@
  */
 
 // Tipos de recorrência: fixos, não editáveis. Só descrição.
+// [kind interno, descrição] — o rótulo exibido vem de rotuloRecorrencia()
 const RECORRENCIAS_INFO = [
   ['Pontual', 'Acontece uma única vez, sem repetição.'],
-  ['Mensal / Contas', 'Repete todo mês no dia informado, ajustado para o dia útil mais próximo.'],
+  ['Mensal', 'Repete todo mês no dia informado, ajustado para o dia útil mais próximo.'],
   ['Parcelada', 'Divide o valor em parcelas mensais — uma transação por mês, cada uma na sua competência. Na receita, cada parcela cai no próximo dia útil.'],
   ['Primeiro dia útil do mês', 'Apenas receitas. Informe a competência (mm/aaaa); a data sai no primeiro dia útil desse mês.'],
   ['Até o 5º dia útil do mês', 'Apenas receitas. Data no 5º dia útil da competência; fica pendente de OK e se confirma sozinho nessa data.'],
@@ -73,9 +74,11 @@ async function carregarAbaMenus() {
         <h3>🔁 Tipos de recorrência</h3>
         <p class="menu-hint">Tipos fixos do sistema. O único campo editável é a cor do chip.</p>
         <div class="menu-list menu-list--livre" id="recorrenciasList">
-          ${RECORRENCIAS_INFO.map(([rotulo, desc]) => {
-            // rótulo exibido x nome real do tipo ("Mensal / Contas" -> "Mensal")
-            const kind = rotulo === 'Mensal / Contas' ? 'Mensal' : rotulo;
+          ${RECORRENCIAS_INFO.map(([kind, desc]) => {
+            // rótulo exibido x nome real do tipo (kind é o valor interno)
+            const rotulo = kind === 'Mensal'
+              ? 'Mensal / Contas'
+              : (typeof rotuloRecorrencia === 'function' ? rotuloRecorrencia(kind) : kind);
             const linha = (menus.recorrencias || []).find(r => r.nome === kind);
             const c = linha ? corDoItemMenu(linha) : corPadraoChip(kind);
             const id = linha ? linha.linha : '';
