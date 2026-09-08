@@ -99,35 +99,35 @@ function validarFormularioTransacao(dados) {
     return { valido: true };
 }
 
-// ===== Máscaras / conversão de datas (dd/mm/aaaa) =====
+// ===== Máscaras / conversão de datas (dd/mm — o ano vem do mês em exibição) =====
+
+const MESES_TRI = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+/** número do mês (1-12 ou '01'..'12') -> tricode "SET" */
+function mesTri(m) { return MESES_TRI[(parseInt(m, 10) || 0) - 1] || ''; }
 
 /**
- * Máscara dd/mm/aaaa.
- * - Ao DIGITAR: insere as "/" e preserva a posição do cursor.
- * - Ao APAGAR: não reinsere "/" nem reformata (evita a barra "pular pra
- *   frente"); só remove caracteres inválidos e o excesso. As "/" voltam
- *   sozinhas quando o usuário digitar de novo.
+ * Máscara dd/mm (sem ano — ele já está definido no mês em exibição).
+ * - Ao DIGITAR: insere a "/" e preserva a posição do cursor.
+ * - Ao APAGAR: não reinsere a "/" nem reformata (evita a barra "pular pra
+ *   frente"). A "/" volta sozinha quando o usuário digitar de novo.
  */
 function mascaraDataBR(input) {
     const original = input.value;
-    const digitos = original.replace(/\D/g, '').slice(0, 8);
+    const digitos = original.replace(/\D/g, '').slice(0, 4);
     const anteriores = input.dataset.qtdDigitos ? +input.dataset.qtdDigitos : digitos.length;
     input.dataset.qtdDigitos = String(digitos.length);
 
-    // Apagando: mantém o que o usuário deixou (sem reformatar)
     if (digitos.length < anteriores) {
-        const limpo = original.replace(/[^\d/]/g, '').replace(/\/{2,}/g, '/').slice(0, 10);
+        const limpo = original.replace(/[^\d/]/g, '').replace(/\/{2,}/g, '/').slice(0, 5);
         if (limpo !== original) input.value = limpo;
         return;
     }
 
-    // Digitando: aplica a máscara
     const caret = (input.selectionStart != null) ? input.selectionStart : original.length;
     const digitosAntesDoCaret = original.slice(0, caret).replace(/\D/g, '').length;
 
     let out = digitos;
-    if (digitos.length > 4) out = digitos.slice(0, 2) + '/' + digitos.slice(2, 4) + '/' + digitos.slice(4);
-    else if (digitos.length > 2) out = digitos.slice(0, 2) + '/' + digitos.slice(2);
+    if (digitos.length > 2) out = digitos.slice(0, 2) + '/' + digitos.slice(2);
     if (out === original) return;
     input.value = out;
 
@@ -138,6 +138,30 @@ function mascaraDataBR(input) {
         pos++;
     }
     try { input.setSelectionRange(pos, pos); } catch (_) {}
+}
+
+/** 'YYYY-MM-DD' -> 'dd/mm' */
+function isoParaDiaMes(iso) {
+    const m = String(iso).slice(0, 10).match(/^\d{4}-(\d{2})-(\d{2})$/);
+    return m ? `${m[2]}/${m[1]}` : '';
+}
+
+/** 'dd/mm' (ano = mês em exibição) ou 'dd/mm/aaaa' -> 'YYYY-MM-DD' (ou '') */
+function dataCampoParaISO(valor) {
+    const s = String(valor || '').trim();
+    const curto = s.match(/^(\d{1,2})\/(\d{1,2})$/);
+    if (curto) {
+        const ano = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
+            ? estadoApp.mesAtual.getFullYear() : new Date().getFullYear();
+        return parseDataBR(`${curto[1]}/${curto[2]}/${ano}`);
+    }
+    return parseDataBR(s);
+}
+
+/** hoje como 'dd/mm' */
+function dataHojeDiaMes() {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 /** Liga a máscara de data num input: keydown (backspace na "/") + sincroniza o
@@ -362,7 +386,7 @@ function limparFormulario() {
     const form = document.querySelector(SELECTORS.formTransacao);
     if (form) {
         form.reset();
-        document.querySelector(SELECTORS.data).value = dataHojeBR();
+        document.querySelector(SELECTORS.data).value = dataHojeDiaMes();
         document.querySelector(SELECTORS.tipoTransacao).value = 'entradas';
         const pv = document.getElementById('pagarVencimento');
         if (pv) pv.checked = false;
@@ -393,10 +417,10 @@ function obterDadosFormulario() {
 
     // Semanal não tem campo de data: usa a 1ª semana marcada (ou o mês em exibição)
     const semanasSel = typeof semanasMarcadas !== 'undefined' ? [...semanasMarcadas].sort() : [];
-    let dataISO = parseDataBR(document.querySelector(SELECTORS.data).value);
+    let dataISO = dataCampoParaISO(document.querySelector(SELECTORS.data).value);
     let compISO = ehDiaUtil
         ? competenciaDeMes(document.getElementById('compRecorrente')?.value || '')
-        : parseCompetencia(document.getElementById('competencia')?.value || '');
+        : competenciaDeMes(document.getElementById('competencia')?.value || '');
     if (tipoRecorrencia === 'Semanal') {
         dataISO = semanasSel[0] || mesExib;
     } else if (ehEntrada && (tipoRecorrencia === 'Mensal' || tipoRecorrencia === 'Parcelada')) {
