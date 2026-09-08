@@ -1,10 +1,10 @@
 /**
  * FERIADOS
- * - Nacionais: calculados no navegador (fixos + móveis via Páscoa).
- *   Não são apagáveis; podem ser desativados (guardado no Supabase).
- * - Do usuário: cadastrados à mão (data + nome). Podem ser apagados.
- * - Botão opcional "sincronizar" puxa da BrasilAPI para completar anos
- *   em que a legislação mudou (ex.: novos feriados nacionais).
+ * - Nacionais: calculados no navegador (fixos + móveis via Páscoa). Oficiais:
+ *   não são apagáveis, só desativados.
+ * - Estaduais: vêm da sincronização (Nager.Date) com a UF escolhida. Oficiais.
+ * - Municipais / avulsos: cadastrados pelo usuário (apagáveis).
+ * O usuário escolhe a categoria ao criar.
  *
  * Os cálculos de dia útil (recorrencia.js) consultam ehFeriado().
  */
@@ -56,107 +56,113 @@ function feriadosNacionaisDoAno(ano) {
   }));
   const pascoa = domingoDePascoa(ano);
   FERIADOS_NACIONAIS_MOVEIS.forEach(([offset, nome]) => {
-    const d = new Date(pascoa.getFullYear(), pascoa.getMonth(), pascoa.getDate() + offset);
-    out.push({ data: formatarDataISO(d), nome });
+    const dt = new Date(pascoa.getFullYear(), pascoa.getMonth(), pascoa.getDate() + offset);
+    out.push({ data: formatarDataISO(dt), nome });
   });
   return out.sort((x, y) => x.data.localeCompare(y.data));
 }
 
 /* ================= Estado ================= */
 
-// Mapa iso -> { nome, ativo } para feriados nacionais (calculados + overrides do banco)
-// Mapa iso -> { id, nome, ativo } para feriados do usuário
+const CATEGORIAS_FERIADO = ['nacional', 'estadual', 'municipal'];
+const CATEGORIA_FERIADO_ROTULO = { nacional: 'Nacionais', estadual: 'Estaduais', municipal: 'Municipais' };
+
 const feriadosState = {
-  nacional: new Map(),
-  usuario: new Map(),
-  anos: []          // anos já calculados
+  nacionalCalc: new Map(), // iso -> nome (nacionais calculados; sem linha no banco)
+  rows: [],                // linhas do banco: {id, data, nome, origem, oficial, ativo}
+  anos: []                 // anos já calculados
 };
 
-/** Garante que os feriados nacionais calculados de um intervalo de anos estão no mapa */
+/** Garante os feriados nacionais calculados de um intervalo de anos */
 function calcularFeriadosNacionais(anoIni, anoFim) {
   for (let ano = anoIni; ano <= anoFim; ano++) {
     if (feriadosState.anos.includes(ano)) continue;
     feriadosState.anos.push(ano);
     feriadosNacionaisDoAno(ano).forEach(f => {
-      if (!feriadosState.nacional.has(f.data)) {
-        feriadosState.nacional.set(f.data, { nome: f.nome, ativo: true });
-      }
+      if (!feriadosState.nacionalCalc.has(f.data)) feriadosState.nacionalCalc.set(f.data, f.nome);
     });
   }
 }
 
-/** true se a data (ISO 'YYYY-MM-DD') é um feriado ATIVO */
+function _rowsData(iso) {
+  const s = String(iso).slice(0, 10);
+  return feriadosState.rows.filter(r => String(r.data).slice(0, 10) === s);
+}
+
+/** true se a data (ISO) é um feriado ATIVO (calculado ou cadastrado) */
 function ehFeriado(iso) {
   const s = String(iso).slice(0, 10);
-  const n = feriadosState.nacional.get(s);
-  if (n && n.ativo) return true;
-  const u = feriadosState.usuario.get(s);
-  return !!(u && u.ativo);
+  const rs = _rowsData(s);
+  if (rs.some(r => r.ativo)) return true;
+  if (feriadosState.nacionalCalc.has(s) && !rs.some(r => r.origem === 'nacional' && !r.ativo)) return true;
+  return false;
 }
 
 /** Nome do feriado da data, ou '' */
 function nomeFeriado(iso) {
   const s = String(iso).slice(0, 10);
-  return (feriadosState.usuario.get(s)?.nome) || (feriadosState.nacional.get(s)?.nome) || '';
+  const ativo = _rowsData(s).find(r => r.ativo);
+  if (ativo) return ativo.nome;
+  return feriadosState.nacionalCalc.get(s) || '';
 }
 
 /* ================= Supabase ================= */
 
-/** Carrega os feriados do usuário e os overrides de feriados nacionais */
-async function carregarFeriados() {
-  // calcula um intervalo generoso ao redor do ano em exibição
-  const anoBase = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
-    ? estadoApp.mesAtual.getFullYear() : new Date().getFullYear();
-  calcularFeriadosNacionais(anoBase - 1, anoBase + 3);
-
-  feriadosState.usuario.clear();
+async function _recarregarRows() {
   try {
     const { data, error } = await sb.from('feriados').select('*');
     if (error) throw error;
-    (data || []).forEach(row => {
-      const iso = String(row.data).slice(0, 10);
-      if (row.origem === 'nacional') {
-        feriadosState.nacional.set(iso, { nome: row.nome, ativo: row.ativo });
-      } else {
-        feriadosState.usuario.set(iso, { id: row.id, nome: row.nome, ativo: row.ativo });
-      }
-    });
+    feriadosState.rows = data || [];
   } catch (e) {
-    console.warn('Feriados: não foi possível carregar do banco', e?.message || e);
+    console.warn('Feriados: falha ao carregar do banco', e?.message || e);
+    feriadosState.rows = [];
   }
 }
 
-/** Ativa/desativa um feriado NACIONAL (grava um override no banco) */
-async function definirFeriadoNacionalAtivo(iso, ativo) {
-  const atual = feriadosState.nacional.get(iso);
-  const nome = atual?.nome || nomeFeriado(iso) || 'Feriado nacional';
-  feriadosState.nacional.set(iso, { nome, ativo });
+/** Carga inicial: calcula nacionais do intervalo e lê as linhas do banco */
+async function carregarFeriados() {
+  const anoBase = (typeof estadoApp !== 'undefined' && estadoApp.mesAtual)
+    ? estadoApp.mesAtual.getFullYear() : new Date().getFullYear();
+  calcularFeriadosNacionais(anoBase - 1, anoBase + 3);
+  await _recarregarRows();
+}
+
+/**
+ * Ativa/desativa um feriado.
+ * - Calculado (sem id): grava um override oficial.
+ * - Com id: atualiza o campo ativo.
+ */
+async function definirFeriadoAtivo({ id, iso, nome, origem = 'nacional', ativo }) {
+  if (id) {
+    const { error } = await sb.from('feriados').update({ ativo }).eq('id', id);
+    if (error) { console.error(error); throw error; }
+  } else {
+    const nm = nome || nomeFeriado(iso) || 'Feriado';
+    const { error } = await sb.from('feriados')
+      .upsert({ data: iso, nome: nm, origem, oficial: true, ativo },
+              { onConflict: 'user_id,data,origem' });
+    if (error) { console.error(error); throw error; }
+  }
+  await _recarregarRows();
+}
+
+/** Cria um feriado do usuário na categoria escolhida (apagável) */
+async function criarFeriado(iso, nome, categoria) {
+  const cat = CATEGORIAS_FERIADO.includes(categoria) ? categoria : 'municipal';
   const { error } = await sb.from('feriados')
-    .upsert({ data: iso, nome, origem: 'nacional', ativo }, { onConflict: 'user_id,data,origem' });
+    .upsert({ data: iso, nome, origem: cat, oficial: false, ativo: true },
+            { onConflict: 'user_id,data,origem' });
   if (error) { console.error(error); throw error; }
+  await _recarregarRows();
 }
 
-/** Cria um feriado do usuário */
-async function criarFeriadoUsuario(iso, nome) {
-  const { data, error } = await sb.from('feriados')
-    .insert({ data: iso, nome, origem: 'usuario', ativo: true })
-    .select().single();
-  if (error) { console.error(error); throw error; }
-  feriadosState.usuario.set(iso, { id: data.id, nome: data.nome, ativo: data.ativo });
-}
-
-/** Ativa/desativa um feriado do usuário */
-async function definirFeriadoUsuarioAtivo(id, ativo) {
-  const { error } = await sb.from('feriados').update({ ativo }).eq('id', id);
-  if (error) { console.error(error); throw error; }
-  for (const [iso, v] of feriadosState.usuario) if (v.id === id) v.ativo = ativo;
-}
-
-/** Apaga um feriado do usuário */
-async function apagarFeriadoUsuario(id) {
+/** Apaga um feriado — só os NÃO oficiais (criados pelo usuário) */
+async function apagarFeriado(id) {
+  const row = feriadosState.rows.find(r => r.id === id);
+  if (!row || row.oficial) throw new Error('Feriado oficial não pode ser apagado (só desativado)');
   const { error } = await sb.from('feriados').delete().eq('id', id);
   if (error) { console.error(error); throw error; }
-  for (const [iso, v] of [...feriadosState.usuario]) if (v.id === id) feriadosState.usuario.delete(iso);
+  await _recarregarRows();
 }
 
 // UF selecionada para os feriados estaduais (persistida no navegador)
@@ -171,10 +177,10 @@ function definirFeriadosUF(uf) {
 }
 
 /**
- * Sincroniza com a Nager.Date: para os anos pedidos, adiciona como
- * "nacional" (não apagável, só desativável) qualquer feriado NACIONAL que
- * ainda não conheçamos e — se houver UF selecionada — os feriados desse
- * estado (counties = ["BR-XX"]). Não remove nada. Retorna quantos entraram.
+ * Sincroniza com a Nager.Date (date.nager.at): adiciona os feriados NACIONAIS
+ * (global) e — se houver UF selecionada — os ESTADUAIS dessa UF (counties
+ * contém "BR-<UF>"), como oficiais (não apagáveis). Não remove nada.
+ * Retorna quantos entraram.
  */
 async function sincronizarFeriados(anos) {
   const uf = feriadosUF();
@@ -191,34 +197,57 @@ async function sincronizarFeriados(anos) {
     }
     calcularFeriadosNacionais(ano, ano);
     for (const f of lista) {
-      const nacional = f.global === true || !f.counties;
-      const doEstado = !nacional && alvoUF && Array.isArray(f.counties) && f.counties.includes(alvoUF);
-      if (!nacional && !doEstado) continue;
+      const ehNacional = f.global === true || !f.counties;
+      const ehEstadual = !ehNacional && alvoUF && Array.isArray(f.counties) && f.counties.includes(alvoUF);
+      if (!ehNacional && !ehEstadual) continue;
       const iso = String(f.date).slice(0, 10);
+      const origem = ehNacional ? 'nacional' : 'estadual';
       const nome = f.localName || f.name;
-      if (feriadosState.nacional.has(iso)) continue;
-      feriadosState.nacional.set(iso, { nome, ativo: true });
+      const jaTem = ehNacional
+        ? (feriadosState.nacionalCalc.has(iso) || _rowsData(iso).some(r => r.origem === 'nacional'))
+        : _rowsData(iso).some(r => r.origem === 'estadual');
+      if (jaTem) continue;
       const { error } = await sb.from('feriados')
-        .upsert({ data: iso, nome, origem: 'nacional', ativo: true },
+        .upsert({ data: iso, nome, origem, oficial: true, ativo: true },
                 { onConflict: 'user_id,data,origem' });
       if (!error) adicionados++;
     }
   }
+  await _recarregarRows();
   return adicionados;
 }
 
-/** Feriados nacionais de um ano para exibição: [{ data, nome, ativo }] */
-function feriadosNacionaisView(ano) {
-  calcularFeriadosNacionais(ano, ano);
-  return [...feriadosState.nacional.entries()]
-    .filter(([iso]) => iso.startsWith(String(ano) + '-'))
-    .map(([iso, v]) => ({ data: iso, nome: v.nome, ativo: v.ativo }))
-    .sort((a, b) => a.data.localeCompare(b.data));
+/** Feriados de uma categoria/ano para exibição: [{ id?, data, nome, ativo, oficial }] */
+function feriadosView(categoria, ano) {
+  const pref = String(ano) + '-';
+  const out = [];
+  if (categoria === 'nacional') {
+    calcularFeriadosNacionais(ano, ano);
+    for (const [iso, nome] of feriadosState.nacionalCalc) {
+      if (!iso.startsWith(pref)) continue;
+      const row = _rowsData(iso).find(r => r.origem === 'nacional');
+      out.push(row
+        ? { id: row.id, data: iso, nome: row.nome, ativo: row.ativo, oficial: row.oficial }
+        : { id: null, data: iso, nome, ativo: true, oficial: true });
+    }
+    for (const r of feriadosState.rows) {
+      const iso = String(r.data).slice(0, 10);
+      if (r.origem === 'nacional' && iso.startsWith(pref) && !feriadosState.nacionalCalc.has(iso)) {
+        out.push({ id: r.id, data: iso, nome: r.nome, ativo: r.ativo, oficial: r.oficial });
+      }
+    }
+  } else {
+    for (const r of feriadosState.rows) {
+      const iso = String(r.data).slice(0, 10);
+      if (r.origem === categoria && iso.startsWith(pref)) {
+        out.push({ id: r.id, data: iso, nome: r.nome, ativo: r.ativo, oficial: r.oficial });
+      }
+    }
+  }
+  return out.sort((a, b) => a.data.localeCompare(b.data));
 }
 
-/** Feriados do usuário para exibição: [{ id, data, nome, ativo }] */
-function feriadosUsuarioView() {
-  return [...feriadosState.usuario.entries()]
-    .map(([iso, v]) => ({ id: v.id, data: iso, nome: v.nome, ativo: v.ativo }))
-    .sort((a, b) => a.data.localeCompare(b.data));
+/** Quantidade de feriados ATIVOS numa categoria/ano (para o resumo dos menus) */
+function feriadosContagem(categoria, ano) {
+  return feriadosView(categoria, ano).filter(f => f.ativo).length;
 }
