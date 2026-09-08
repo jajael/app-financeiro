@@ -38,13 +38,13 @@
     align-items: stretch;
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
-    padding-right: 2.2rem;   /* espaço para o botão "×" */
 }
 
 .form-header h2 {
     margin: 0;
     color: var(--dark);
     font-size: 1.2rem;
+    padding-right: 2.2rem;   /* espaço para o botão "×" (só o título) */
 }
 
 /* Seletor de tipo: sempre abaixo do título, dividindo 100% */
@@ -93,6 +93,14 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 0.75rem;
     margin-bottom: 0.85rem;
+}
+
+/* Linhas principais: empilhadas até ~900px; no layout largo (1024)
+   linha 1 = Recorrência + Data (+ Método) ; linha 2 = Valor + Categoria + Descrição */
+#linha1, #linha2 { grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+    #linha1 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    #linha2 { grid-template-columns: repeat(3, 1fr); }
 }
 
 .form-group {

@@ -158,11 +158,24 @@
                     
                     <input type="hidden" id="tipoTransacao" value="entradas">
 
-                    <!-- 1) Recorrência e derivados -->
-                    <div class="form-row">
+                    <!-- 1) Recorrência + Data (+ Método) -->
+                    <div class="form-row" id="linha1">
                         <div class="form-group">
                             <label for="tipoRecorrencia">Recorrência:</label>
                             <select id="tipoRecorrencia" required></select>
+                        </div>
+                        <div class="form-group" id="dataGroup">
+                            <label for="data">Data:</label>
+                            <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
+                        </div>
+                        <div class="form-group" id="metodoGroup">
+                            <label for="metodo">Método:</label>
+                            <div class="campo-com-add">
+                                <select id="metodo" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                                <button type="button" id="btnNovoMetodo" class="btn-mini-add" title="Novo método">+</button>
+                            </div>
                         </div>
                         <div class="form-group" id="diaSemanaGroup" hidden>
                             <label for="diaSemana">Dia da semana:</label>
@@ -192,18 +205,6 @@
                         </div>
                     </div>
 
-                    <!-- 2) Data e valor -->
-                    <div class="form-row">
-                        <div class="form-group" id="dataGroup">
-                            <label for="data">Data:</label>
-                            <input type="text" id="data" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10" autocomplete="off" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="valor">Valor:</label>
-                            <input type="number" id="valor" step="0.01" placeholder="0,00" required>
-                        </div>
-                    </div>
-
                     <!-- 2b) Dia do vencimento / parcelas -->
                     <div class="form-row" id="vencimentoRow" hidden>
                         <div class="form-group" id="diaRecorrenciaGroup" hidden>
@@ -217,16 +218,18 @@
                         </div>
                     </div>
 
-                    <!-- 3) Método e categoria -->
-                    <div class="form-row">
+                    <div class="form-row" id="competenciaGroup" hidden>
                         <div class="form-group">
-                            <label for="metodo">Método:</label>
-                            <div class="campo-com-add">
-                                <select id="metodo" required>
-                                    <option value="">Selecione...</option>
-                                </select>
-                                <button type="button" id="btnNovoMetodo" class="btn-mini-add" title="Novo método">+</button>
-                            </div>
+                            <label for="competencia">Competência:</label>
+                            <input type="text" id="competencia" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <!-- 2) Valor + Categoria + Descrição -->
+                    <div class="form-row" id="linha2">
+                        <div class="form-group">
+                            <label for="valor">Valor:</label>
+                            <input type="number" id="valor" step="0.01" placeholder="0,00" required>
                         </div>
                         <div class="form-group">
                             <label for="categoria">Categoria:</label>
@@ -237,18 +240,10 @@
                                 <button type="button" id="btnNovaCategoria" class="btn-mini-add" title="Nova categoria">+</button>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-row" id="competenciaGroup" hidden>
                         <div class="form-group">
-                            <label for="competencia">Competência:</label>
-                            <input type="text" id="competencia" inputmode="numeric" placeholder="mm/aaaa" maxlength="7" autocomplete="off">
+                            <label for="descricao">Descrição (opcional):</label>
+                            <input type="text" id="descricao" placeholder="Ex: Mercado, Aluguel">
                         </div>
-                    </div>
-
-                    <!-- 4) Descrição -->
-                    <div class="form-group full-width">
-                        <label for="descricao">Descrição (opcional):</label>
-                        <input type="text" id="descricao" placeholder="Ex: Compra no mercado, Aluguel, etc">
                     </div>
 
                     <div class="form-actions">
