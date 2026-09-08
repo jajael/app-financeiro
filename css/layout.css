@@ -60,6 +60,12 @@ header.header {
 /* Impede que o "* { font-size }" do mobile aumente estes textos filhos */
 .month-bar .month-btn--config .cfg-label,
 .month-bar .current-month > span { font-size: inherit; }
+/* Emoji da engrenagem um pouco maior que o texto do botão */
+.month-bar .month-btn--config .cfg-ico {
+    font-size: 1.05rem;
+    line-height: 1;
+    vertical-align: -0.12em;
+}
 .month-bar .current-month {
     font-weight: var(--font-weight-bold);
     font-size: var(--font-size-base);

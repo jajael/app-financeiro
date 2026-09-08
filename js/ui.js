@@ -598,7 +598,7 @@ function atualizarCamposRecorrencia() {
     set('diaRecorrenciaGroup', comDia);
     set('parceleGroup', tipo === 'Parcelada');
     set('diaSemanaGroup', ehSemanal);
-    set('mesRefGroup', ehCalculada);
+    set('mesRefGroup', false);   // "Mês de ref." não aparece mais; usa o mês em exibição
     set('dataCalculadaGroup', ehCalculada);
     set('semanasChipsGroup', ehSemanal);
     // Valor se divide em 2 (informado + total) em Semanal e Parcelada
@@ -642,10 +642,11 @@ function atualizarCamposRecorrencia() {
 
     // Data derivada da competência (primeiro / 5º / último dia útil, deste mês ou do anterior)
     if (ehCalculada) {
-        definirLabelResp('label[for="compRecorrente"]', 'Mês de ref.', 'Ref.');
         definirLabelResp('label[for="dataCalculada"]', 'Data', null);
+        // "Mês de ref." não é mais editável: usa o mês em exibição (na edição, mantém o gravado)
         const compEl = document.getElementById('compRecorrente');
-        if (compEl && !compEl.value && typeof estadoApp !== 'undefined' && estadoApp.mesAtual) {
+        const editando = typeof estadoApp !== 'undefined' && estadoApp.editandoId;
+        if (compEl && !editando && typeof estadoApp !== 'undefined' && estadoApp.mesAtual) {
             compEl.value = mesDeCompetencia(formatarDataISO(estadoApp.mesAtual));
         }
         const compISO = competenciaDeMes(compEl ? compEl.value : '');

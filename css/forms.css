@@ -20,24 +20,18 @@
     margin-bottom: var(--spacing-md);
 }
 
-/* Título + botão "×" na mesma linha, centralizados verticalmente */
-.form-header-topo {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: .5rem;
-}
-.form-header-topo h2 {
+.form-header h2 {
     margin: 0;
     color: var(--dark);
     font-size: 1.2rem;
-    line-height: 1.9rem;   /* casa com a altura do botão "×" */
+    padding-right: 2.4rem;   /* espaço para o botão "×" no canto */
 }
 
-/* Botão "×" para limpar / fechar o formulário */
+/* Botão "×" para limpar / fechar o formulário — canto superior direito */
 .btn-fechar-form {
-    flex: none;
-    position: relative;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
     width: 1.9rem;
     height: 1.9rem;
     border: 1px solid var(--border-strong);
@@ -54,10 +48,9 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    width: .8rem;
-    height: 1.6px;
+    width: .78rem;
+    height: 2px;
     background: currentColor;
-    border-radius: 1px;
 }
 .btn-fechar-form::before { transform: translate(-50%, -50%) rotate(45deg); }
 .btn-fechar-form::after  { transform: translate(-50%, -50%) rotate(-45deg); }
@@ -144,16 +137,15 @@
 #dataBloco { position: relative; }
 #dataBloco > .form-group { margin: 0; }
 
-/* Checkbox "pagar no vencimento" ao lado da label "Pagamento" */
-#dataBloco > #pagarVencimentoWrap {
-    position: absolute;
-    top: 0;
-    right: 0;
-    margin: 0;
+/* Label "Pagamento" + checkbox "pagar no vcto." na mesma linha, um ao lado do outro */
+#dataGroup .label-linha {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    flex-wrap: wrap;
 }
-#dataBloco:has(> #pagarVencimentoWrap:not([hidden])) #dataGroup > label {
-    padding-right: 6rem;
-}
+#dataGroup .label-linha > label { margin-bottom: .25rem; }
+#dataGroup .label-linha > #pagarVencimentoWrap { margin: 0; }
 
 /* Metade da Recorrência: dropdown + (opcional) campo auxiliar lado a lado,
    sempre na mesma linha (Recorrência + Qtd. + Vencimento/Dia pg.) */
