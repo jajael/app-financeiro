@@ -928,6 +928,22 @@ function abrirNovoMetodo() {
     });
     ov.querySelectorAll('input[inputmode="numeric"]').forEach(inp =>
         inp.addEventListener('input', () => soNumeros(inp, 2)));
+
+    // "Melhor dia" sugerido automaticamente a partir do Fechamento
+    const fechInp = ov.querySelector('#dlgMetFech');
+    const melhorInp = ov.querySelector('#dlgMetMelhor');
+    if (fechInp && melhorInp && typeof sugerirMelhorDiaCompra === 'function') {
+        fechInp.addEventListener('input', () => {
+            const f = parseInt(fechInp.value, 10);
+            if (f >= 1 && f <= 31 && (!melhorInp.value || melhorInp.dataset.auto)) {
+                melhorInp.value = sugerirMelhorDiaCompra(f);
+                melhorInp.dataset.auto = '1';
+            } else if (!(f >= 1 && f <= 31) && melhorInp.dataset.auto) {
+                melhorInp.value = '';
+            }
+        });
+        melhorInp.addEventListener('input', () => { delete melhorInp.dataset.auto; });
+    }
 }
 
 /**

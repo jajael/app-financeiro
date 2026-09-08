@@ -15,19 +15,17 @@
   flex-wrap: wrap;
 }
 .subtabs .subtab {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-width: 0;
-  padding: 0.45rem 0.4rem;
+  padding: 0.45rem 0.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--text-muted);
   font-weight: 600;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   cursor: pointer;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .subtabs .subtab.active {
   background: var(--primary);
