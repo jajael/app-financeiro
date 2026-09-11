@@ -45,6 +45,7 @@ async function carregarAbaMenus() {
         <button class="subtab" data-sub="met">Métodos de pagamento</button>
         <button class="subtab" data-sub="rec">Recorrências</button>
         <button class="subtab" data-sub="fer">Feriados</button>
+        <button class="subtab" data-sub="pluggy">Contas conectadas</button>
       </div>
 
       <div class="menu-section menu-section--cols" data-sub="cat">
@@ -127,6 +128,17 @@ async function carregarAbaMenus() {
         </details>`).join('')}
       </div>
 
+      <div class="menu-section" data-sub="pluggy" hidden>
+        <h3>🔗 Contas conectadas
+          <button type="button" class="h3-add" onclick="conectarContaPluggy()" title="Conectar nova conta">+</button>
+        </h3>
+        <p class="menu-hint">
+          Contas conectadas via <a href="https://pluggy.ai" target="_blank" rel="noopener">Pluggy</a> (open finance).
+          Associe cada conta a um Método do app pra saber onde os lançamentos importados caem.
+        </p>
+        <div class="menu-list" id="pluggyContasList"></div>
+      </div>
+
     </div>
   `;
 
@@ -154,6 +166,8 @@ async function carregarAbaMenus() {
       if (typeof atualizarUI === 'function') atualizarUI();
     });
   }
+
+  if (typeof carregarContasConectadas === 'function') carregarContasConectadas();
 }
 
 let feriadosAnoView = new Date().getFullYear();
