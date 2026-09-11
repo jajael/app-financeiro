@@ -13,7 +13,7 @@ provider — feito uma vez, nos painéis do Google e do Supabase.
 3. **APIs & Services → Credentials → Create Credentials → OAuth client ID**
    - Application type: **Web application**
    - **Authorized JavaScript origins:**
-     - `https://jajael.github.io`
+     - `https://apps-rafa.github.io`
      - `http://localhost:8777`
    - **Authorized redirect URIs:**
      - `https://lbfnjxzthbclvgnszway.supabase.co/auth/v1/callback`
@@ -21,14 +21,25 @@ provider — feito uma vez, nos painéis do Google e do Supabase.
 
 ## 2. Supabase
 
+Os dois apps (`app-financeiro-of` e o "plano B" `app-financeiro`) usam o
+**mesmo projeto Supabase** (`lbfnjxzthbclvgnszway`), então essa configuração
+é uma só e vale pros dois sites.
+
 **Authentication → Providers → Google**
 - Enable
 - Cole o **Client ID** e o **Client Secret**
 - Save
 
-**Authentication → URL Configuration** (já deve estar assim do magic link):
-- Site URL: `https://jajael.github.io/app-financeiro`
-- Redirect URLs: `https://jajael.github.io/app-financeiro/**` e `http://localhost:8777/**`
+**Authentication → URL Configuration**:
+- Site URL: `https://apps-rafa.github.io/app-financeiro-of`
+- Redirect URLs (uma por linha):
+  - `https://apps-rafa.github.io/app-financeiro-of/**`
+  - `https://apps-rafa.github.io/app-financeiro/**`
+  - `http://localhost:8777/**`
+
+> Histórico: o app já morou em `https://jajael.github.io/app-financeiro`
+> antes do repo ser transferido pra org `apps-rafa` em 2026-09-11 — se
+> ainda tiver essa URL configurada em algum painel, pode remover.
 
 ## 3. Pronto
 
