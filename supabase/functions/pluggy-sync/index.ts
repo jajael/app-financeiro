@@ -135,23 +135,72 @@ function traduzirCategoriaPluggy(categoriaPluggy: string): string {
   return TRADUCAO_CATEGORIA_PLUGGY[categoriaPluggy.trim().toLowerCase()] ?? categoriaPluggy;
 }
 
-/** Sugestão simples de categoria do app a partir da categoria da Pluggy
- *  já traduzida (nome igual ou um contendo o outro, só dentro do mesmo
- *  tipo entrada/saída). */
+// Heurística por nome do estabelecimento (descricao_banco), pra quando o
+// nome bate com algo reconhecível mesmo sem a categoria da Pluggy ajudar
+// (ex.: "DROGARIAS IMPERIAL LTDA" → Saúde). Concept em português, no mesmo
+// vocabulário da tradução acima — casado contra as categorias do usuário
+// do mesmo jeito (exata ou parcial).
+const PALAVRAS_CHAVE_CATEGORIA: { padrao: RegExp; categoria: string }[] = [
+  { padrao: /drogaria|farm[aá]cia|droga ?raia|pacheco|pague ?menos/, categoria: "Saúde" },
+  { padrao: /hospital|cl[ií]nica|laborat[oó]rio|dentista|odont/, categoria: "Saúde" },
+  { padrao: /academia|smart ?fit|bodytech|bio ?ritmo/, categoria: "Saúde" },
+  { padrao: /supermercado|hortifruti|atacad[ãa]o|carrefour|extra|p[ãa]o de a[çc][uú]car|assa[íi]/, categoria: "Mercado" },
+  { padrao: /restaurante|lanchonete|padaria|pizzaria|churrascaria/, categoria: "Alimentação" },
+  { padrao: /ifood|rappi|mcdonalds|burger king|habib|subway/, categoria: "Alimentação" },
+  { padrao: /uber|99app|99pop|t[áa]xi/, categoria: "Transporte" },
+  { padrao: /posto|ipiranga|shell|petrobras|ale combust/, categoria: "Transporte" },
+  { padrao: /estacionamento|zona azul/, categoria: "Transporte" },
+  { padrao: /netflix|spotify|disney|amazon prime|hbo|paramount/, categoria: "Lazer" },
+  { padrao: /cinema|cinemark|teatro/, categoria: "Lazer" },
+  { padrao: /escola|faculdade|universidade|udemy|alura/, categoria: "Educação" },
+  { padrao: /condom[ií]nio|imobili[aá]ria|aluguel/, categoria: "Casa" },
+  { padrao: /cemig|light sa|enel|sabesp|copasa|eletropaulo/, categoria: "Casa" },
+];
+
+function sugerirCategoriaPorPalavraChave(descricaoBanco: string | null | undefined): string | null {
+  if (!descricaoBanco) return null;
+  const alvo = descricaoBanco.toLowerCase();
+  const achado = PALAVRAS_CHAVE_CATEGORIA.find((p) => p.padrao.test(alvo));
+  return achado ? achado.categoria : null;
+}
+
+/** Sugestão de categoria do app pra uma transação importada. Ordem de
+ *  prioridade: (1) categoria com o nome EXATAMENTE igual à descrição do
+ *  banco — ex. o usuário já cadastrou uma categoria "Drogarias Imperial";
+ *  (2) heurística por palavra-chave do nome do estabelecimento; (3) a
+ *  categoria da Pluggy já traduzida (nome igual ou um contendo o outro).
+ *  Sempre restrito ao mesmo tipo entrada/saída da transação. */
 function sugerirCategoria(
   categoriaTraduzida: string | null,
+  descricaoBanco: string | null | undefined,
   tipo: "entradas" | "saidas",
   categoriasApp: { nome: string; categoria_tipo: string | null }[],
 ): string | null {
-  if (!categoriaTraduzida) return null;
-  const alvo = categoriaTraduzida.trim().toLowerCase();
   const candidatas = categoriasApp.filter((c) => c.categoria_tipo === tipo);
-  const exata = candidatas.find((c) => c.nome.toLowerCase() === alvo);
-  if (exata) return exata.nome;
-  const parcial = candidatas.find(
-    (c) => alvo.includes(c.nome.toLowerCase()) || c.nome.toLowerCase().includes(alvo),
-  );
-  return parcial ? parcial.nome : null;
+
+  const descNorm = (descricaoBanco || "").trim().toLowerCase();
+  if (descNorm) {
+    const exataDescricao = candidatas.find((c) => c.nome.toLowerCase() === descNorm);
+    if (exataDescricao) return exataDescricao.nome;
+  }
+
+  const porPalavraChave = sugerirCategoriaPorPalavraChave(descricaoBanco);
+  if (porPalavraChave) {
+    const achada = candidatas.find((c) => c.nome.toLowerCase() === porPalavraChave.toLowerCase());
+    if (achada) return achada.nome;
+  }
+
+  if (categoriaTraduzida) {
+    const alvo = categoriaTraduzida.trim().toLowerCase();
+    const exata = candidatas.find((c) => c.nome.toLowerCase() === alvo);
+    if (exata) return exata.nome;
+    const parcial = candidatas.find(
+      (c) => alvo.includes(c.nome.toLowerCase()) || c.nome.toLowerCase().includes(alvo),
+    );
+    if (parcial) return parcial.nome;
+  }
+
+  return null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -223,15 +272,16 @@ Deno.serve(async (req: Request) => {
             // algo em português mesmo quando não bate com nenhuma categoria
             // já cadastrada) e usada na sugestão.
             const categoriaTraduzida = t.category ? traduzirCategoriaPluggy(t.category) : null;
+            const descricaoBanco = t.description || t.descriptionRaw || "";
             linhas.push({
               pluggy_transaction_id: t.id,
               conta_id: conta.id,
               data: String(t.date ?? "").slice(0, 10),
               valor: Math.abs(Number(t.amount) || 0),
               tipo,
-              descricao_banco: t.description || t.descriptionRaw || "",
+              descricao_banco: descricaoBanco,
               categoria_pluggy: categoriaTraduzida,
-              categoria_sugerida: sugerirCategoria(categoriaTraduzida, tipo, categoriasApp ?? []),
+              categoria_sugerida: sugerirCategoria(categoriaTraduzida, descricaoBanco, tipo, categoriasApp ?? []),
               metodo_sugerido: conta.metodo_id ?? null,
               status: "pendente",
               user_id: user.id,
