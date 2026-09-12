@@ -222,6 +222,21 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Não autenticado" }, 401);
     }
 
+    // dateFrom opcional vindo do client (controle "Buscar últimos N dia(s)/
+    // mês(es)/ano(s)" na aba Revisão) — quando informado, ignora o
+    // ultimo_sync de cada conta e busca a partir dessa data pra todas.
+    // Sem isso, apagar os lançamentos importados não adianta: o próximo
+    // sync ainda parte do último ultimo_sync (recente) e não traz nada.
+    let dateFromOverride: string | null = null;
+    try {
+      const body = await req.json();
+      if (typeof body?.dateFrom === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.dateFrom)) {
+        dateFromOverride = body.dateFrom;
+      }
+    } catch {
+      // corpo vazio ({}) — segue sem override, comportamento de sempre.
+    }
+
     // Inclui contas com erro também — um sync manual deve tentar de novo,
     // não travar pra sempre por causa de uma falha anterior.
     const { data: contas, error: contasError } = await supabaseClient
@@ -246,9 +261,9 @@ Deno.serve(async (req: Request) => {
     let erroConta: string | null = null;
 
     for (const conta of contas) {
-      const dateFrom = conta.ultimo_sync
+      const dateFrom = dateFromOverride ?? (conta.ultimo_sync
         ? String(conta.ultimo_sync).slice(0, 10)
-        : new Date(Date.now() - DIAS_HISTORICO_PRIMEIRA_SYNC * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        : new Date(Date.now() - DIAS_HISTORICO_PRIMEIRA_SYNC * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
 
       try {
         const linhas: Record<string, unknown>[] = [];

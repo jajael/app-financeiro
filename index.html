@@ -151,6 +151,14 @@
                     <div class="revisao-topo">
                         <p class="menu-hint">Transações trazidas do banco (open finance). Confirme e ajuste a categoria antes de virarem um lançamento de verdade.</p>
                         <div class="revisao-topo-acoes">
+                            <label class="sync-range" for="syncQtd">Buscar últimos
+                                <input type="number" id="syncQtd" class="input-mini sync-qtd" min="1" max="999" value="30">
+                                <select id="syncUnidade" class="select-mini">
+                                    <option value="dias" selected>dia(s)</option>
+                                    <option value="meses">mês(es)</option>
+                                    <option value="anos">ano(s)</option>
+                                </select>
+                            </label>
                             <button type="button" class="mini-btn" id="btnSincronizarPluggy">↻ Sincronizar agora</button>
                             <button type="button" class="mini-btn" id="btnLimparRevisao">🧹 Limpar tudo</button>
                         </div>
