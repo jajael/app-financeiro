@@ -270,7 +270,7 @@ async function carregarRevisaoPluggy() {
 
     const { data, error } = await sb
         .from('transacoes_importadas')
-        .select('*, conta:conta_id(nome_instituicao, tipo_conta, nome_conta, marketing_name, banco_origem)')
+        .select('*, conta:conta_id(nome_instituicao, tipo_conta, nome_conta, marketing_name, banco_origem, metodo_id)')
         .eq('status', 'pendente')
         .order('data', { ascending: false });
 
@@ -325,9 +325,15 @@ function gerarHTMLImportada(item) {
         `<option value="${nome}" ${nome === item.categoria_sugerida ? 'selected' : ''}>${nome}</option>`
     ).join('');
 
+    // metodo_sugerido é gravado no momento do sync, a partir do método que
+    // já estava associado à conta ali; mas se a conta só foi associada
+    // DEPOIS do sync (fluxo comum: conecta, sincroniza, só então define o
+    // método em Contas conectadas), essas linhas antigas ficam com
+    // metodo_sugerido nulo — cai pro método atual da conta como reforço.
+    const metodoPreSelecionado = item.metodo_sugerido ?? item.conta?.metodo_id ?? null;
     const metodos = (estadoApp.menus && estadoApp.menus.metodos) || [];
     const opcoesMetodo = metodos.map(m =>
-        `<option value="${m.id}" ${m.id === item.metodo_sugerido ? 'selected' : ''}>${rotuloMetodo(m)}</option>`
+        `<option value="${m.id}" ${m.id === metodoPreSelecionado ? 'selected' : ''}>${rotuloMetodo(m)}</option>`
     ).join('');
 
     return `
