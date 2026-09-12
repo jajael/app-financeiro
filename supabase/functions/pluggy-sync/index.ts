@@ -91,10 +91,12 @@ Deno.serve(async (req: Request) => {
       return json({ error: "Não autenticado" }, 401);
     }
 
+    // Inclui contas com erro também — um sync manual deve tentar de novo,
+    // não travar pra sempre por causa de uma falha anterior.
     const { data: contas, error: contasError } = await supabaseClient
       .from("pluggy_contas")
       .select("*")
-      .eq("status", "ativo");
+      .in("status", ["ativo", "erro"]);
     if (contasError) {
       return json({ error: "Falha ao carregar contas conectadas", detalhe: contasError.message }, 500);
     }
@@ -119,13 +121,13 @@ Deno.serve(async (req: Request) => {
 
       try {
         const linhas: Record<string, unknown>[] = [];
-        let page = 1;
-        let totalPages = 1;
-        do {
-          const resp = await pluggyGet(
-            `/transactions?accountId=${conta.account_id}&dateFrom=${dateFrom}&pageSize=500&page=${page}`,
-            apiKey,
-          );
+        // /transactions (offset) foi descontinuado pela Pluggy (410
+        // ENDPOINT_DEPRECATED) — /v2/transactions pagina por cursor: cada
+        // resposta traz "next" com a query string pronta pra próxima página.
+        let path: string | null =
+          `/v2/transactions?accountId=${conta.account_id}&dateFrom=${dateFrom}`;
+        while (path) {
+          const resp = await pluggyGet(path, apiKey);
           for (const t of resp.results ?? []) {
             const tipo: "entradas" | "saidas" = t.type === "CREDIT" ? "entradas" : "saidas";
             linhas.push({
@@ -142,9 +144,8 @@ Deno.serve(async (req: Request) => {
               user_id: user.id,
             });
           }
-          totalPages = resp.totalPages ?? 1;
-          page += 1;
-        } while (page <= totalPages);
+          path = resp.next ? `/v2/transactions?${String(resp.next).replace(/^\?/, "")}` : null;
+        }
 
         if (linhas.length) {
           const { data: inseridas, error: upsertError } = await supabaseClient
