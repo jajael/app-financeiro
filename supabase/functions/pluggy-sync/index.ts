@@ -54,15 +54,97 @@ async function pluggyGet(path: string, apiKey: string) {
   return resp.json();
 }
 
+// Taxonomia de categorias da Pluggy é em inglês (docs.pluggy.ai/docs/
+// transaction-categories); as categorias do app são livres, em
+// português. Traduz pro português antes de comparar — sem isso o match
+// por nome praticamente nunca acerta. Cobre os 3 níveis da taxonomia
+// (o campo "category" de uma transação normalmente vem no nível mais
+// específico disponível).
+const TRADUCAO_CATEGORIA_PLUGGY: Record<string, string> = {
+  // Nível 1
+  "income": "Receita", "loans and financing": "Empréstimos e financiamento",
+  "investments": "Investimentos", "same person transfer": "Transferência entre contas próprias",
+  "transfers": "Transferências", "legal obligations": "Obrigações legais",
+  "services": "Serviços", "shopping": "Compras", "digital services": "Serviços digitais",
+  "groceries": "Mercado", "food and drinks": "Alimentação", "travel": "Viagem",
+  "donations": "Doações", "gambling": "Jogos de azar", "taxes": "Impostos",
+  "bank fees": "Tarifas bancárias", "housing": "Casa", "healthcare": "Saúde",
+  "transportation": "Transporte", "insurance": "Seguro", "leisure": "Lazer", "other": "Outro",
+  // Nível 2
+  "salary": "Salário", "retirement": "Aposentadoria",
+  "entrepreneurial activities": "Atividade autônoma", "government aid": "Auxílio governamental",
+  "non-recurring income": "Receita eventual",
+  "late payment and overdraft costs": "Juros por atraso", "interests charged": "Juros cobrados",
+  "loans": "Empréstimo", "financing": "Financiamento",
+  "automatic investment": "Investimento automático", "fixed income": "Renda fixa",
+  "mutual funds": "Fundos de investimento", "variable income": "Renda variável",
+  "margin": "Margem", "proceeds interests and dividends": "Rendimentos e dividendos",
+  "pension": "Previdência",
+  "same person transfer - cash": "Transferência própria em dinheiro",
+  "same person transfer - pix": "Transferência própria via PIX",
+  "same person transfer - ted": "Transferência própria via TED",
+  "transfer - bank slip (boleto)": "Pagamento de boleto", "transfer - cash": "Transferência em dinheiro",
+  "transfer - check": "Transferência por cheque", "transfer - doc": "Transferência DOC",
+  "transfer - foreign exchange": "Câmbio", "transfer - internal": "Transferência interna",
+  "transfer - pix": "PIX", "transfer - ted": "TED",
+  "credit card payment": "Pagamento de fatura do cartão", "third-party transfers": "Transferência a terceiros",
+  "blocked balances": "Saldo bloqueado", "alimony": "Pensão alimentícia",
+  "telecommunications": "Telecomunicações", "education": "Educação",
+  "wellness and fitness": "Bem-estar e academia", "tickets": "Ingressos",
+  "online shopping": "Compras online", "electronics": "Eletrônicos",
+  "pet supplies and vet": "Pet shop e veterinário", "clothing": "Roupas",
+  "kids and toys": "Infantil e brinquedos", "bookstore": "Livraria",
+  "sports goods": "Artigos esportivos", "office supplies": "Material de escritório",
+  "cashback": "Cashback",
+  "gaming": "Jogos", "video streaming": "Streaming de vídeo", "music streaming": "Streaming de música",
+  "eating out": "Restaurante", "food delivery": "Delivery de comida",
+  "airport and airlines": "Aeroporto e companhias aéreas", "accommodation": "Hospedagem",
+  "mileage programs": "Programa de milhas", "bus tickets": "Passagem de ônibus",
+  "lottery": "Loteria", "online bet": "Aposta online",
+  "income taxes": "Imposto de renda", "taxes on investments": "Imposto sobre investimentos",
+  "tax on financial operations": "IOF",
+  "account fees": "Tarifa de conta", "wire transfer fees and atm fees": "Tarifa de TED/saque",
+  "credit card fees": "Tarifa de cartão de crédito",
+  "rent": "Aluguel", "houseware": "Utilidades domésticas",
+  "urban land and building tax": "IPTU", "utilities": "Contas de casa",
+  "dentist": "Dentista", "pharmacy": "Farmácia", "optometry": "Oftalmologia",
+  "hospital clinics and labs": "Hospital e laboratório",
+  "taxi and ride-hailing": "Transporte por app", "public transportation": "Transporte público",
+  "car rental": "Aluguel de carro", "bicycle": "Bicicleta", "automotive": "Automotivo",
+  "life insurance": "Seguro de vida", "home insurance": "Seguro residencial",
+  "health insurance": "Seguro saúde", "vehicle insurance": "Seguro veicular",
+  // Nível 3
+  "real estate financing": "Financiamento imobiliário", "vehicle financing": "Financiamento de veículo",
+  "student loan": "Financiamento estudantil",
+  "internet": "Internet", "mobile": "Celular", "tv": "TV",
+  "online courses": "Cursos online", "university": "Faculdade", "school": "Escola",
+  "kindergarten": "Creche",
+  "gyms and fitness centers": "Academia", "sports practice": "Prática esportiva",
+  "wellness": "Bem-estar",
+  "stadiums and arenas": "Estádios e arenas", "landmarks and museums": "Pontos turísticos e museus",
+  "cinema, theater and concerts": "Cinema, teatro e shows",
+  "bank slip": "Boleto", "debt card": "Cartão de débito", "doc": "DOC",
+  "water": "Água", "electricity": "Energia elétrica", "gas": "Gás",
+  "gas stations": "Posto de gasolina", "parking": "Estacionamento",
+  "tolls and in-vehicle payment": "Pedágio",
+  "vehicle ownership taxes and fees": "IPVA e taxas", "vehicle maintenance": "Manutenção veicular",
+  "traffic tickets": "Multas de trânsito",
+};
+
+function traduzirCategoriaPluggy(categoriaPluggy: string): string {
+  return TRADUCAO_CATEGORIA_PLUGGY[categoriaPluggy.trim().toLowerCase()] ?? categoriaPluggy;
+}
+
 /** Sugestão simples de categoria do app a partir da categoria da Pluggy
- *  (v1: nome igual ou um contendo o outro, só dentro do mesmo tipo). */
+ *  já traduzida (nome igual ou um contendo o outro, só dentro do mesmo
+ *  tipo entrada/saída). */
 function sugerirCategoria(
-  categoriaPluggy: string | null,
+  categoriaTraduzida: string | null,
   tipo: "entradas" | "saidas",
   categoriasApp: { nome: string; categoria_tipo: string | null }[],
 ): string | null {
-  if (!categoriaPluggy) return null;
-  const alvo = categoriaPluggy.trim().toLowerCase();
+  if (!categoriaTraduzida) return null;
+  const alvo = categoriaTraduzida.trim().toLowerCase();
   const candidatas = categoriasApp.filter((c) => c.categoria_tipo === tipo);
   const exata = candidatas.find((c) => c.nome.toLowerCase() === alvo);
   if (exata) return exata.nome;
@@ -130,6 +212,10 @@ Deno.serve(async (req: Request) => {
           const resp = await pluggyGet(path, apiKey);
           for (const t of resp.results ?? []) {
             const tipo: "entradas" | "saidas" = t.type === "CREDIT" ? "entradas" : "saidas";
+            // Traduzida uma vez só: guardada em categoria_pluggy (pra exibir
+            // algo em português mesmo quando não bate com nenhuma categoria
+            // já cadastrada) e usada na sugestão.
+            const categoriaTraduzida = t.category ? traduzirCategoriaPluggy(t.category) : null;
             linhas.push({
               pluggy_transaction_id: t.id,
               conta_id: conta.id,
@@ -137,8 +223,8 @@ Deno.serve(async (req: Request) => {
               valor: Math.abs(Number(t.amount) || 0),
               tipo,
               descricao_banco: t.description || t.descriptionRaw || "",
-              categoria_pluggy: t.category ?? null,
-              categoria_sugerida: sugerirCategoria(t.category ?? null, tipo, categoriasApp ?? []),
+              categoria_pluggy: categoriaTraduzida,
+              categoria_sugerida: sugerirCategoria(categoriaTraduzida, tipo, categoriasApp ?? []),
               metodo_sugerido: conta.metodo_id ?? null,
               status: "pendente",
               user_id: user.id,
