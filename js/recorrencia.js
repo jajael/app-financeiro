@@ -253,13 +253,14 @@ function addMeses(dataISO, n) {
 }
 
 /**
- * Sugestão de "melhor dia de compra" a partir do dia de fechamento:
- * dia seguinte ao fechamento, ajustado para dia útil. Retorna número (1-31).
+ * Sugestão de "melhor dia de compra" a partir do dia de fechamento: é
+ * literalmente o dia seguinte ao fechamento (a compra cai só na próxima
+ * fatura, dando o prazo máximo até o vencimento). Sem ajuste pra dia
+ * útil — é só uma sugestão de referência, não uma data de verdade.
+ * Retorna número (1-31); fechamento 31 vira dia 1.
  */
 function sugerirMelhorDiaCompra(diaFechamento) {
   const f = parseInt(diaFechamento, 10);
   if (!f) return '';
-  const hoje = new Date();
-  const alvo = new Date(hoje.getFullYear(), hoje.getMonth(), f + 1);
-  return ajustarDiaUtil(alvo).getDate();
+  return f >= 31 ? 1 : f + 1;
 }
