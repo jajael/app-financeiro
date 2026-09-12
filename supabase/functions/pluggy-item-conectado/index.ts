@@ -95,11 +95,30 @@ Deno.serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    const linhas = contas.map((conta: { id: string; type: string }) => ({
+    // Guarda o máximo de detalhe que a Pluggy dá pra diferenciar contas do
+    // mesmo conector (ex.: "MeuPluggy" agrega várias instituições reais) —
+    // sem isso a tela de Contas conectadas mostrava só o nome do conector,
+    // igual pra todas, e o usuário não conseguia saber qual conta era qual
+    // na hora de associar o Método do app.
+    type ContaPluggy = {
+      id: string;
+      type: string;
+      name?: string;
+      marketingName?: string | null;
+      number?: string | null;
+      balance?: number | null;
+      creditData?: { brand?: string | null; level?: string | null } | null;
+    };
+    const linhas = contas.map((conta: ContaPluggy) => ({
       item_id: itemId,
       account_id: conta.id,
       nome_instituicao: nomeInstituicao,
       tipo_conta: conta.type === "CREDIT" ? "CREDIT" : "BANK",
+      nome_conta: conta.name || null,
+      marketing_name: conta.marketingName || null,
+      numero_mascarado: conta.number || null,
+      marca_cartao: conta.creditData?.brand || null,
+      saldo: typeof conta.balance === "number" ? conta.balance : null,
       status: "ativo",
       user_id: user.id,
     }));

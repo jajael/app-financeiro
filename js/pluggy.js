@@ -104,14 +104,29 @@ async function carregarContasConectadas() {
             ? `último sync: ${new Date(c.ultimo_sync).toLocaleString('pt-BR')}`
             : 'ainda não sincronizada';
 
+        // marketing_name/nome_conta/numero_mascarado/marca_cartao vêm da
+        // Pluggy só na hora de conectar (pluggy-item-conectado) — sem isso
+        // todas as contas do mesmo conector (ex.: "MeuPluggy" agregando
+        // Bradesco + Mercado Pago) apareciam com o mesmo nome genérico e
+        // dava pra confundir na hora de associar o Método do app.
+        const tituloConta = c.marketing_name || c.nome_instituicao;
+        const detalhesConta = [
+            c.nome_conta,
+            c.numero_mascarado ? `final ${c.numero_mascarado}` : null,
+            c.marca_cartao,
+        ].filter(Boolean).join(' · ');
+        const saldoTxt = c.tipo_conta === 'BANK' && typeof c.saldo === 'number'
+            ? `saldo: ${formatarMoeda(c.saldo)}` : '';
+
         return `
         <div class="menu-item ativo" data-conta-id="${c.id}">
             <div class="item-info">
-                <div class="item-nome">${c.nome_instituicao}
+                <div class="item-nome">${tituloConta}
                     <span class="chip chip--neutro">${c.tipo_conta === 'CREDIT' ? 'Cartão' : 'Conta'}</span>
                     ${statusTag}
                 </div>
-                <div class="item-descricao">${ultimoSync}</div>
+                ${detalhesConta ? `<div class="item-descricao">${detalhesConta}</div>` : ''}
+                <div class="item-descricao">${ultimoSync}${saldoTxt ? ' · ' + saldoTxt : ''}</div>
                 <div class="item-descricao">
                     <label>Método do app:
                         <select data-act="metodo-conta" data-id="${c.id}">
