@@ -129,6 +129,14 @@ create table if not exists public.pluggy_contas (
   account_id        uuid not null,
   nome_instituicao  text not null,
   tipo_conta        text not null check (tipo_conta in ('BANK','CREDIT')),
+  -- Detalhe por conta (só a Pluggy sabe na hora de conectar): sem isso,
+  -- conectores que agregam várias instituições reais (ex.: "MeuPluggy")
+  -- mostravam todas as contas com o mesmo nome genérico.
+  nome_conta        text,
+  marketing_name    text,
+  numero_mascarado  text,
+  marca_cartao      text,
+  saldo             numeric(12,2),
   metodo_id         bigint references public.menu_itens(id) on delete set null,
   status            text not null default 'ativo' check (status in ('ativo','erro','desconectado')),
   ultimo_sync       timestamptz,
