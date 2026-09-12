@@ -211,7 +211,14 @@ Deno.serve(async (req: Request) => {
         while (path) {
           const resp = await pluggyGet(path, apiKey);
           for (const t of resp.results ?? []) {
-            const tipo: "entradas" | "saidas" = t.type === "CREDIT" ? "entradas" : "saidas";
+            // Em contas CREDIT (cartão) o sentido de CREDIT/DEBIT se inverte
+            // em relação a conta corrente: lá CREDIT = entrada de dinheiro,
+            // aqui CREDIT = compra/gasto que aumenta a fatura e DEBIT = pagamento
+            // que abate o saldo devedor. Sem isso, compras no cartão (Netflix,
+            // Spotify, etc.) eram gravadas como "entradas" por engano.
+            const tipo: "entradas" | "saidas" = conta.tipo_conta === "CREDIT"
+              ? (t.type === "CREDIT" ? "saidas" : "entradas")
+              : (t.type === "CREDIT" ? "entradas" : "saidas");
             // Traduzida uma vez só: guardada em categoria_pluggy (pra exibir
             // algo em português mesmo quando não bate com nenhuma categoria
             // já cadastrada) e usada na sugestão.

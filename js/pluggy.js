@@ -7,8 +7,15 @@
 
 // Versão fixa do SDK (não usar "latest" — evita quebra silenciosa).
 const PLUGGY_SDK_URL = 'https://cdn.jsdelivr.net/npm/pluggy-connect-sdk@2.14.2/+esm';
-// TODO: desligar quando o app for conectar contas reais (produção).
+// TODO: desligar quando o app for conectar contas reais (produção) — e
+// junto com isso, remover o filtro connectorIds abaixo.
 const PLUGGY_INCLUDE_SANDBOX = true;
+// Restringe o widget ao conector sandbox "Pluggy Bank" (id 2 na API da
+// Pluggy). Sem isso o widget também mostra conectores de demonstração de
+// Open Finance (ex.: "MeuPluggy"), que exigem um fluxo OAuth à parte e
+// travam em "Nenhuma conta disponível" — só "Pluggy Bank" tem o fluxo
+// usuário/senha simples que este app testa.
+const PLUGGY_CONNECTOR_IDS = [2];
 
 let _PluggyConnectCtor = null;
 
@@ -33,6 +40,7 @@ async function conectarContaPluggy() {
         const widget = new PluggyConnect({
             connectToken: data.accessToken,
             includeSandbox: PLUGGY_INCLUDE_SANDBOX,
+            connectorIds: PLUGGY_CONNECTOR_IDS,
             onSuccess: async ({ item }) => {
                 await finalizarConexaoPluggy(item.id);
             },
@@ -116,6 +124,7 @@ async function carregarContasConectadas() {
                 ${c.status !== 'desconectado'
                     ? `<button class="btn-icon btn-danger" data-act="desconectar-conta" data-id="${c.id}" title="Desconectar">🔌</button>`
                     : ''}
+                <button class="btn-icon btn-danger" data-act="apagar-conta" data-id="${c.id}" title="Apagar">🗑️</button>
             </div>
         </div>`;
     }).join('');
@@ -129,9 +138,14 @@ function onContasConectadasClick(e) {
         associarMetodoConta(Number(sel.dataset.id), sel.value ? Number(sel.value) : null);
         return;
     }
-    const btn = e.target.closest('[data-act="desconectar-conta"]');
-    if (btn) {
-        desconectarConta(Number(btn.dataset.id));
+    const btnDesconectar = e.target.closest('[data-act="desconectar-conta"]');
+    if (btnDesconectar) {
+        desconectarConta(Number(btnDesconectar.dataset.id));
+        return;
+    }
+    const btnApagar = e.target.closest('[data-act="apagar-conta"]');
+    if (btnApagar) {
+        apagarConta(Number(btnApagar.dataset.id));
     }
 }
 
@@ -155,6 +169,28 @@ async function desconectarConta(contaId) {
     }
     mostrarNotificacao('Conta desconectada', 'sucesso');
     await carregarContasConectadas();
+}
+
+/** "Apagar": remove a conta de vez (diferente de desconectar). Bloqueado
+ *  pelo backend se já houver transação confirmada vinda dela. */
+async function apagarConta(contaId) {
+    if (!confirm('Apagar essa conta de vez? Isso não pode ser desfeito.')) return;
+    try {
+        const { data, error } = await sb.functions.invoke('pluggy-excluir-conta', { body: { contaId } });
+        if (error) {
+            // Erros com corpo (ex.: bloqueio por histórico confirmado, 409)
+            // vêm no Response guardado em error.context — sem isso a
+            // mensagem específica se perde e vira um "erro genérico".
+            const detalhe = await error.context?.json?.().catch(() => null);
+            throw new Error(detalhe?.error || error.message);
+        }
+        if (data?.error) throw new Error(data.error);
+        mostrarNotificacao('Conta apagada', 'sucesso');
+        await carregarContasConectadas();
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacao(e.message || 'Erro ao apagar conta', 'erro');
+    }
 }
 
 /**
