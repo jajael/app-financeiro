@@ -45,6 +45,7 @@
     margin-bottom: var(--spacing-md);
 }
 .revisao-topo .menu-hint { margin: 0; flex: 1 1 14rem; }
+.revisao-topo-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
 
 /* Faturas de cartão (topo das Próximas) */
 .faturas-cartao { display: flex; flex-direction: column; gap: .4rem; margin-bottom: var(--spacing-md); }

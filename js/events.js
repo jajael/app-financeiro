@@ -52,6 +52,12 @@ function configurarEventListeners() {
         btnSyncPluggy.addEventListener('click', sincronizarPluggyAgora);
     }
 
+    // Aba Revisão: botão "Limpar tudo" (ignora toda a fila pendente)
+    const btnLimparRevisao = document.getElementById('btnLimparRevisao');
+    if (btnLimparRevisao && typeof onClickLimparRevisao === 'function') {
+        btnLimparRevisao.addEventListener('click', onClickLimparRevisao);
+    }
+
     // Aba Despesas: alternar "Por recorrência" / "Por método"
     const modoSaidas = document.getElementById('modoSaidas');
     if (modoSaidas) modoSaidas.addEventListener('click', e => {
