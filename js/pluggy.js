@@ -10,12 +10,13 @@ const PLUGGY_SDK_URL = 'https://cdn.jsdelivr.net/npm/pluggy-connect-sdk@2.14.2/+
 // TODO: desligar quando o app for conectar contas reais (produção) — e
 // junto com isso, remover o filtro connectorIds abaixo.
 const PLUGGY_INCLUDE_SANDBOX = true;
-// Restringe o widget ao conector sandbox "Pluggy Bank" (id 2 na API da
-// Pluggy). Sem isso o widget também mostra conectores de demonstração de
-// Open Finance (ex.: "MeuPluggy"), que exigem um fluxo OAuth à parte e
-// travam em "Nenhuma conta disponível" — só "Pluggy Bank" tem o fluxo
-// usuário/senha simples que este app testa.
-const PLUGGY_CONNECTOR_IDS = [2];
+// Restringe o widget aos conectores de teste conhecidos (ids fixos, via
+// GET /connectors?sandbox=true na API da Pluggy):
+//   2   = "Pluggy Bank"  — sandbox usuário/senha (user-ok / password-ok)
+//   200 = "MeuPluggy"    — demo próprio da Pluggy, fluxo OAuth
+// Sem essa lista o widget mostra também conectores reais e outros
+// conectores de demonstração que exigem cadastro/login à parte.
+const PLUGGY_CONNECTOR_IDS = [2, 200];
 
 let _PluggyConnectCtor = null;
 
