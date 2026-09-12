@@ -6,7 +6,7 @@
 /* Grade fixa: "+ Lançamento" ocupa a linha; Receitas | Despesas | Próximas dividem */
 .tabs {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-sm);
     margin-bottom: var(--spacing-md);
 }
@@ -41,6 +41,7 @@
 .tabs [data-tab="entradas"] { order: 1; }
 .tabs [data-tab="saidas"]   { order: 2; }
 .tabs [data-tab="proximas"] { order: 3; }
+.tabs [data-tab="revisao"]  { order: 4; }
 
 /* Conteúdo das abas */
 .tab-content {

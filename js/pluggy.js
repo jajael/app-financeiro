@@ -155,3 +155,91 @@ async function desconectarConta(contaId) {
     mostrarNotificacao('Conta desconectada', 'sucesso');
     await carregarContasConectadas();
 }
+
+/**
+ * FILA DE REVISÃO — transações trazidas do banco, aguardando confirmação.
+ * (Confirmar/ignorar vêm numa etapa seguinte; por ora é só leitura + sync.)
+ */
+
+/** Botão "Sincronizar agora": busca transações novas em todas as contas. */
+async function sincronizarPluggyAgora() {
+    const btn = document.getElementById('btnSincronizarPluggy');
+    const textoOriginal = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Sincronizando...'; }
+    try {
+        const { data, error } = await sb.functions.invoke('pluggy-sync', { body: {} });
+        if (error) throw error;
+        const novas = data?.novas || 0;
+        mostrarNotificacao(
+            novas ? `${novas} transação(ões) nova(s) pra revisar` : 'Nada novo por enquanto',
+            'sucesso'
+        );
+        await carregarRevisaoPluggy();
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacao('Erro ao sincronizar com a Pluggy', 'erro');
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = textoOriginal || '↻ Sincronizar agora'; }
+    }
+}
+
+/** Carrega e renderiza a fila de revisão (aba "Revisão"). */
+async function carregarRevisaoPluggy() {
+    const container = document.getElementById('revisaoLista');
+    if (!container) return;
+
+    const { data, error } = await sb
+        .from('transacoes_importadas')
+        .select('*, conta:conta_id(nome_instituicao, tipo_conta)')
+        .eq('status', 'pendente')
+        .order('data', { ascending: false });
+
+    atualizarBadgeRevisao(data ? data.length : 0);
+
+    if (error) {
+        console.error(error);
+        container.innerHTML = '<p class="empty-message">Erro ao carregar a fila de revisão</p>';
+        return;
+    }
+    if (!data || !data.length) {
+        container.innerHTML = '<p class="empty-message">Nada pendente — toque em "Sincronizar agora" pra buscar transações novas</p>';
+        return;
+    }
+    container.innerHTML = data.map(gerarHTMLImportada).join('');
+}
+
+/** Contador de pendentes no botão da aba. */
+function atualizarBadgeRevisao(n) {
+    const badge = document.getElementById('badgeRevisao');
+    if (!badge) return;
+    badge.hidden = !n;
+    badge.textContent = n ? ` ${n}` : '';
+}
+
+/** Card de uma transação importada (leitura — sem editar/excluir ainda). */
+function gerarHTMLImportada(item) {
+    const _dowTri = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+    const dt = item.data ? parseDataLocal(item.data) : null;
+    const dia = dt ? String(dt.getDate()).padStart(2, '0') : '--';
+    const dow = dt ? _dowTri[dt.getDay()] : '';
+    const sinal = item.tipo === 'entradas' ? '+' : '-';
+
+    const cores = (estadoApp.menus && estadoApp.menus.cores) || {};
+    const catNome = item.categoria_sugerida || item.categoria_pluggy;
+    const catChip = catNome
+        ? `<span class="chip" style="background:${(cores.categoria && cores.categoria[catNome]) || corPadraoChip(catNome)}">${catNome}</span>`
+        : '<span class="chip chip--neutro">sem categoria sugerida</span>';
+    const contaTag = item.conta
+        ? `<span class="chip chip--neutro">${item.conta.nome_instituicao}</span>` : '';
+    const desc = item.descricao_banco
+        ? `<span class="despesa-desc">${item.descricao_banco}</span>` : '';
+
+    return `
+        <div class="despesa-item ${item.tipo === 'entradas' ? 'entrada' : 'saida'}">
+            <span class="despesa-data"><span class="despesa-dia">${dia}</span><span class="despesa-dow">${dow}</span></span>
+            <span class="despesa-valor">${sinal} ${formatarMoeda(item.valor)}</span>
+            ${catChip}
+            ${contaTag}
+            ${desc}
+        </div>`;
+}

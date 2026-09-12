@@ -9,6 +9,17 @@
     gap: var(--spacing-md);
 }
 
+/* Aba Revisão: dica + botão de sincronizar */
+.revisao-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-md);
+}
+.revisao-topo .menu-hint { margin: 0; flex: 1 1 14rem; }
+
 /* Faturas de cartão (topo das Próximas) */
 .faturas-cartao { display: flex; flex-direction: column; gap: .4rem; margin-bottom: var(--spacing-md); }
 .faturas-titulo { font-size: .8rem; font-weight: 700; color: var(--text-muted); margin: 0 0 .1rem; text-transform: uppercase; letter-spacing: .03em; }
