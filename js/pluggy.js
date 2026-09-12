@@ -119,8 +119,8 @@ async function carregarContasConectadas() {
         // nome_conta/numero_mascarado/marca_cartao vêm da Pluggy só na hora
         // de conectar (pluggy-item-conectado). O título nunca é o nome do
         // conector (ex.: "MeuPluggy" agrega várias instituições reais e não
-        // diz nada sozinho) — banco_origem é a tag que identifica o banco,
-        // editável aqui porque a Pluggy nem sempre informa.
+        // diz nada sozinho) — banco_origem vira uma tag automática ao lado
+        // do título (sem campo editável: o que a Pluggy manda já basta).
         const detalhesConta = [
             c.nome_conta,
             c.numero_mascarado ? `final ${c.numero_mascarado}` : null,
@@ -139,22 +139,15 @@ async function carregarContasConectadas() {
                 </div>
                 ${detalhesConta ? `<div class="item-descricao">${detalhesConta}</div>` : ''}
                 <div class="item-descricao">${ultimoSync}${saldoTxt ? ' · ' + saldoTxt : ''}</div>
-                <div class="item-descricao">
-                    <label>Banco de origem:
-                        <input type="text" class="input-mini" data-campo="banco-origem" data-id="${c.id}"
-                            value="${c.banco_origem || ''}" placeholder="Ex: Bradesco">
-                    </label>
-                </div>
-                <div class="item-descricao">
-                    <label>Método do app:
-                        <div class="campo-com-add">
-                            <select data-act="metodo-conta" data-id="${c.id}">
-                                <option value="">Selecione...</option>
-                                ${opcoesMetodo}
-                            </select>
-                            <button type="button" class="btn-mini-add" data-act="add-metodo" title="Novo método">+</button>
-                        </div>
-                    </label>
+                <div class="item-descricao campo-metodo-conta">
+                    <label for="metodo-conta-${c.id}">Método do app:</label>
+                    <div class="campo-com-add campo-com-add--mini">
+                        <select id="metodo-conta-${c.id}" data-act="metodo-conta" data-id="${c.id}">
+                            <option value="">Selecione...</option>
+                            ${opcoesMetodo}
+                        </select>
+                        <button type="button" class="btn-mini-add" data-act="add-metodo" title="Novo método">+</button>
+                    </div>
                 </div>
             </div>
             <div class="item-actions">
@@ -191,11 +184,6 @@ function onContasConectadasChange(e) {
     const sel = e.target.closest('select[data-act="metodo-conta"]');
     if (sel) {
         associarMetodoConta(Number(sel.dataset.id), sel.value ? Number(sel.value) : null);
-        return;
-    }
-    const inputBanco = e.target.closest('input[data-campo="banco-origem"]');
-    if (inputBanco) {
-        associarBancoOrigemConta(Number(inputBanco.dataset.id), inputBanco.value.trim() || null);
     }
 }
 
@@ -207,16 +195,6 @@ async function associarMetodoConta(contaId, metodoId) {
         return;
     }
     mostrarNotificacao('Método associado', 'sucesso');
-}
-
-async function associarBancoOrigemConta(contaId, bancoOrigem) {
-    const { error } = await sb.from('pluggy_contas').update({ banco_origem: bancoOrigem }).eq('id', contaId);
-    if (error) {
-        console.error(error);
-        mostrarNotificacao('Erro ao salvar banco de origem', 'erro');
-        return;
-    }
-    mostrarNotificacao('Banco de origem salvo', 'sucesso');
 }
 
 /** "Desconectar": só para de sincronizar por aqui; não remove o item na Pluggy (v1). */
