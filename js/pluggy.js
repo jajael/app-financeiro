@@ -32,6 +32,61 @@ function tituloContaPluggy(c) {
     return c.nome_conta || 'Conta bancária';
 }
 
+// Mesma heurística de supabase/functions/pluggy-sync (e pluggy-webhook):
+// duplicada aqui pra também sugerir categoria nas linhas que já estavam na
+// fila antes dessa lógica existir no servidor (categoria_sugerida só é
+// calculada no momento do sync — linhas antigas ficam com o valor de
+// então, geralmente nulo, e nunca são recalculadas num sync seguinte).
+const PALAVRAS_CHAVE_CATEGORIA = [
+    { padrao: /drogaria|farm[aá]cia|droga ?raia|pacheco|pague ?menos/, categoria: 'Saúde' },
+    { padrao: /hospital|cl[ií]nica|laborat[oó]rio|dentista|odont/, categoria: 'Saúde' },
+    { padrao: /academia|smart ?fit|bodytech|bio ?ritmo/, categoria: 'Saúde' },
+    { padrao: /supermercado|hortifruti|atacad[ãa]o|carrefour|extra|p[ãa]o de a[çc][uú]car|assa[íi]/, categoria: 'Mercado' },
+    { padrao: /restaurante|lanchonete|padaria|pizzaria|churrascaria/, categoria: 'Alimentação' },
+    { padrao: /ifood|rappi|mcdonalds|burger king|habib|subway/, categoria: 'Alimentação' },
+    { padrao: /uber|99app|99pop|t[áa]xi/, categoria: 'Transporte' },
+    { padrao: /posto|ipiranga|shell|petrobras|ale combust/, categoria: 'Transporte' },
+    { padrao: /estacionamento|zona azul/, categoria: 'Transporte' },
+    { padrao: /netflix|spotify|disney|amazon prime|hbo|paramount/, categoria: 'Lazer' },
+    { padrao: /cinema|cinemark|teatro/, categoria: 'Lazer' },
+    { padrao: /escola|faculdade|universidade|udemy|alura/, categoria: 'Educação' },
+    { padrao: /condom[ií]nio|imobili[aá]ria|aluguel/, categoria: 'Casa' },
+    { padrao: /cemig|light sa|enel|sabesp|copasa|eletropaulo/, categoria: 'Casa' },
+];
+
+function sugerirCategoriaPorPalavraChave(descricaoBanco) {
+    if (!descricaoBanco) return null;
+    const alvo = descricaoBanco.toLowerCase();
+    const achado = PALAVRAS_CHAVE_CATEGORIA.find(p => p.padrao.test(alvo));
+    return achado ? achado.categoria : null;
+}
+
+/** Sugestão de categoria calculada no cliente (fallback quando a linha já
+ *  tem categoria_sugerida nula, gravada antes dessa heurística existir).
+ *  Mesma ordem de prioridade do servidor: nome exato da descrição →
+ *  palavra-chave do estabelecimento → categoria da Pluggy já traduzida.
+ *  categoriasApp é a lista de nomes (string) do tipo entrada/saída certo. */
+function sugerirCategoriaCliente(item, categoriasApp) {
+    const descNorm = (item.descricao_banco || '').trim().toLowerCase();
+    if (descNorm) {
+        const exata = categoriasApp.find(nome => nome.toLowerCase() === descNorm);
+        if (exata) return exata;
+    }
+    const porPalavraChave = sugerirCategoriaPorPalavraChave(item.descricao_banco);
+    if (porPalavraChave) {
+        const achada = categoriasApp.find(nome => nome.toLowerCase() === porPalavraChave.toLowerCase());
+        if (achada) return achada;
+    }
+    if (item.categoria_pluggy) {
+        const alvo = item.categoria_pluggy.trim().toLowerCase();
+        const exata = categoriasApp.find(nome => nome.toLowerCase() === alvo);
+        if (exata) return exata;
+        const parcial = categoriasApp.find(nome => alvo.includes(nome.toLowerCase()) || nome.toLowerCase().includes(alvo));
+        if (parcial) return parcial;
+    }
+    return null;
+}
+
 /** Carrega o SDK da Pluggy sob demanda (só quando o usuário clica em conectar). */
 async function carregarPluggyConnectSdk() {
     if (!_PluggyConnectCtor) {
@@ -263,6 +318,47 @@ async function sincronizarPluggyAgora() {
     }
 }
 
+/** Botão "Limpar tudo": mesmo padrão de 2 cliques usado em Configurações
+ *  (sem confirm() nativo) — marca toda a fila pendente como 'ignorada'.
+ *  Não apaga as linhas (perderia o dedup por pluggy_transaction_id e o
+ *  próximo sync reimportaria tudo de novo). */
+function onClickLimparRevisao(e) {
+    const btn = e.currentTarget;
+    if (btn.dataset.armed) {
+        limparFilaRevisao(btn);
+        return;
+    }
+    const original = btn.textContent;
+    btn.dataset.armed = '1';
+    btn.textContent = 'confirmar?';
+    btn.classList.add('armed');
+    setTimeout(() => {
+        if (!btn.isConnected) return;
+        delete btn.dataset.armed;
+        btn.textContent = original;
+        btn.classList.remove('armed');
+    }, 3000);
+}
+
+async function limparFilaRevisao(btn) {
+    delete btn.dataset.armed;
+    btn.classList.remove('armed');
+    const original = '🧹 Limpar tudo';
+    btn.disabled = true;
+    try {
+        const { error } = await sb.from('transacoes_importadas').update({ status: 'ignorada' }).eq('status', 'pendente');
+        if (error) throw error;
+        mostrarNotificacao('Fila de revisão limpa', 'sucesso');
+        await carregarRevisaoPluggy();
+    } catch (e) {
+        console.error(e);
+        mostrarNotificacao('Erro ao limpar a fila', 'erro');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+    }
+}
+
 /** Carrega e renderiza a fila de revisão (aba "Revisão"). */
 async function carregarRevisaoPluggy() {
     const container = document.getElementById('revisaoLista');
@@ -325,8 +421,12 @@ function gerarHTMLImportada(item) {
     // categoriasReceita/categoriasDespesa são arrays de nomes (string), não objetos.
     const categoriasApp = (estadoApp.menus &&
         (item.tipo === 'entradas' ? estadoApp.menus.categoriasReceita : estadoApp.menus.categoriasDespesa)) || [];
+    // categoria_sugerida vem do servidor (calculada no sync); se estiver
+    // nula — linha importada antes dessa heurística existir, ou categoria
+    // criada depois do sync — recalcula no cliente como reforço.
+    const categoriaPreSelecionada = item.categoria_sugerida || sugerirCategoriaCliente(item, categoriasApp);
     const opcoesCategoria = categoriasApp.map(nome =>
-        `<option value="${nome}" ${nome === item.categoria_sugerida ? 'selected' : ''}>${nome}</option>`
+        `<option value="${nome}" ${nome === categoriaPreSelecionada ? 'selected' : ''}>${nome}</option>`
     ).join('');
 
     // metodo_sugerido é gravado no momento do sync, a partir do método que
