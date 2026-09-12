@@ -265,11 +265,10 @@ Deno.serve(async (req: Request) => {
         while (path) {
           const resp = await pluggyGet(path, apiKey);
           for (const t of resp.results ?? []) {
-            // Ver nota equivalente em pluggy-sync: em contas CREDIT (cartão) o
-            // sentido de CREDIT/DEBIT se inverte em relação a conta corrente.
-            const tipo: "entradas" | "saidas" = conta.tipo_conta === "CREDIT"
-              ? (t.type === "CREDIT" ? "saidas" : "entradas")
-              : (t.type === "CREDIT" ? "entradas" : "saidas");
+            // Ver nota equivalente em pluggy-sync: CREDIT = entrada, DEBIT =
+            // saída pra conta e cartão igual — a inversão pro cartão que
+            // existia aqui antes só valia pro conector sandbox de teste.
+            const tipo: "entradas" | "saidas" = t.type === "CREDIT" ? "entradas" : "saidas";
             const categoriaTraduzida = t.category ? traduzirCategoriaPluggy(t.category) : null;
             const descricaoBanco = t.description || t.descriptionRaw || "";
             linhas.push({
