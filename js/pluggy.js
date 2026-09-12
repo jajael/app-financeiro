@@ -315,8 +315,12 @@ function gerarHTMLImportada(item) {
     const contaTag = item.conta
         ? `<span class="chip chip--neutro">${item.conta.banco_origem || tituloContaPluggy(item.conta)}</span>`
         : '';
-    const desc = item.descricao_banco
-        ? `<span class="despesa-desc">${item.descricao_banco}</span>` : '';
+    // Editável — a descrição que vem do banco às vezes é um código/sigla
+    // (ex.: "DROGARIAS IMPERIAL LTDA") que o usuário quer ajustar antes de
+    // confirmar o lançamento. Escapa aspas pro valor não quebrar o atributo.
+    const descEscapada = (item.descricao_banco || '').replace(/"/g, '&quot;');
+    const desc = `<input type="text" class="input-mini despesa-desc-input" data-campo="descricao"
+        value="${descEscapada}" placeholder="Descrição" title="Descrição">`;
 
     // categoriasReceita/categoriasDespesa são arrays de nomes (string), não objetos.
     const categoriasApp = (estadoApp.menus &&
@@ -397,13 +401,15 @@ async function confirmarImportada(id) {
         metodoObj && metodoObj.metodoKind === 'Crédito' ? metodoObj.diaFechamento : null
     );
 
+    const descricao = card.querySelector('input[data-campo="descricao"]')?.value.trim() || '';
+
     const dados = {
         tipo: item.tipo,
         data: item.data,
         valor: item.valor,
         metodo: metodoRotulo,
         categoria,
-        descricao: item.descricao_banco || '',
+        descricao,
         formaPagamento: 'À vista',
         tipoRecorrencia: 'Pontual',
         competencia,

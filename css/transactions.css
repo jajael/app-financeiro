@@ -20,6 +20,21 @@
     max-width: 9rem;
 }
 
+/* Aba Revisão: campo de descrição editável dentro do card */
+.input-mini {
+    font-size: .78rem;
+    padding: .2rem .4rem;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+}
+.despesa-desc-input {
+    flex: 1 1 auto;
+    min-width: 6rem;
+    max-width: 16rem;
+}
+
 /* Aba Revisão: dica + botão de sincronizar */
 .revisao-topo {
     display: flex;
