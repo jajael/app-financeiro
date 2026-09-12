@@ -9,6 +9,17 @@
     gap: var(--spacing-md);
 }
 
+/* Aba Revisão: selects de categoria/método dentro do card */
+.select-mini {
+    font-size: .78rem;
+    padding: .2rem .4rem;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    max-width: 9rem;
+}
+
 /* Aba Revisão: dica + botão de sincronizar */
 .revisao-topo {
     display: flex;
