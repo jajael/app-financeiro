@@ -20,6 +20,18 @@ const PLUGGY_CONNECTOR_IDS = [2, 200];
 
 let _PluggyConnectCtor = null;
 
+/** Título de exibição de uma conta Pluggy — nunca o nome do conector (ex.:
+ *  "MeuPluggy" agrega várias instituições reais e não diz nada sozinho).
+ *  Prioriza o nome comercial que a Pluggy manda; senão usa um rótulo
+ *  genérico pelo tipo de conta ("Cartão de crédito") ou o nome da conta
+ *  em si (ex.: "Conta Corrente"). O banco de origem vira uma tag à parte
+ *  (banco_origem), editável pelo usuário quando a Pluggy não informa. */
+function tituloContaPluggy(c) {
+    if (c.marketing_name) return c.marketing_name;
+    if (c.tipo_conta === 'CREDIT') return 'Cartão de crédito';
+    return c.nome_conta || 'Conta bancária';
+}
+
 /** Carrega o SDK da Pluggy sob demanda (só quando o usuário clica em conectar). */
 async function carregarPluggyConnectSdk() {
     if (!_PluggyConnectCtor) {
@@ -104,12 +116,11 @@ async function carregarContasConectadas() {
             ? `último sync: ${new Date(c.ultimo_sync).toLocaleString('pt-BR')}`
             : 'ainda não sincronizada';
 
-        // marketing_name/nome_conta/numero_mascarado/marca_cartao vêm da
-        // Pluggy só na hora de conectar (pluggy-item-conectado) — sem isso
-        // todas as contas do mesmo conector (ex.: "MeuPluggy" agregando
-        // Bradesco + Mercado Pago) apareciam com o mesmo nome genérico e
-        // dava pra confundir na hora de associar o Método do app.
-        const tituloConta = c.marketing_name || c.nome_instituicao;
+        // nome_conta/numero_mascarado/marca_cartao vêm da Pluggy só na hora
+        // de conectar (pluggy-item-conectado). O título nunca é o nome do
+        // conector (ex.: "MeuPluggy" agrega várias instituições reais e não
+        // diz nada sozinho) — banco_origem é a tag que identifica o banco,
+        // editável aqui porque a Pluggy nem sempre informa.
         const detalhesConta = [
             c.nome_conta,
             c.numero_mascarado ? `final ${c.numero_mascarado}` : null,
@@ -121,18 +132,28 @@ async function carregarContasConectadas() {
         return `
         <div class="menu-item ativo" data-conta-id="${c.id}">
             <div class="item-info">
-                <div class="item-nome">${tituloConta}
-                    <span class="chip chip--neutro">${c.tipo_conta === 'CREDIT' ? 'Cartão' : 'Conta'}</span>
+                <div class="item-nome">${tituloContaPluggy(c)}
+                    ${c.banco_origem && c.banco_origem !== tituloContaPluggy(c)
+                        ? `<span class="chip chip--neutro">${c.banco_origem}</span>` : ''}
                     ${statusTag}
                 </div>
                 ${detalhesConta ? `<div class="item-descricao">${detalhesConta}</div>` : ''}
                 <div class="item-descricao">${ultimoSync}${saldoTxt ? ' · ' + saldoTxt : ''}</div>
                 <div class="item-descricao">
+                    <label>Banco de origem:
+                        <input type="text" class="input-mini" data-campo="banco-origem" data-id="${c.id}"
+                            value="${c.banco_origem || ''}" placeholder="Ex: Bradesco">
+                    </label>
+                </div>
+                <div class="item-descricao">
                     <label>Método do app:
-                        <select data-act="metodo-conta" data-id="${c.id}">
-                            <option value="">Selecione...</option>
-                            ${opcoesMetodo}
-                        </select>
+                        <div class="campo-com-add">
+                            <select data-act="metodo-conta" data-id="${c.id}">
+                                <option value="">Selecione...</option>
+                                ${opcoesMetodo}
+                            </select>
+                            <button type="button" class="btn-mini-add" data-act="add-metodo" title="Novo método">+</button>
+                        </div>
                     </label>
                 </div>
             </div>
@@ -146,12 +167,13 @@ async function carregarContasConectadas() {
     }).join('');
 
     container.onclick = onContasConectadasClick;
+    container.onchange = onContasConectadasChange;
 }
 
 function onContasConectadasClick(e) {
-    const sel = e.target.closest('select[data-act="metodo-conta"]');
-    if (sel) {
-        associarMetodoConta(Number(sel.dataset.id), sel.value ? Number(sel.value) : null);
+    const btnAddMetodo = e.target.closest('[data-act="add-metodo"]');
+    if (btnAddMetodo) {
+        abrirNovoMetodo();
         return;
     }
     const btnDesconectar = e.target.closest('[data-act="desconectar-conta"]');
@@ -165,6 +187,18 @@ function onContasConectadasClick(e) {
     }
 }
 
+function onContasConectadasChange(e) {
+    const sel = e.target.closest('select[data-act="metodo-conta"]');
+    if (sel) {
+        associarMetodoConta(Number(sel.dataset.id), sel.value ? Number(sel.value) : null);
+        return;
+    }
+    const inputBanco = e.target.closest('input[data-campo="banco-origem"]');
+    if (inputBanco) {
+        associarBancoOrigemConta(Number(inputBanco.dataset.id), inputBanco.value.trim() || null);
+    }
+}
+
 async function associarMetodoConta(contaId, metodoId) {
     const { error } = await sb.from('pluggy_contas').update({ metodo_id: metodoId }).eq('id', contaId);
     if (error) {
@@ -173,6 +207,16 @@ async function associarMetodoConta(contaId, metodoId) {
         return;
     }
     mostrarNotificacao('Método associado', 'sucesso');
+}
+
+async function associarBancoOrigemConta(contaId, bancoOrigem) {
+    const { error } = await sb.from('pluggy_contas').update({ banco_origem: bancoOrigem }).eq('id', contaId);
+    if (error) {
+        console.error(error);
+        mostrarNotificacao('Erro ao salvar banco de origem', 'erro');
+        return;
+    }
+    mostrarNotificacao('Banco de origem salvo', 'sucesso');
 }
 
 /** "Desconectar": só para de sincronizar por aqui; não remove o item na Pluggy (v1). */
@@ -248,7 +292,7 @@ async function carregarRevisaoPluggy() {
 
     const { data, error } = await sb
         .from('transacoes_importadas')
-        .select('*, conta:conta_id(nome_instituicao, tipo_conta)')
+        .select('*, conta:conta_id(nome_instituicao, tipo_conta, nome_conta, marketing_name, banco_origem)')
         .eq('status', 'pendente')
         .order('data', { ascending: false });
 
@@ -287,8 +331,12 @@ function gerarHTMLImportada(item) {
     const dow = dt ? _dowTri[dt.getDay()] : '';
     const sinal = item.tipo === 'entradas' ? '+' : '-';
 
+    // Nunca mostra o nome do conector (ex.: "MeuPluggy") — usa banco de
+    // origem quando o usuário já preencheu, senão o título genérico da
+    // conta (mesma regra de tituloContaPluggy).
     const contaTag = item.conta
-        ? `<span class="chip chip--neutro">${item.conta.nome_instituicao}</span>` : '';
+        ? `<span class="chip chip--neutro">${item.conta.banco_origem || tituloContaPluggy(item.conta)}</span>`
+        : '';
     const desc = item.descricao_banco
         ? `<span class="despesa-desc">${item.descricao_banco}</span>` : '';
 
@@ -308,14 +356,20 @@ function gerarHTMLImportada(item) {
         <div class="despesa-item ${item.tipo === 'entradas' ? 'entrada' : 'saida'}" data-importada-id="${item.id}">
             <span class="despesa-data"><span class="despesa-dia">${dia}</span><span class="despesa-dow">${dow}</span></span>
             <span class="despesa-valor">${sinal} ${formatarMoeda(item.valor)}</span>
-            <select class="select-mini" data-campo="categoria" title="Categoria">
-                <option value="">Categoria...</option>
-                ${opcoesCategoria}
-            </select>
-            <select class="select-mini" data-campo="metodo" title="Método">
-                <option value="">Método...</option>
-                ${opcoesMetodo}
-            </select>
+            <div class="campo-com-add">
+                <select class="select-mini" data-campo="categoria" title="Categoria">
+                    <option value="">Categoria...</option>
+                    ${opcoesCategoria}
+                </select>
+                <button type="button" class="btn-mini-add" data-act="add-categoria" data-tipo="${item.tipo}" title="Nova categoria">+</button>
+            </div>
+            <div class="campo-com-add">
+                <select class="select-mini" data-campo="metodo" title="Método">
+                    <option value="">Método...</option>
+                    ${opcoesMetodo}
+                </select>
+                <button type="button" class="btn-mini-add" data-act="add-metodo" title="Novo método">+</button>
+            </div>
             ${contaTag}
             ${desc}
             <div class="despesa-actions">
@@ -328,6 +382,8 @@ function gerarHTMLImportada(item) {
 function onRevisaoClick(e) {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
+    if (btn.dataset.act === 'add-categoria') { abrirNovaCategoria(btn.dataset.tipo); return; }
+    if (btn.dataset.act === 'add-metodo') { abrirNovoMetodo(); return; }
     const id = Number(btn.dataset.id);
     if (btn.dataset.act === 'confirmar-importada') confirmarImportada(id);
     else if (btn.dataset.act === 'ignorar-importada') ignorarImportada(id);
