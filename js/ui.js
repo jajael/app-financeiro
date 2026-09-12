@@ -816,6 +816,7 @@ function abrirNovaCategoria(catTipo) {
                 if (!ok) return true;
                 await carregarMenus();
                 if (typeof carregarAbaMenus === "function") await carregarAbaMenus();
+                if (typeof carregarRevisaoPluggy === "function") await carregarRevisaoPluggy();
                 const sel = document.querySelector(SELECTORS.categoria);
                 if (sel && tipo === (estadoApp.tipoAtual === 'entradas' ? 'entradas' : 'saidas')) sel.value = nome;
             } }
@@ -871,6 +872,7 @@ function abrirNovoMetodo() {
                 if (!ok) return true;
                 await carregarMenus();
                 if (typeof carregarAbaMenus === "function") await carregarAbaMenus();
+                if (typeof carregarRevisaoPluggy === "function") await carregarRevisaoPluggy();
                 const sel = document.querySelector(SELECTORS.metodo);
                 if (sel) sel.value = nome;
                 if (typeof atualizarCampoCredito === 'function') atualizarCampoCredito();

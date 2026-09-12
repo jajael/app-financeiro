@@ -119,6 +119,11 @@ Deno.serve(async (req: Request) => {
       numero_mascarado: conta.number || null,
       marca_cartao: conta.creditData?.brand || null,
       saldo: typeof conta.balance === "number" ? conta.balance : null,
+      // Melhor esforço: conectores que agregam várias instituições reais
+      // (ex.: "MeuPluggy") não dizem o banco de origem por conta — quando a
+      // Pluggy manda um marketingName específico usamos ele, senão fica em
+      // branco pro usuário preencher na tela (Contas conectadas).
+      banco_origem: conta.marketingName || null,
       status: "ativo",
       user_id: user.id,
     }));

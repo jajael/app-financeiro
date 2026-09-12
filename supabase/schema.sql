@@ -137,6 +137,11 @@ create table if not exists public.pluggy_contas (
   numero_mascarado  text,
   marca_cartao      text,
   saldo             numeric(12,2),
+  -- Banco/instituição de origem pra exibir na tela (editável pelo usuário
+  -- — conectores que agregam várias instituições, ex. "MeuPluggy", não
+  -- entregam esse dado por conta; pré-preenchido com marketing_name
+  -- quando a Pluggy manda, senão fica em branco pro usuário completar).
+  banco_origem      text,
   metodo_id         bigint references public.menu_itens(id) on delete set null,
   status            text not null default 'ativo' check (status in ('ativo','erro','desconectado')),
   ultimo_sync       timestamptz,
