@@ -275,14 +275,17 @@ Deno.serve(async (req: Request) => {
         while (path) {
           const resp = await pluggyGet(path, apiKey);
           for (const t of resp.results ?? []) {
-            // Em contas CREDIT (cartão) o sentido de CREDIT/DEBIT se inverte
-            // em relação a conta corrente: lá CREDIT = entrada de dinheiro,
-            // aqui CREDIT = compra/gasto que aumenta a fatura e DEBIT = pagamento
-            // que abate o saldo devedor. Sem isso, compras no cartão (Netflix,
-            // Spotify, etc.) eram gravadas como "entradas" por engano.
-            const tipo: "entradas" | "saidas" = conta.tipo_conta === "CREDIT"
-              ? (t.type === "CREDIT" ? "saidas" : "entradas")
-              : (t.type === "CREDIT" ? "entradas" : "saidas");
+            // CREDIT = entrada, DEBIT = saída — mesma regra pra conta e
+            // cartão (é a que os docs da Pluggy descrevem: no cartão, DEBIT
+            // é a compra que aumenta a fatura e CREDIT é o pagamento que
+            // abate o saldo devedor). Já tentamos inverter isso assumindo
+            // que cartão seria ao contrário — parecia bater com um teste no
+            // conector sandbox "Pluggy Bank", mas com uma conexão real
+            // (Bradesco via MeuPluggy) ficou claro que o sandbox é que tinha
+            // o dado errado: compras de verdade (Uber, farmácia, Apple,
+            // GitHub, restaurante) vinham com DEBIT, e a inversão as jogava
+            // pra "entradas" por engano.
+            const tipo: "entradas" | "saidas" = t.type === "CREDIT" ? "entradas" : "saidas";
             // Traduzida uma vez só: guardada em categoria_pluggy (pra exibir
             // algo em português mesmo quando não bate com nenhuma categoria
             // já cadastrada) e usada na sugestão.
