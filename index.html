@@ -103,6 +103,7 @@
                 <button class="tab-btn" data-tab="entradas">📥 Receitas</button>
                 <button class="tab-btn" data-tab="saidas">📤 Despesas</button>
                 <button class="tab-btn" data-tab="proximas">⏰ Próximas</button>
+                <button class="tab-btn" data-tab="revisao">🔍 Revisão<span id="badgeRevisao" class="tab-badge info" hidden></span></button>
             </section>
 
             <!-- Tab: Entradas -->
@@ -140,6 +141,19 @@
                     <h2 id="proximasTitulo">Próximas transações</h2>
                     <div id="proximasLista" class="transacoes-lista">
                         <!-- Próximas transações -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: Revisão (transações importadas da Pluggy, aguardando confirmação) -->
+            <section id="revisao" class="tab-content">
+                <div class="transacoes-container">
+                    <div class="revisao-topo">
+                        <p class="menu-hint">Transações trazidas do banco (open finance). Confirme e ajuste a categoria antes de virarem um lançamento de verdade.</p>
+                        <button type="button" class="mini-btn" id="btnSincronizarPluggy">↻ Sincronizar agora</button>
+                    </div>
+                    <div id="revisaoLista" class="transacoes-lista">
+                        <!-- Transações pendentes de revisão -->
                     </div>
                 </div>
             </section>

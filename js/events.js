@@ -46,6 +46,12 @@ function configurarEventListeners() {
     const btnConfig = document.getElementById('btnConfig');
     if (btnConfig) btnConfig.addEventListener('click', () => mudarAba('menus'));
 
+    // Aba Revisão: botão "Sincronizar agora" (busca transações novas na Pluggy)
+    const btnSyncPluggy = document.getElementById('btnSincronizarPluggy');
+    if (btnSyncPluggy && typeof sincronizarPluggyAgora === 'function') {
+        btnSyncPluggy.addEventListener('click', sincronizarPluggyAgora);
+    }
+
     // Aba Despesas: alternar "Por recorrência" / "Por método"
     const modoSaidas = document.getElementById('modoSaidas');
     if (modoSaidas) modoSaidas.addEventListener('click', e => {
@@ -278,6 +284,9 @@ function mudarAba(novaAba) {
     } else if (novaAba === 'proximas') {
         // Carregar próximas transações
         atualizarProximasTransacoes();
+    } else if (novaAba === 'revisao') {
+        // Carregar fila de revisão (lançamentos importados da Pluggy)
+        if (typeof carregarRevisaoPluggy === 'function') carregarRevisaoPluggy();
     } else if (novaAba === 'menus') {
         // Carregar aba de gerenciamento de menus
         carregarAbaMenus();
