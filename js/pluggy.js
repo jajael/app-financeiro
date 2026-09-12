@@ -296,13 +296,32 @@ async function apagarConta(contaId) {
 // na hora de confirmar, sem precisar buscar de novo no banco).
 let _revisaoCache = {};
 
-/** Botão "Sincronizar agora": busca transações novas em todas as contas. */
+/** Calcula a data de início a partir dos campos "Buscar últimos N
+ *  dia(s)/mês(es)/ano(s)" — sobrescreve o padrão do servidor (que parte do
+ *  último sync de cada conta), útil quando isso não basta pra trazer o
+ *  histórico de novo (ex.: depois de apagar lançamentos já importados). */
+function calcularDateFromSync() {
+    const qtdEl = document.getElementById('syncQtd');
+    const unidadeEl = document.getElementById('syncUnidade');
+    const qtd = parseInt(qtdEl?.value, 10);
+    if (!qtd || qtd <= 0) return null;
+
+    const alvo = new Date();
+    if (unidadeEl?.value === 'meses') alvo.setMonth(alvo.getMonth() - qtd);
+    else if (unidadeEl?.value === 'anos') alvo.setFullYear(alvo.getFullYear() - qtd);
+    else alvo.setDate(alvo.getDate() - qtd);
+    return alvo.toISOString().slice(0, 10);
+}
+
+/** Botão "Sincronizar agora": busca transações novas em todas as contas,
+ *  a partir da data calculada pelo seletor "Buscar últimos...". */
 async function sincronizarPluggyAgora() {
     const btn = document.getElementById('btnSincronizarPluggy');
     const textoOriginal = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Sincronizando...'; }
     try {
-        const { data, error } = await sb.functions.invoke('pluggy-sync', { body: {} });
+        const dateFrom = calcularDateFromSync();
+        const { data, error } = await sb.functions.invoke('pluggy-sync', { body: dateFrom ? { dateFrom } : {} });
         if (error) throw error;
         const novas = data?.novas || 0;
         mostrarNotificacao(

@@ -45,7 +45,16 @@
     margin-bottom: var(--spacing-md);
 }
 .revisao-topo .menu-hint { margin: 0; flex: 1 1 14rem; }
-.revisao-topo-acoes { display: flex; gap: .5rem; flex-wrap: wrap; }
+.revisao-topo-acoes { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.sync-range {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .8rem;
+    color: var(--text-muted, #6c757d);
+    white-space: nowrap;
+}
+.sync-qtd { width: 3.6rem; text-align: right; }
 
 /* Faturas de cartão (topo das Próximas) */
 .faturas-cartao { display: flex; flex-direction: column; gap: .4rem; margin-bottom: var(--spacing-md); }
