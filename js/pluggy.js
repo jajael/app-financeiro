@@ -338,9 +338,13 @@ async function sincronizarPluggyAgora() {
 }
 
 /** Botão "Limpar tudo": mesmo padrão de 2 cliques usado em Configurações
- *  (sem confirm() nativo) — marca toda a fila pendente como 'ignorada'.
- *  Não apaga as linhas (perderia o dedup por pluggy_transaction_id e o
- *  próximo sync reimportaria tudo de novo). */
+ *  (sem confirm() nativo) — apaga de vez as linhas 'pendente' e 'ignorada'.
+ *  Preserva as 'confirmada' (viraram lançamento de verdade; apagar essas
+ *  perderia o dedup por pluggy_transaction_id e um resync futuro poderia
+ *  duplicar o lançamento se o usuário confirmasse de novo). Marcar como
+ *  'ignorada' em vez de apagar bloquearia um resync com histórico maior
+ *  pra sempre — o próprio dedup impediria essas linhas de voltarem mesmo
+ *  ampliando o período de busca. */
 function onClickLimparRevisao(e) {
     const btn = e.currentTarget;
     if (btn.dataset.armed) {
@@ -365,7 +369,7 @@ async function limparFilaRevisao(btn) {
     const original = '🧹 Limpar tudo';
     btn.disabled = true;
     try {
-        const { error } = await sb.from('transacoes_importadas').update({ status: 'ignorada' }).eq('status', 'pendente');
+        const { error } = await sb.from('transacoes_importadas').delete().in('status', ['pendente', 'ignorada']);
         if (error) throw error;
         mostrarNotificacao('Fila de revisão limpa', 'sucesso');
         await carregarRevisaoPluggy();
